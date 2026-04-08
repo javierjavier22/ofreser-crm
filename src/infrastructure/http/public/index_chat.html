@@ -259,7 +259,7 @@ body{
 </div>
 
 <script>
-const API_URL = 'http://localhost:3000/chat';
+const API_URL = `${window.location.origin}/chat`;
 const SESSION_KEY = 'ofreser_chat_session_id';
 
 let sessionId = sessionStorage.getItem(SESSION_KEY);
