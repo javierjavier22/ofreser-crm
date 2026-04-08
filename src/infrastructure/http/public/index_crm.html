@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	
     <title>Ofreser CRM</title>
     <style>
       :root {
@@ -1082,6 +1083,67 @@
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* =========================================
+   FIX MOBILE REAL PARA TU CRM (NO SUPOSICIONES)
+   ========================================= */
+
+@media (max-width: 768px) {
+
+  /* modal ocupa toda la pantalla */
+  .modal {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+
+  /* cuerpo del modal en columna */
+  .modal-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* ocultamos panel izquierdo (detalle) en mobile */
+  .drawer-left {
+    display: none;
+  }
+
+  /* chat ocupa todo */
+  .drawer-right {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-shell {
+    height: 100%;
+  }
+
+  .chat-thread-card {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* 🔥 CLAVE: sacamos altura fija y dejamos que crezca */
+  .conversation {
+    flex: 1;
+    max-height: none;
+    height: auto;
+    overflow-y: auto;
+  }
+
+  /* input siempre abajo */
+  .chat-composer-card {
+    flex-shrink: 0;
+  }
+}
+
+
+
     </style>
   </head>
   <body>
