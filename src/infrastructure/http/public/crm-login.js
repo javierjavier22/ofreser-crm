@@ -20,7 +20,7 @@
  */
 
 (function () {
-  const CRM_API_BASE = 'http://localhost:3000';
+  const CRM_API_BASE = window.location.origin;
   const CRM_TOKEN_STORAGE_KEY = 'ofreser_crm_token';
   const CRM_ROLE_STORAGE_KEY = 'ofreser_crm_role';
   const CRM_LAST_ACTIVITY_KEY = 'ofreser_crm_last_activity';
