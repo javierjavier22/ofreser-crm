@@ -1,0 +1,132 @@
+PASOS PARA LLEVAR EL CHATBOT A UN ENTORNO PRO (DEPLOY REAL)
+
+OBJETIVO:
+Que el bot funcione 24/7 sin depender de tu PC, sin ngrok y con URL fija.
+
+--------------------------------------------------
+ETAPA 1 - PREPARAR EL PROYECTO
+--------------------------------------------------
+
+	1) ASEGURAR ARCHIVOS BASE
+	El proyecto debe tener como mínimo:
+
+	- server.js
+	- package.json
+	- .env (solo local)
+	- src/
+	- storage/
+	  - leads.json
+	  - messages.json
+	  - sessions.json
+
+	2) ASEGURAR VARIABLES DE ENTORNO
+	Tu proyecto debe usar process.env para:
+
+	- WHATSAPP_TOKEN
+	- PHONE_NUMBER_ID
+	- VERIFY_TOKEN
+	- PORT
+
+	3) NO DEJAR SECRETOS EN CODIGO
+	Verificar que:
+	- no haya tokens pegados en archivos .js
+	- no haya credenciales hardcodeadas
+
+--------------------------------------------------
+ETAPA 2 - SUBIR EL CODIGO A GITHUB
+--------------------------------------------------
+
+	1) CREAR REPOSITORIO
+	Subir el proyecto a un repositorio privado o público.
+
+	2) AGREGAR .GITIGNORE
+	Asegurarte de tener un .gitignore con esto:
+
+	.env
+	node_modules
+
+	3) NO SUBIR .ENV
+	El archivo .env NO debe subirse al repo.
+
+--------------------------------------------------
+ETAPA 3 - DEPLOY EN HOSTING
+--------------------------------------------------
+
+	1) ELEGIR HOSTING
+	Opciones típicas:
+	- Render
+	- Railway
+	- VPS
+	- otro hosting Node.js
+
+	2) CREAR SERVICIO WEB
+	Configurar el proyecto para que ejecute:
+
+	node server.js
+
+	3) CONFIGURAR VARIABLES DE ENTORNO EN EL HOSTING
+	Cargar en el panel del hosting:
+
+	WHATSAPP_TOKEN=...
+	PHONE_NUMBER_ID=...
+	VERIFY_TOKEN=ofreser_token
+	PORT=3000
+
+	4) DEPLOYAR
+	Esperar a que el hosting genere una URL pública fija, por ejemplo:
+
+	https://tu-bot.onrender.com
+
+--------------------------------------------------
+ETAPA 4 - CAMBIAR WEBHOOK EN META
+--------------------------------------------------
+
+	1) ENTRAR A META DEVELOPERS
+	Ir a:
+	WhatsApp
+	Configuration (Webhook)
+
+	2) REEMPLAZAR CALLBACK URL
+	Cambiar la URL de ngrok por la URL real del hosting:
+
+	https://tu-bot.onrender.com/webhook/whatsapp
+
+	3) DEJAR VERIFY TOKEN IGUAL
+	ofreser_token
+
+	4) VERIFICAR
+	Meta debe aceptar el webhook.
+
+--------------------------------------------------
+ETAPA 5 - PRUEBA FINAL
+--------------------------------------------------
+
+	1) ENVIAR MENSAJE DESDE WHATSAPP
+	Mandar:
+	Hola
+
+	2) VERIFICAR LOGS EN HOSTING
+	Comprobar que:
+	- entra el webhook
+	- responde el motor
+	- se envía la respuesta
+
+	3) CONFIRMAR ESTABILIDAD
+	A partir de acá:
+	- ya no necesitás ngrok
+	- ya no necesitás tener la PC prendida
+	- la URL queda fija
+	- el bot puede funcionar 24/7
+
+--------------------------------------------------
+ETAPA 6 - MEJORAS PRO FUTURAS
+--------------------------------------------------
+
+	Cuando ya esté deployado, lo ideal después es:
+
+	- mover storage JSON a base de datos real
+	- agregar backup
+	- agregar autenticación para CRM
+	- agregar dominio propio
+	- agregar logs estructurados
+	- agregar monitoreo de errores

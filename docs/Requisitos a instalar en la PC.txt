@@ -1,0 +1,67 @@
+GUIA DE TODO LO NECESARIO PARA REPLICAR EL PROYECTO EN OTRA PC
+
+1) INSTALAR EN WINDOWS
+- Node.js LTS
+- ngrok
+- Navegador web (Chrome, Edge, etc.)
+- Editor de código o texto
+
+2) COPIAR EL PROYECTO
+Copiar la carpeta completa:
+D:\ofreser-bot
+
+3) VERIFICAR QUE EXISTAN ESTOS ARCHIVOS Y CARPETAS
+- server.js
+- package.json
+- package-lock.json
+- src\
+- storage\
+  - leads.json
+  - messages.json
+  - sessions.json
+
+4) INSTALAR DEPENDENCIAS DEL PROYECTO
+Abrir CMD dentro de la carpeta del proyecto:
+
+cd D:\ofreser-bot
+npm install
+
+Esto reinstala las dependencias locales del proyecto.
+
+5) DEPENDENCIAS LOCALES QUE USA EL PROYECTO
+- express
+- cors
+- axios
+- dotenv
+
+6) CREAR / COMPLETAR EL ARCHIVO .ENV
+Debe existir en la raíz del proyecto:
+
+PORT=3000
+WHATSAPP_TOKEN=PEGAR_TOKEN_META
+PHONE_NUMBER_ID=PEGAR_PHONE_NUMBER_ID
+VERIFY_TOKEN=ofreser_token
+
+7) LEVANTAR EL BACKEND
+Abrir CMD:
+
+cd D:\ofreser-bot
+node server.js
+
+8) LEVANTAR NGROK
+Abrir otra ventana CMD:
+
+ngrok http 3000
+
+9) CONFIGURAR META DEVELOPERS
+En la app de Meta:
+- actualizar Callback URL con la URL nueva de ngrok
+- dejar VERIFY_TOKEN = ofreser_token
+- verificar webhook
+- revisar API Setup
+- generar access token si hace falta
+
+10) PROBAR
+- probar el webhook en navegador
+- probar envío desde Meta
+- probar mensaje desde WhatsApp

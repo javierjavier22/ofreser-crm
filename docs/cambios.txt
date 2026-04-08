@@ -1,0 +1,36 @@
+cambios
+
+agregar industria a lugares		OK
+	
+escribir la direccion exacta	OK
+
+
+revisar las zonas de la industria	OK
+
+validar numero de whataspp		OK
+
+crear archivo env		OK
+
+agregar comentarios		OK
+
+ver si habria qu eborrar el contendo de sessions para evitar que quede pegado una conversacion
+
+
+pendiente programa asesor
+
+resumen de todo lo que se instalo po rejh ngrook, aixis, dotenv,etc y para q sirve cada cosa
+
+
+asesor humano real
+scoring automático de leads
+derivación automática a WhatsApp
+
+
+que pasa sio el usuario
+
+NO QUIERE USAR MAS EL CHATBOT
+
+QUIERE USAR EL CHATGBOT PERO NOSE SE CAYO EL SERVER DONE ESTA ALOJAD Y NECESITAN SEGUIR RESPONEINDO CHATS
+
+1 OPERARDO USA EL CRM Y OTRO WHASTAPWEB O EL CELULAR FISICO REAL
+

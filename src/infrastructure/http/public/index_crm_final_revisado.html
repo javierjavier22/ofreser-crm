@@ -1,0 +1,3423 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ofreser CRM</title>
+    <style>
+      :root {
+        --bg: #08111f;
+        --panel: #101826;
+        --panel-2: #0c1422;
+        --line: #1e2a3d;
+        --line-2: #233248;
+        --text: #e5e7eb;
+        --muted: #94a3b8;
+        --green: #16a34a;
+        --green-2: #15803d;
+        --blue: #2563eb;
+        --amber: #d97706;
+        --red: #dc2626;
+        --shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(180deg, #07101c 0%, #0b1320 100%);
+        color: var(--text);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(7, 16, 28, 0.88);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+        padding: 16px 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 320px;
+      }
+
+      .logo {
+        width: auto;
+        height: 54px;
+        object-fit: contain;
+        background: #fff;
+        border-radius: 12px;
+        padding: 4px 8px;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+      }
+
+      .logo.hidden {
+        display: none;
+      }
+
+      .title {
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.1;
+      }
+
+      .sub {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .last-sync {
+        font-size: 12px;
+        color: var(--muted);
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .btn {
+        appearance: none;
+        border: none;
+        cursor: pointer;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-weight: 700;
+        color: #fff;
+        background: var(--green);
+        transition: 0.15s ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+      .btn.secondary {
+        background: #334155;
+      }
+      .btn.secondary:hover {
+        background: #3f5168;
+      }
+      .btn.whatsapp {
+        background: var(--green);
+      }
+      .btn.whatsapp:hover {
+        background: var(--green-2);
+      }
+      .btn.small {
+        padding: 8px 10px;
+        font-size: 12px;
+        border-radius: 10px;
+      }
+
+      .layout {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 20px 20px 28px;
+      }
+
+      .hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+        margin-bottom: 18px;
+        flex-wrap: wrap;
+      }
+
+      .hero h1 {
+        margin: 0;
+        font-size: 40px;
+        line-height: 1;
+        letter-spacing: -0.02em;
+      }
+
+      .hero p {
+        margin: 10px 0 0;
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      .hero-badges {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .filters {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .filters input,
+      .filters select {
+        width: 100%;
+        padding: 13px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--line-2);
+        background: var(--panel);
+        color: var(--text);
+        font-size: 14px;
+        outline: none;
+      }
+
+      .filters input:focus,
+      .filters select:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+
+      .stat {
+        background:
+          linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.02) 0%,
+            rgba(255, 255, 255, 0.01) 100%
+          ),
+          var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 16px;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      }
+
+      .stat-label {
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+      }
+
+      .stat-value {
+        font-size: 34px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .board {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        align-items: start;
+      }
+
+      .column {
+        background: rgba(16, 24, 38, 0.88);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 14px;
+        min-height: 420px;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      }
+
+      .column-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        padding: 4px 2px 12px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 12px;
+      }
+
+      .column-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        display: inline-block;
+      }
+
+      .dot.nuevo {
+        background: #3b82f6;
+      }
+      .dot.calificado {
+        background: #16a34a;
+      }
+      .dot.seguimiento {
+        background: #d97706;
+      }
+      .dot.cerrado {
+        background: #64748b;
+      }
+
+      .column-count {
+        font-size: 12px;
+        background: #0b1220;
+        padding: 4px 9px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        color: #dbe4f0;
+      }
+
+      .lead-card {
+        background: var(--panel-2);
+        border: 1px solid var(--line-2);
+        border-radius: 18px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 12px;
+        transition: 0.15s ease;
+        cursor: pointer;
+      }
+
+      .lead-card:hover {
+        transform: translateY(-1px);
+        border-color: #31445f;
+      }
+
+      /* =========================================
+   MEJORA PRO: NUEVOS LEADS VISUALES
+   ========================================= */
+
+      /* Lead recién ingresado */
+      .lead-new {
+        box-shadow:
+          0 0 0 1px rgba(59, 130, 246, 0.4),
+          0 0 12px rgba(59, 130, 246, 0.25);
+      }
+
+      /* Badge NUEVO */
+      .badge.new {
+        background: #2563eb;
+        color: #fff;
+      }
+
+      /* Animación suave al aparecer */
+      .lead-animate {
+        animation: fadeInUp 0.35s ease;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .status-nuevo {
+        border-left: 4px solid #3b82f6;
+      }
+      .status-calificado {
+        border-left: 4px solid #16a34a;
+      }
+      .status-seguimiento {
+        border-left: 4px solid #d97706;
+      }
+      .status-cerrado {
+        border-left: 4px solid #64748b;
+      }
+
+      .lead-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: flex-start;
+      }
+
+      .lead-title {
+        font-size: 16px;
+        font-weight: 800;
+        line-height: 1.2;
+      }
+
+      .lead-date {
+        font-size: 11px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .badges {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        font-size: 11px;
+        padding: 5px 8px;
+        border-radius: 999px;
+        font-weight: 700;
+        width: fit-content;
+      }
+
+      .badge.category {
+        background: #1d4ed8;
+        color: #fff;
+      }
+      .badge.human {
+        background: #b91c1c;
+        color: #fff;
+      }
+      .badge.partial {
+        background: #92400e;
+        color: #fff;
+      }
+      .badge.hot {
+        background: #dc2626;
+        color: #fff;
+      }
+      .badge.channel {
+        background: #0f766e;
+        color: #fff;
+      }
+      .badge.status {
+        background: #475569;
+        color: #fff;
+      }
+      .badge.control-bot {
+        background: var(--blue);
+        color: #fff;
+      }
+      .badge.control-human {
+        background: var(--amber);
+        color: #fff;
+      }
+      .badge.control-closed {
+        background: var(--red);
+        color: #fff;
+      }
+
+      .lead-main-summary {
+        font-size: 13px;
+        color: #dbe4f0;
+        background: #111827;
+        border: 1px solid var(--line-2);
+        border-radius: 12px;
+        padding: 10px;
+        line-height: 1.45;
+      }
+
+      .lead-preview {
+        font-size: 12px;
+        color: #9fb0c4;
+        background: #0f172a;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px;
+        line-height: 1.45;
+      }
+
+      .lead-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 7px;
+        margin-top: 2px;
+      }
+
+      .lead-actions button {
+        appearance: none;
+        border: none;
+        cursor: pointer;
+        text-align: left;
+        color: #fff;
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .lead-actions button.default-btn {
+        background: #334155;
+      }
+
+      .lead-actions button.default-btn:hover {
+        background: #3f5168;
+      }
+
+      .lead-actions button.take-human-btn {
+        background: var(--amber);
+      }
+
+      .lead-actions button.take-human-btn:hover {
+        background: #b45309;
+      }
+
+      .lead-actions button.return-bot-btn {
+        background: var(--blue);
+      }
+
+      .lead-actions button.return-bot-btn:hover {
+        background: #1d4ed8;
+      }
+
+      .lead-actions button.close-conversation-btn {
+        background: var(--red);
+      }
+
+      .lead-actions button.close-conversation-btn:hover {
+        background: #b91c1c;
+      }
+
+      .lead-actions button.attended-btn {
+        background: var(--green);
+      }
+
+      .lead-actions button.attended-btn:hover {
+        background: var(--green-2);
+      }
+
+      .empty {
+        color: #66758a;
+        font-size: 14px;
+        padding: 8px 0;
+      }
+
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(3, 8, 17, 0.72);
+        backdrop-filter: blur(5px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        z-index: 1000;
+      }
+
+      .modal-overlay.open {
+        display: flex;
+      }
+
+      .modal {
+        width: min(1260px, 100%);
+        max-height: 92vh;
+        overflow: hidden;
+        background: linear-gradient(180deg, #0e1625 0%, #101826 100%);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .modal-header {
+        padding: 18px 22px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 14px;
+      }
+
+      .modal-title-wrap h2 {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .modal-title-wrap .modal-sub {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .modal-close {
+        appearance: none;
+        border: none;
+        cursor: pointer;
+        background: #1f2937;
+        color: #fff;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        font-size: 18px;
+        line-height: 1;
+      }
+
+      .modal-body {
+        display: grid;
+        grid-template-columns: 400px 1fr;
+        gap: 18px;
+        padding: 18px;
+        overflow: auto;
+        min-height: 0;
+      }
+
+      .drawer-left {
+        min-height: 0;
+      }
+
+      .drawer-right {
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .detail-block {
+        background: var(--panel-2);
+        border: 1px solid var(--line-2);
+        border-radius: 18px;
+        padding: 16px;
+        margin-bottom: 14px;
+      }
+
+      .detail-title {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+      }
+
+      .detail-line {
+        font-size: 14px;
+        line-height: 1.55;
+        margin-bottom: 8px;
+        word-break: break-word;
+      }
+
+      .detail-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .msg {
+        max-width: 88%;
+        padding: 10px 12px;
+        border-radius: 14px;
+        font-size: 13px;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        word-break: break-word;
+        border: 1px solid transparent;
+      }
+
+      .msg.user {
+        align-self: flex-end;
+        background: #dcf8c6;
+        color: #111827;
+        border-top-right-radius: 5px;
+      }
+
+      .msg.bot {
+        align-self: flex-start;
+        background: #fff;
+        color: #111827;
+        border-top-left-radius: 5px;
+      }
+
+      .msg.human {
+        align-self: flex-start;
+        background: #fef3c7;
+        color: #111827;
+        border-top-left-radius: 5px;
+      }
+
+      .msg-meta {
+        margin-top: 6px;
+        font-size: 11px;
+        color: #6b7280;
+      }
+
+      .note-textarea,
+      .human-textarea {
+        width: 100%;
+        resize: vertical;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid var(--line-2);
+        background: #0b1220;
+        color: var(--text);
+        font-size: 14px;
+        font-family: Arial, sans-serif;
+      }
+
+      .note-textarea {
+        min-height: 120px;
+      }
+
+      .human-textarea {
+        min-height: 88px;
+        max-height: 180px;
+        resize: vertical;
+      }
+
+      .note-actions,
+      .human-actions {
+        margin-top: 10px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .note-save-btn,
+      .human-send-btn {
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .note-save-btn {
+        background: var(--green);
+      }
+
+      .note-save-btn:hover {
+        background: var(--green-2);
+      }
+
+      .human-send-btn {
+        background: var(--amber);
+      }
+
+      .human-send-btn:hover {
+        background: #b45309;
+      }
+
+      .human-send-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /**
+     * Ajustes finos del chat para que se sienta más natural.
+     */
+      .msg {
+        max-width: 78%;
+      }
+
+      .human-textarea {
+        line-height: 1.45;
+      }
+
+      .note-status,
+      .human-status {
+        font-size: 13px;
+        color: #93c5fd;
+        margin-top: 8px;
+        min-height: 18px;
+      }
+
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+
+      .refresh-banner {
+        display: none;
+        margin-bottom: 10px;
+        padding: 10px 12px;
+        border: 1px solid rgba(59, 130, 246, 0.35);
+        background: rgba(59, 130, 246, 0.1);
+        color: #bfdbfe;
+        border-radius: 12px;
+        font-size: 13px;
+      }
+
+      .refresh-banner.show {
+        display: block;
+      }
+
+      .loading {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .control-panel {
+        display: grid;
+        gap: 10px;
+      }
+
+      .control-actions {
+        display: grid;
+        gap: 8px;
+      }
+
+      .control-actions button {
+        border: none;
+        border-radius: 12px;
+        padding: 10px 12px;
+        color: #fff;
+        cursor: pointer;
+        font-weight: 700;
+        text-align: left;
+      }
+
+      .control-actions button.take-human {
+        background: var(--amber);
+      }
+
+      .control-actions button.take-human:hover {
+        background: #b45309;
+      }
+
+      .control-actions button.return-bot {
+        background: var(--blue);
+      }
+
+      .control-actions button.return-bot:hover {
+        background: #1d4ed8;
+      }
+
+      .control-actions button.close-session {
+        background: var(--red);
+      }
+
+      .control-actions button.close-session:hover {
+        background: #b91c1c;
+      }
+
+      .human-send-block.disabled {
+        opacity: 0.6;
+      }
+
+      /**
+     * =====================================================
+     * CHAT LAYOUT PRO
+     * =====================================================
+     *
+     * Este bloque arma la columna derecha como un inbox real:
+     * - historial arriba
+     * - caja de respuesta abajo
+     * - scroll independiente del chat
+     */
+      .chat-shell {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        height: 100%;
+        gap: 14px;
+      }
+
+      .chat-thread-card {
+        background: var(--panel-2);
+        border: 1px solid var(--line-2);
+        border-radius: 18px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        flex: 1;
+      }
+
+      .chat-thread-title {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+      }
+
+      .conversation {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        overflow: auto;
+        min-height: 300px;
+        max-height: 520px;
+        padding-right: 6px;
+        scroll-behavior: smooth;
+      }
+
+      .chat-composer-card {
+        background: var(--panel-2);
+        border: 1px solid var(--line-2);
+        border-radius: 18px;
+        padding: 16px;
+        flex-shrink: 0;
+      }
+
+      .chat-composer-help {
+        font-size: 13px;
+        color: var(--text);
+        margin-bottom: 10px;
+        line-height: 1.5;
+      }
+
+      .chat-composer-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+
+      .chat-composer-tip {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      @media (max-width: 1280px) {
+        .stats {
+          grid-template-columns: repeat(4, 1fr);
+        }
+        .board {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .modal-body {
+          grid-template-columns: 1fr;
+        }
+        .conversation {
+          max-height: 420px;
+        }
+      }
+
+      @media (max-width: 800px) {
+        .filters {
+          grid-template-columns: 1fr;
+        }
+        .stats {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .board {
+          grid-template-columns: 1fr;
+        }
+        .hero h1 {
+          font-size: 30px;
+        }
+        .modal-overlay {
+          padding: 10px;
+        }
+        .modal {
+          max-height: 96vh;
+          border-radius: 18px;
+        }
+        .logo {
+          height: 44px;
+        }
+      }
+
+      .admin-users-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      .admin-users-table th,
+      .admin-users-table td {
+        border-bottom: 1px solid var(--line);
+        padding: 10px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .admin-users-table th {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .admin-users-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .admin-users-actions button {
+        border: none;
+        border-radius: 10px;
+        padding: 8px 10px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+        background: #334155;
+      }
+
+      .admin-users-actions button:hover {
+        background: #3f5168;
+      }
+
+      .admin-users-actions button.reset-pass {
+        background: var(--amber);
+      }
+
+      .admin-users-actions button.reset-pass:hover {
+        background: #b45309;
+      }
+
+      .admin-users-actions button.deactivate-user {
+        background: var(--red);
+      }
+
+      .admin-users-actions button.deactivate-user:hover {
+        background: #b91c1c;
+      }
+
+      .admin-users-actions button.activate-user {
+        background: var(--green);
+      }
+
+      .admin-users-actions button.activate-user:hover {
+        background: var(--green-2);
+      }
+
+      .admin-inline-select {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--line-2);
+        background: #0b1220;
+        color: var(--text);
+        font-size: 12px;
+      }
+
+      /**
+     * =====================================================
+     * MODALES DEL SISTEMA (CONFIRM / INPUT / MENSAJES)
+     * =====================================================
+     *
+     * Estos estilos reemplazan alert, confirm y prompt
+     * del navegador por modales internos del CRM.
+     */
+      .system-modal {
+        width: min(560px, 100%);
+      }
+
+      .system-modal .modal-body {
+        display: block;
+        padding: 20px 22px 22px;
+      }
+
+      .system-modal-message {
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--text);
+        white-space: pre-wrap;
+      }
+
+      .system-modal-field {
+        margin-top: 14px;
+      }
+
+      .system-modal-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+
+      .system-modal-input {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--line-2);
+        background: #0b1220;
+        color: var(--text);
+        font-size: 14px;
+        outline: none;
+      }
+
+      .system-modal-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+      }
+
+      .system-modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+      }
+
+      .btn.danger {
+        background: var(--red);
+      }
+
+      .btn.danger:hover {
+        background: #b91c1c;
+      }
+
+      .btn.warning {
+        background: var(--amber);
+      }
+
+      .btn.warning:hover {
+        background: #b45309;
+      }
+
+      @media (max-width: 520px) {
+        .stats {
+          grid-template-columns: 1fr;
+        }
+        .topbar,
+        .layout {
+          padding-left: 14px;
+          padding-right: 14px;
+        }
+        .modal-header {
+          padding: 16px;
+        }
+        .modal-body {
+          padding: 14px;
+        }
+        .brand {
+          min-width: unset;
+        }
+        .chat-composer-footer {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .human-send-btn {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="brand">
+        <img
+          src="logo.png"
+          alt="Ofreser"
+          class="logo"
+          onerror="this.classList.add('hidden')"
+        />
+        <div>
+          <div class="title">Ofreser CRM</div>
+          <div class="sub">
+            Grupo Morón · Gestión comercial de leads del chatbot y WhatsApp
+          </div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <div class="last-sync" id="lastSyncLabel">Actualizado: --</div>
+        <button
+          class="btn secondary"
+          onclick="loadLeads({ silent: false, preserveModal: true })"
+        >
+          Actualizar
+        </button>
+        <button
+          class="btn secondary"
+          id="soundToggleBtn"
+          onclick="activateCrmSound()"
+        >
+          🔔 Activar sonido
+        </button>
+
+        <button
+          id="usersAdminBtn"
+          class="btn secondary"
+          onclick="openUsersAdminModal()"
+          style="display: none"
+        >
+          Usuarios
+        </button>
+
+        <button
+          id="resetTestingBtn"
+          class="btn secondary"
+          onclick="resetTestingData()"
+        >
+          Reset testing
+        </button>
+
+        <button class="btn secondary" onclick="logoutCrm()">Salir</button>
+        <button class="btn" onclick="window.open('index_chat.html', '_blank')">
+          Abrir demo del cliente
+        </button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="hero">
+        <div>
+          <h1>Panel comercial</h1>
+          <p>Leads entrantes desde WhatsApp y Webchat listos para gestionar.</p>
+        </div>
+        <div class="hero-badges">
+          <span class="pill">CRM activo</span>
+          <span class="pill">Integración WhatsApp</span>
+          <span class="pill">Automatización activa</span>
+          <span class="pill" id="autoRefreshLabel">Auto refresh: 30s</span>
+        </div>
+      </div>
+
+      <div class="filters">
+        <input
+          id="searchInput"
+          type="text"
+          name="crm_lead_search"
+          placeholder="Buscar lead, teléfono o consulta..."
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+        />
+        <select id="categoryFilter">
+          <option value="">Todas las categorías</option>
+          <option value="servicios">Servicios</option>
+          <option value="productos">Productos</option>
+          <option value="certificados">Certificados</option>
+          <option value="administracion">Administración</option>
+          <option value="sin_categoria">Sin categoría</option>
+        </select>
+        <select id="statusFilter">
+          <option value="">Todos los estados comerciales</option>
+          <option value="nuevo">Nuevo</option>
+          <option value="calificado">Calificado</option>
+          <option value="seguimiento">Seguimiento</option>
+          <option value="cerrado">Cerrado</option>
+        </select>
+        <select id="controlFilter">
+          <option value="">Todos los estados operativos</option>
+          <option value="bot">BOT</option>
+          <option value="human">HUMANO</option>
+          <option value="closed">CERRADO</option>
+        </select>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Total</div>
+          <div class="stat-value" id="stat-total">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Nuevos</div>
+          <div class="stat-value" id="stat-nuevo">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Calificados</div>
+          <div class="stat-value" id="stat-calificado">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Seguimiento</div>
+          <div class="stat-value" id="stat-seguimiento">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Cerrados</div>
+          <div class="stat-value" id="stat-cerrado">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Modo humano</div>
+          <div class="stat-value" id="stat-human">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Modo bot</div>
+          <div class="stat-value" id="stat-bot">0</div>
+        </div>
+      </div>
+
+      <div class="board">
+        <div class="column">
+          <div class="column-header">
+            <div class="column-left">
+              <span class="dot nuevo"></span><span>Ingresados</span>
+            </div>
+            <span class="column-count" id="count-nuevo">0</span>
+          </div>
+          <div id="col-nuevo"></div>
+        </div>
+
+        <div class="column">
+          <div class="column-header">
+            <div class="column-left">
+              <span class="dot calificado"></span><span>Calificados</span>
+            </div>
+            <span class="column-count" id="count-calificado">0</span>
+          </div>
+          <div id="col-calificado"></div>
+        </div>
+
+        <div class="column">
+          <div class="column-header">
+            <div class="column-left">
+              <span class="dot seguimiento"></span><span>En seguimiento</span>
+            </div>
+            <span class="column-count" id="count-seguimiento">0</span>
+          </div>
+          <div id="col-seguimiento"></div>
+        </div>
+
+        <div class="column">
+          <div class="column-header">
+            <div class="column-left">
+              <span class="dot cerrado"></span><span>Finalizados</span>
+            </div>
+            <span class="column-count" id="count-cerrado">0</span>
+          </div>
+          <div id="col-cerrado"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="leadModalOverlay" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h2 id="modalLeadTitle">Detalle del lead</h2>
+            <div class="modal-sub" id="modalLeadSub">
+              Vista comercial + conversación
+            </div>
+          </div>
+          <button class="modal-close" onclick="closeDrawer()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="drawer-left">
+            <div id="modalRefreshBanner" class="refresh-banner">
+              Hay cambios nuevos en este lead. Cerrá y volvé a abrir o tocá
+              “Actualizar”.
+            </div>
+
+            <div id="drawerLeft"></div>
+          </div>
+
+          <div id="drawerRight" class="drawer-right"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="usersAdminModalOverlay" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h2>Administración de usuarios</h2>
+            <div class="modal-sub">
+              Alta, edición y reseteo de usuarios del CRM
+            </div>
+          </div>
+          <button class="modal-close" onclick="closeUsersAdminModal()">
+            ✕
+          </button>
+        </div>
+
+        <div class="modal-body" style="grid-template-columns: 360px 1fr">
+          <div>
+            <div class="detail-block">
+              <div class="detail-title">Crear usuario</div>
+
+              <div class="detail-grid">
+                <div>
+                  <div class="detail-line"><strong>Usuario</strong></div>
+                  <input
+                    id="adminNewUsername"
+                    type="text"
+                    class="note-textarea"
+                    style="min-height: auto; height: 44px"
+                    placeholder="Ej: operador2"
+                  />
+                </div>
+
+                <div>
+                  <div class="detail-line"><strong>Contraseña</strong></div>
+                  <input
+                    id="adminNewPassword"
+                    type="password"
+                    class="note-textarea"
+                    style="min-height: auto; height: 44px"
+                    placeholder="Contraseña inicial"
+                  />
+                </div>
+
+                <div>
+                  <div class="detail-line"><strong>Rol</strong></div>
+                  <select
+                    id="adminNewRole"
+                    class="note-textarea"
+                    style="min-height: auto; height: 44px"
+                  >
+                    <option value="user">user</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="note-actions">
+                <button class="note-save-btn" onclick="createAdminUser()">
+                  Crear usuario
+                </button>
+              </div>
+
+              <div id="adminUsersCreateStatus" class="note-status"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="detail-block">
+              <div class="detail-title">Usuarios registrados</div>
+              <div id="adminUsersListStatus" class="note-status"></div>
+              <div id="adminUsersTableWrap" class="loading">
+                Cargando usuarios...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="systemModalOverlay" class="modal-overlay">
+      <div class="modal system-modal">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h2 id="systemModalTitle">Mensaje</h2>
+            <div class="modal-sub" id="systemModalSub">Sistema</div>
+          </div>
+          <button
+            class="modal-close"
+            type="button"
+            onclick="closeSystemModal()"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div id="systemModalMessage" class="system-modal-message"></div>
+
+          <div
+            id="systemModalFieldWrap"
+            class="system-modal-field"
+            style="display: none"
+          >
+            <label
+              id="systemModalInputLabel"
+              class="system-modal-label"
+              for="systemModalInput"
+              >Valor</label
+            >
+            <input
+              id="systemModalInput"
+              class="system-modal-input"
+              type="text"
+            />
+          </div>
+
+          <div class="system-modal-actions">
+            <button
+              id="systemModalCancelBtn"
+              class="btn secondary"
+              type="button"
+              style="display: none"
+            >
+              Cancelar
+            </button>
+
+            <button id="systemModalConfirmBtn" class="btn" type="button">
+              Aceptar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="crm-login.js"></script>
+    <script>
+          /**
+           * =========================================================
+           * CONFIGURACIÓN GENERAL
+           * =========================================================
+           */
+      const API_BASE = 'http://localhost:3000';
+      const CRM_SOUND_STORAGE_KEY = 'ofreser_crm_sound_enabled';
+
+      let allLeads = [];
+      let currentLeadId = null;
+      let autoRefreshTimer = null;
+
+      /**
+       * Evita ejecutar el bootstrap del CRM múltiples veces.
+       */
+      let crmBootstrapStarted = false;
+
+      	/**
+      	 * Indica si el CRM ya completó al menos una carga inicial de leads.
+      	 *
+      	 * Regla:
+      	 * - primera carga al abrir el CRM => no sonar
+      	 * - cargas siguientes => si entra lead nuevo, sí sonar
+      	 */
+      	let crmHasCompletedInitialLoad = false;
+
+      /**
+       * Estado persistente del sonido del CRM.
+       *
+       * Si el usuario ya lo activó antes, lo recordamos.
+       */
+      let crmAudioUnlocked = localStorage.getItem(CRM_SOUND_STORAGE_KEY) === '1';
+
+      /**
+       * Contexto de audio reutilizable del CRM.
+       */
+      let crmAudioContext = null;
+
+          /**
+           * Flag simple para evitar doble envío manual
+           * si el usuario hace doble click o presiona Enter varias veces.
+           */
+          let isSendingHumanMessage = false;
+
+          const searchInput = document.getElementById('searchInput');
+          const categoryFilter = document.getElementById('categoryFilter');
+          const statusFilter = document.getElementById('statusFilter');
+          const controlFilter = document.getElementById('controlFilter');
+
+
+      /**
+       * =========================================================
+       * UTILIDADES GENERALES
+       * =========================================================
+       */
+      	/**
+           * Escapa HTML para render seguro.
+           */
+          function escapeHtml(text) {
+            return String(text || '')
+              .replaceAll('&', '&amp;')
+              .replaceAll('<', '&lt;')
+              .replaceAll('>', '&gt;')
+              .replaceAll('"', '&quot;')
+              .replaceAll("'", '&#039;');
+          }
+
+          /**
+           * Traduce categoría a formato visible.
+           */
+          function formatCategory(lead) {
+            if (lead.category === 'servicios') return 'Servicios';
+            if (lead.category === 'productos') return 'Productos';
+            if (lead.category === 'certificados') return 'Certificados';
+            if (lead.category === 'administracion') return 'Administración';
+            if (lead.category === 'sin_categoria') return 'Sin categoría';
+            return lead.category || 'Sin categoría';
+          }
+
+          /**
+           * Formatea fecha.
+           */
+          function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            if (isNaN(date)) return '-';
+            return date.toLocaleString('es-AR');
+          }
+
+          /**
+           * Actualiza hora de sync.
+           */
+          function updateLastSyncLabel() {
+            const now = new Date();
+            document.getElementById('lastSyncLabel').textContent = `Actualizado: ${now.toLocaleTimeString('es-AR')}`;
+          }
+
+          /**
+           * =========================================================
+           * MODALES DEL SISTEMA
+           * =========================================================
+           *
+           * Reemplazan alert, confirm y prompt del navegador
+           * por modales internos del CRM.
+           */
+
+          /**
+           * Estado interno del modal genérico del sistema.
+           *
+           * currentResolver:
+           * - se usa para resolver promesas de confirmación o input
+           */
+          let systemModalState = {
+            mode: null,
+            currentResolver: null
+          };
+
+          function getSystemModalElements() {
+            return {
+              overlay: document.getElementById('systemModalOverlay'),
+              title: document.getElementById('systemModalTitle'),
+              sub: document.getElementById('systemModalSub'),
+              message: document.getElementById('systemModalMessage'),
+              fieldWrap: document.getElementById('systemModalFieldWrap'),
+              inputLabel: document.getElementById('systemModalInputLabel'),
+              input: document.getElementById('systemModalInput'),
+              cancelBtn: document.getElementById('systemModalCancelBtn'),
+              confirmBtn: document.getElementById('systemModalConfirmBtn')
+            };
+          }
+
+          function resetSystemModalButtons(confirmBtn, cancelBtn) {
+            confirmBtn.className = 'btn';
+            cancelBtn.className = 'btn secondary';
+          }
+
+          function closeSystemModal() {
+            const elements = getSystemModalElements();
+            if (!elements.overlay) return;
+
+            elements.overlay.classList.remove('open');
+            elements.input.value = '';
+            elements.fieldWrap.style.display = 'none';
+            elements.cancelBtn.style.display = 'none';
+
+            resetSystemModalButtons(elements.confirmBtn, elements.cancelBtn);
+
+            /**
+             * Si había una promesa esperando respuesta
+             * y se cierra con la X o fondo, devolvemos null/false.
+             */
+            if (typeof systemModalState.currentResolver === 'function') {
+              const resolver = systemModalState.currentResolver;
+              const mode = systemModalState.mode;
+
+              systemModalState.currentResolver = null;
+              systemModalState.mode = null;
+
+              if (mode === 'prompt') {
+                resolver(null);
+                return;
+              }
+
+              if (mode === 'confirm') {
+                resolver(false);
+                return;
+              }
+            }
+          }
+
+          function bindSystemModalBaseEvents() {
+            const elements = getSystemModalElements();
+            if (!elements.overlay) return;
+
+            if (elements.overlay.dataset.bound === '1') {
+              return;
+            }
+
+            elements.overlay.dataset.bound = '1';
+
+            elements.overlay.addEventListener('click', function (e) {
+              if (e.target === elements.overlay) {
+                closeSystemModal();
+              }
+            });
+
+            elements.cancelBtn.addEventListener('click', function () {
+              const resolver = systemModalState.currentResolver;
+              const mode = systemModalState.mode;
+
+              closeSystemModal();
+
+              if (typeof resolver === 'function') {
+                if (mode === 'prompt') {
+                  resolver(null);
+                  return;
+                }
+
+                if (mode === 'confirm') {
+                  resolver(false);
+                }
+              }
+            });
+
+            elements.input.addEventListener('keydown', function (e) {
+              if (e.key === 'Enter' && systemModalState.mode === 'prompt') {
+                e.preventDefault();
+                elements.confirmBtn.click();
+              }
+            });
+
+            document.addEventListener('keydown', function (e) {
+              if (e.key === 'Escape' && elements.overlay.classList.contains('open')) {
+                closeSystemModal();
+              }
+            });
+          }
+
+          function showSystemMessage({ title = 'Mensaje', message = '', tone = 'info', confirmText = 'Aceptar' }) {
+            bindSystemModalBaseEvents();
+
+            const elements = getSystemModalElements();
+
+            elements.title.textContent = title;
+            elements.sub.textContent = 'Sistema';
+            elements.message.textContent = String(message || '');
+            elements.fieldWrap.style.display = 'none';
+            elements.cancelBtn.style.display = 'none';
+            elements.confirmBtn.textContent = confirmText;
+
+            resetSystemModalButtons(elements.confirmBtn, elements.cancelBtn);
+
+            if (tone === 'danger') {
+              elements.confirmBtn.classList.add('danger');
+            } else if (tone === 'warning') {
+              elements.confirmBtn.classList.add('warning');
+            }
+
+            systemModalState.mode = 'message';
+            systemModalState.currentResolver = null;
+
+            elements.confirmBtn.onclick = function () {
+              closeSystemModal();
+            };
+
+            elements.overlay.classList.add('open');
+          }
+
+          function askSystemConfirm({
+            title = 'Confirmar acción',
+            message = '',
+            tone = 'warning',
+            confirmText = 'Confirmar',
+            cancelText = 'Cancelar'
+          }) {
+            bindSystemModalBaseEvents();
+
+            return new Promise((resolve) => {
+              const elements = getSystemModalElements();
+
+              elements.title.textContent = title;
+              elements.sub.textContent = 'Confirmación requerida';
+              elements.message.textContent = String(message || '');
+              elements.fieldWrap.style.display = 'none';
+              elements.cancelBtn.style.display = '';
+              elements.cancelBtn.textContent = cancelText;
+              elements.confirmBtn.textContent = confirmText;
+
+              resetSystemModalButtons(elements.confirmBtn, elements.cancelBtn);
+
+              if (tone === 'danger') {
+                elements.confirmBtn.classList.add('danger');
+              } else if (tone === 'warning') {
+                elements.confirmBtn.classList.add('warning');
+              }
+
+              systemModalState.mode = 'confirm';
+              systemModalState.currentResolver = resolve;
+
+              elements.confirmBtn.onclick = function () {
+                systemModalState.currentResolver = null;
+                systemModalState.mode = null;
+                elements.overlay.classList.remove('open');
+                resolve(true);
+              };
+
+              elements.overlay.classList.add('open');
+            });
+          }
+
+          function askSystemPrompt({
+            title = 'Ingresar valor',
+            message = '',
+            label = 'Valor',
+            placeholder = '',
+            inputType = 'text',
+            confirmText = 'Guardar',
+            cancelText = 'Cancelar'
+          }) {
+            bindSystemModalBaseEvents();
+
+            return new Promise((resolve) => {
+              const elements = getSystemModalElements();
+
+              elements.title.textContent = title;
+              elements.sub.textContent = 'Entrada requerida';
+              elements.message.textContent = String(message || '');
+              elements.fieldWrap.style.display = '';
+              elements.inputLabel.textContent = label;
+              elements.input.type = inputType;
+              elements.input.placeholder = placeholder;
+              elements.input.value = '';
+              elements.cancelBtn.style.display = '';
+              elements.cancelBtn.textContent = cancelText;
+              elements.confirmBtn.textContent = confirmText;
+
+              resetSystemModalButtons(elements.confirmBtn, elements.cancelBtn);
+
+              systemModalState.mode = 'prompt';
+              systemModalState.currentResolver = resolve;
+
+              elements.confirmBtn.onclick = function () {
+                const value = elements.input.value;
+
+                systemModalState.currentResolver = null;
+                systemModalState.mode = null;
+                elements.overlay.classList.remove('open');
+                resolve(value);
+              };
+
+              elements.overlay.classList.add('open');
+
+              setTimeout(() => {
+                elements.input.focus();
+              }, 30);
+            });
+          }
+
+          /**
+           * =========================================================
+           * ROLES Y PERMISOS VISUALES
+           * =========================================================
+           */
+
+          /**
+           * Devuelve true si el usuario autenticado es admin.
+           */
+          function isCrmAdmin() {
+            return String(window.getStoredCrmRole?.() || '').toLowerCase() === 'admin';
+          }
+
+          /**
+           * Aplica permisos visuales del CRM según role.
+           *
+           * En esta etapa solo ocultamos acciones sensibles.
+           * Más adelante vamos a reforzar esto también en backend.
+           */
+          function applyCrmRolePermissions() {
+            const resetBtn = document.getElementById('resetTestingBtn');
+            const usersBtn = document.getElementById('usersAdminBtn');
+            const isAdmin = isCrmAdmin();
+
+            if (resetBtn) {
+              resetBtn.style.display = isAdmin ? '' : 'none';
+            }
+
+            if (usersBtn) {
+              usersBtn.style.display = isAdmin ? '' : 'none';
+            }
+          }
+      /**
+       * Actualiza el título de la pestaña del navegador.
+       *
+       * Regla actual:
+       * - muestra la cantidad de leads en estado "nuevo"
+       * - si no hay nuevos, deja el título normal
+       *
+       * Ejemplos:
+       * - Ofreser CRM
+       * - (2) Ofreser CRM
+       * - (5) Ofreser CRM
+       */
+      function updateBrowserTabTitle(newCount) {
+        const baseTitle = 'Ofreser CRM';
+
+        if (Number(newCount || 0) > 0) {
+          document.title = `(${newCount}) ${baseTitle}`;
+          return;
+        }
+
+        document.title = baseTitle;
+      }
+
+      /**
+       * =========================================================
+       * SONIDO Y NOTIFICACIONES
+       * =========================================================
+       */
+      	/**
+      	 * Desbloquea el audio después de una interacción del usuario.
+      	 *
+      	 * Importante:
+      	 * muchos navegadores no solo exigen click,
+      	 * también exigen crear o reanudar el AudioContext
+      	 * dentro de una interacción real.
+      	 */
+      	/**
+      	 * Actualiza visualmente el botón de sonido del CRM.
+      	 */
+      function updateSoundButtonUI() {
+        const btn = document.getElementById('soundToggleBtn');
+        if (!btn) return;
+
+        if (crmAudioUnlocked) {
+          btn.textContent = '🔔 Sonido activo';
+          btn.classList.remove('secondary');
+          return;
+        }
+
+        btn.textContent = '🔔 Activar sonido';
+        btn.classList.add('secondary');
+      }
+
+      /**
+       * Desbloquea el audio del CRM.
+       *
+       * Esto requiere interacción humana real al menos una vez.
+       */
+      async function unlockCrmAudio() {
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return false;
+
+          if (!crmAudioContext) {
+            crmAudioContext = new AudioContextClass();
+          }
+
+          if (crmAudioContext.state === 'suspended') {
+            await crmAudioContext.resume();
+          }
+
+          crmAudioUnlocked = true;
+          localStorage.setItem(CRM_SOUND_STORAGE_KEY, '1');
+          updateSoundButtonUI();
+
+          return true;
+        } catch (error) {
+          console.error('No se pudo desbloquear el audio del CRM:', error);
+          return false;
+        }
+      }
+
+      /**
+       * Sonido de nuevo lead.
+       *
+       * Está pensado para sonar más fuerte y más "mensaje nuevo"
+       * que el beep técnico anterior.
+       */
+      async function playNewLeadSound() {
+        if (!crmAudioUnlocked) return;
+
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+
+          if (!crmAudioContext) {
+            crmAudioContext = new AudioContextClass();
+          }
+
+          if (crmAudioContext.state === 'suspended') {
+            await crmAudioContext.resume();
+          }
+
+          const now = crmAudioContext.currentTime;
+
+          const osc1 = crmAudioContext.createOscillator();
+          const gain1 = crmAudioContext.createGain();
+
+          osc1.type = 'triangle';
+          osc1.frequency.setValueAtTime(980, now);
+
+          gain1.gain.setValueAtTime(0.0001, now);
+          gain1.gain.exponentialRampToValueAtTime(0.30, now + 0.01);
+          gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.17);
+
+          osc1.connect(gain1);
+          gain1.connect(crmAudioContext.destination);
+
+          osc1.start(now);
+          osc1.stop(now + 0.17);
+
+          const osc2 = crmAudioContext.createOscillator();
+          const gain2 = crmAudioContext.createGain();
+
+          osc2.type = 'triangle';
+          osc2.frequency.setValueAtTime(1320, now + 0.19);
+
+          gain2.gain.setValueAtTime(0.0001, now + 0.19);
+          gain2.gain.exponentialRampToValueAtTime(0.26, now + 0.21);
+          gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.36);
+
+          osc2.connect(gain2);
+          gain2.connect(crmAudioContext.destination);
+
+          osc2.start(now + 0.19);
+          osc2.stop(now + 0.36);
+
+        } catch (error) {
+          console.error('No se pudo reproducir el sonido de nuevo lead:', error);
+        }
+      }
+
+      /**
+       * Activación manual del sonido.
+       *
+       * Hace tres cosas:
+       * 1. desbloquea audio
+       * 2. lo guarda para futuras veces
+       * 3. reproduce una prueba inmediata
+       */
+      async function activateCrmSound() {
+        const unlocked = await unlockCrmAudio();
+
+        if (!unlocked) {
+          showSystemMessage({
+            title: 'No se pudo activar el sonido',
+            message: 'El navegador no permitió habilitar el sonido en este momento.',
+            tone: 'warning'
+          });
+          return;
+        }
+
+        await playNewLeadSound();
+      }
+
+          /**
+           * Badge visual de controlMode.
+           */
+          function buildControlBadge(controlMode) {
+            const mode = String(controlMode || 'bot').toLowerCase();
+
+            if (mode === 'human') {
+              return `<span class="badge control-human">HUMANO</span>`;
+            }
+
+            if (mode === 'closed') {
+              return `<span class="badge control-closed">CERRADO</span>`;
+            }
+
+            return `<span class="badge control-bot">BOT</span>`;
+          }
+
+          /**
+           * Texto visible de controlMode.
+           */
+          function formatControlMode(controlMode) {
+            const mode = String(controlMode || 'bot').toLowerCase();
+
+            if (mode === 'human') return 'HUMANO';
+            if (mode === 'closed') return 'CERRADO';
+            return 'BOT';
+          }
+
+          /**
+           * Resumen visual del lead.
+           */
+          function buildLeadDetail(lead) {
+            const lines = [];
+
+            if (lead.phone) lines.push(`📞 ${lead.phone}`);
+
+            if (lead.category === 'servicios') {
+              if (lead.pest) lines.push(`🪳 Plaga: ${lead.pest}`);
+              if (lead.placeType) lines.push(`🏠 Lugar: ${lead.placeType}`);
+              if (lead.zone) lines.push(`📍 Domicilio: ${lead.zone}`);
+            }
+
+            if (lead.category === 'certificados') {
+              if (lead.localType) lines.push(`🏢 Tipo de local: ${lead.localType}`);
+              if (lead.businessName) lines.push(`🏷️ Nombre del local: ${lead.businessName}`);
+              if (lead.address) lines.push(`📍 Domicilio: ${lead.address}`);
+            }
+
+            if (lead.category === 'productos') {
+              if (lead.product) lines.push(`🛒 Producto: ${lead.product}`);
+            }
+
+            if (lead.category === 'administracion') {
+              if (lead.adminReason) lines.push(`📄 Motivo: ${lead.adminReason}`);
+            }
+
+            return lines.map(x => escapeHtml(x)).join('<br>');
+          }
+
+          /**
+           * Determina si el lead está caliente.
+           */
+          function isHotLead(lead) {
+            if (lead.requiresHuman) return true;
+            if (lead.controlMode === 'human') return true;
+            if (lead.category === 'certificados') return true;
+            if (lead.status === 'nuevo' && lead.name && lead.phone) return true;
+            return false;
+          }
+
+          /**
+           * Arma URL de WhatsApp.
+           */
+          function buildWhatsAppUrl(phone, normalizedPhone) {
+            const raw = String(normalizedPhone || phone || '').replace(/\D/g, '');
+            if (!raw) return '';
+
+            if (raw.startsWith('54')) {
+              return `https://wa.me/${raw}`;
+            }
+            return `https://wa.me/54${raw}`;
+          }
+
+          /**
+           * Botones para mover de estado comercial.
+           */
+          function nextStatusButtons(currentStatus, leadId) {
+            const buttons = [];
+
+            if (currentStatus !== 'nuevo') {
+              buttons.push(`<button class="default-btn" onclick="updateStatus('${leadId}', 'nuevo')">Mover a Nuevo</button>`);
+            }
+            if (currentStatus !== 'calificado') {
+              buttons.push(`<button class="default-btn" onclick="updateStatus('${leadId}', 'calificado')">Mover a Calificado</button>`);
+            }
+            if (currentStatus !== 'seguimiento') {
+              buttons.push(`<button class="default-btn" onclick="updateStatus('${leadId}', 'seguimiento')">Mover a Seguimiento</button>`);
+            }
+            if (currentStatus !== 'cerrado') {
+              buttons.push(`<button class="default-btn" onclick="updateStatus('${leadId}', 'cerrado')">Mover a Cerrado</button>`);
+            }
+
+            return buttons.join('');
+          }
+
+          /**
+           * Botones para cambiar control de sesión.
+           */
+          function buildSessionControlButtons(lead) {
+            const mode = String(lead.controlMode || 'bot').toLowerCase();
+            const sessionId = lead.sessionId;
+
+            const buttons = [];
+
+            if (mode !== 'human') {
+              buttons.push(`
+                <button class="take-human-btn" onclick="changeSessionControl('${sessionId}', 'human', '${lead.id}')">
+                  Tomar como humano
+                </button>
+              `);
+            }
+
+            if (mode !== 'bot') {
+              buttons.push(`
+                <button class="return-bot-btn" onclick="changeSessionControl('${sessionId}', 'bot', '${lead.id}')">
+                  Devolver al bot
+                </button>
+              `);
+            }
+
+            if (mode !== 'closed') {
+              buttons.push(`
+                <button class="close-conversation-btn" onclick="changeSessionControl('${sessionId}', 'closed', '${lead.id}')">
+                  Cerrar conversación
+                </button>
+              `);
+            }
+
+            return buttons.join('');
+          }
+      /**
+       * =========================================================
+       * RENDER DEL TABLERO
+       * =========================================================
+       */
+          /**
+           * Card del lead en tablero.
+           */
+          function createLeadCard(lead) {
+            const div = document.createElement('div');
+            // Detecta si el lead es nuevo (últimos X segundos)
+      		const isNewLead = (() => {
+      		  if (!lead.createdAt) return false;
+      		  const created = new Date(lead.createdAt).getTime();
+      		  const now = Date.now();
+      		  return (now - created) < 60000; // 60 segundos
+      		})();
+
+      div.className = `
+        lead-card
+        status-${lead.status || 'nuevo'}
+        ${isNewLead ? 'lead-new lead-animate' : ''}
+      `;
+
+            const name = lead.name || lead.businessName || 'Sin nombre';
+            const messageCount = Number(lead.messageCount || 0);
+            const lastSender = lead.lastMessageSender === 'user'
+              ? 'Cliente'
+              : lead.lastMessageSender === 'bot'
+                ? 'Bot'
+                : lead.lastMessageSender === 'human'
+                  ? 'Asesor'
+                  : '';
+
+            const lastText = lead.lastMessageText || 'Sin mensajes';
+            const previewText = lastText.length > 120 ? lastText.slice(0, 120) + '...' : lastText;
+            const waUrl = buildWhatsAppUrl(lead.phone, lead.normalizedPhone);
+
+            let badges = `
+                ${isNewLead ? '<span class="badge new">Nuevo</span>' : ''}
+      			<span class="badge category">${escapeHtml(formatCategory(lead))}</span>
+              <span class="badge channel">${escapeHtml(lead.channel || lead.source || 'webchat')}</span>
+              <span class="badge status">${escapeHtml(lead.status || 'nuevo')}</span>
+              ${buildControlBadge(lead.controlMode)}
+            `;
+
+            if (lead.requiresHuman) badges += `<span class="badge human">Requiere asesor</span>`;
+            if (lead.partial) badges += `<span class="badge partial">Parcial</span>`;
+            if (isHotLead(lead)) badges += `<span class="badge hot">Lead caliente</span>`;
+
+            div.innerHTML = `
+              <div class="lead-top">
+                <div class="lead-title">${escapeHtml(name)}</div>
+                <div class="lead-date">${escapeHtml(formatDate(lead.createdAt))}</div>
+              </div>
+
+              <div class="badges">${badges}</div>
+
+              <div class="lead-main-summary">
+                ${buildLeadDetail(lead) || 'Sin datos adicionales'}
+              </div>
+
+              <div class="lead-preview">
+                <div><strong>Mensajes:</strong> ${messageCount}</div>
+                <div><strong>Último:</strong> ${escapeHtml(lastSender ? `${lastSender}: ${previewText}` : previewText)}</div>
+                <div><strong>Fecha último:</strong> ${escapeHtml(formatDate(lead.lastMessageAt || ''))}</div>
+                <div><strong>Modo operativo:</strong> ${escapeHtml(formatControlMode(lead.controlMode))}</div>
+              </div>
+
+              <div class="lead-actions">
+      		  ${waUrl ? `<button class="default-btn" onclick="openWhatsApp('${waUrl}')">Abrir WhatsApp</button>` : ''}
+      		  <button class="default-btn" onclick="openDrawer('${lead.id}')">Ver detalle + conversación</button>
+
+      		  ${
+      			lead.status !== 'seguimiento' && lead.status !== 'cerrado'
+      			  ? `<button class="attended-btn" onclick="markAsAttended('${lead.id}')">✔ Marcar como atendido</button>`
+      			  : ''
+      		  }
+
+      		  ${buildSessionControlButtons(lead)}
+      		  ${nextStatusButtons(lead.status, lead.id)}
+      		</div>
+            `;
+
+            return div;
+          }
+
+          function setEmpty(columnId) {
+            document.getElementById(columnId).innerHTML = '<div class="empty">Sin leads</div>';
+          }
+
+          function clearColumns() {
+            ['nuevo', 'calificado', 'seguimiento', 'cerrado'].forEach(status => {
+              document.getElementById(`col-${status}`).innerHTML = '';
+            });
+          }
+
+          /**
+           * KPIs superiores.
+           */
+          function renderStats(leads) {
+            const total = leads.length;
+            const nuevo = leads.filter(x => x.status === 'nuevo').length;
+            const calificado = leads.filter(x => x.status === 'calificado').length;
+            const seguimiento = leads.filter(x => x.status === 'seguimiento').length;
+            const cerrado = leads.filter(x => x.status === 'cerrado').length;
+            const human = leads.filter(x => x.controlMode === 'human').length;
+            const bot = leads.filter(x => (x.controlMode || 'bot') === 'bot').length;
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-nuevo').textContent = nuevo;
+            document.getElementById('stat-calificado').textContent = calificado;
+            document.getElementById('stat-seguimiento').textContent = seguimiento;
+            document.getElementById('stat-cerrado').textContent = cerrado;
+            document.getElementById('stat-human').textContent = human;
+            document.getElementById('stat-bot').textContent = bot;
+
+            document.getElementById('count-nuevo').textContent = nuevo;
+            document.getElementById('count-calificado').textContent = calificado;
+            document.getElementById('count-seguimiento').textContent = seguimiento;
+            document.getElementById('count-cerrado').textContent = cerrado;
+
+            /**
+            * El título de la pestaña debe reflejar TODOS los leads nuevos cargados,
+            * no solo los visibles por filtros.
+            */
+            const totalNuevoGlobal = allLeads.filter(x => x.status === 'nuevo').length;
+            updateBrowserTabTitle(totalNuevoGlobal);
+          }
+
+          /**
+           * Filtros del tablero.
+           */
+          function getFilteredLeads() {
+            const search = searchInput.value.trim().toLowerCase();
+            const category = categoryFilter.value;
+            const status = statusFilter.value;
+            const controlMode = controlFilter.value;
+
+            return allLeads
+              .filter(lead => {
+                if (category && lead.category !== category) return false;
+                if (status && lead.status !== status) return false;
+                if (controlMode && (lead.controlMode || 'bot') !== controlMode) return false;
+
+                if (!search) return true;
+
+                const haystack = [
+                  lead.name,
+                  lead.phone,
+                  lead.normalizedPhone,
+                  lead.zone,
+                  lead.address,
+                  lead.pest,
+                  lead.product,
+                  lead.businessName,
+                  lead.localType,
+                  lead.adminReason,
+                  lead.category,
+                  lead.status,
+                  lead.controlMode,
+                  lead.lastMessageText
+                ]
+                .join(' ')
+                .toLowerCase();
+
+                return haystack.includes(search);
+              })
+              .sort((a, b) => {
+      			  /**
+      			   * Orden operativo del CRM:
+      			   * 1. último mensaje
+      			   * 2. updatedAt
+      			   * 3. createdAt
+      			   *
+      			   * Así los leads con actividad reciente suben arriba,
+      			   * aunque hayan sido creados hace más tiempo.
+      			   */
+      			  const dateA = new Date(a.lastMessageAt || a.updatedAt || a.createdAt || 0).getTime();
+      			  const dateB = new Date(b.lastMessageAt || b.updatedAt || b.createdAt || 0).getTime();
+
+      			  return dateB - dateA;
+      		});
+          }
+
+          /**
+           * Render del tablero.
+           */
+          function renderLeads(leads) {
+            clearColumns();
+            renderStats(leads);
+
+            const grouped = {
+              nuevo: leads.filter(x => x.status === 'nuevo'),
+              calificado: leads.filter(x => x.status === 'calificado'),
+              seguimiento: leads.filter(x => x.status === 'seguimiento'),
+              cerrado: leads.filter(x => x.status === 'cerrado')
+            };
+
+            Object.keys(grouped).forEach(status => {
+              const container = document.getElementById(`col-${status}`);
+              const items = grouped[status];
+
+              if (items.length === 0) {
+                setEmpty(`col-${status}`);
+                return;
+              }
+
+              items.forEach(lead => {
+                container.appendChild(createLeadCard(lead));
+              });
+            });
+          }
+
+          function applyFilters() {
+            const filtered = getFilteredLeads();
+            renderLeads(filtered);
+          }
+      /**
+       * =========================================================
+       * ACCIONES CONTRA API
+       * =========================================================
+       */
+          /**
+           * Carga general de leads.
+           */
+      async function loadLeads({ silent = false, preserveModal = true } = {}) {
+        try {
+      const res = await crmFetch(`${API_BASE}/leads`);
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const incomingLeads = await res.json();
+
+      /**
+       * Detectamos IDs nuevos antes de reemplazar el estado local.
+       */
+      const previousIds = new Set(allLeads.map(lead => String(lead.id)));
+      const newLeadCount = incomingLeads.filter(lead => !previousIds.has(String(lead.id))).length;
+
+      allLeads = incomingLeads;
+      applyFilters();
+      updateLastSyncLabel();
+
+      /**
+       * Regla correcta:
+       * - la primera carga del CRM NO debe sonar
+       * - cualquier carga posterior con nuevos leads SÍ debe sonar
+       *
+       * Esto permite que:
+       * - si abrís el CRM vacío y entra el primer lead, suene
+       * - si ya había leads y entra otro, también suene
+       */
+      if (crmHasCompletedInitialLoad && newLeadCount > 0) {
+        if (crmAudioUnlocked) {
+          await playNewLeadSound();
+        }
+      }
+
+      /**
+       * Marcamos que la primera carga ya ocurrió.
+       */
+      crmHasCompletedInitialLoad = true;
+
+              if (preserveModal && currentLeadId && document.getElementById('leadModalOverlay').classList.contains('open')) {
+                const noteFocused = document.activeElement && document.activeElement.id === 'internalNoteInput';
+                const humanFocused = document.activeElement && document.activeElement.id === 'humanMessageInput';
+
+                if (!noteFocused && !humanFocused) {
+                  await openDrawer(currentLeadId, true);
+                } else {
+                  document.getElementById('modalRefreshBanner').classList.add('show');
+                }
+              }
+
+            } catch (error) {
+              console.error(error);
+              if (!silent) {
+                showSystemMessage({
+                  title: 'Error cargando leads',
+                  message: error.message,
+                  tone: 'danger'
+                });
+              }
+            }
+          }
+
+          /**
+           * Actualiza estado comercial.
+           */
+          async function updateStatus(leadId, status) {
+            try {
+              const res = await crmFetch(`${API_BASE}/leads/${leadId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+              });
+
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+              await loadLeads({ silent: false, preserveModal: true });
+            } catch (error) {
+              console.error(error);
+              showSystemMessage({
+                title: 'Error actualizando estado',
+                message: error.message,
+                tone: 'danger'
+              });
+            }
+          }
+
+      	/**
+      	 * Marca un lead como atendido.
+      	 *
+      	 * IMPORTANTE:
+      	 * En la versión actual, "atendido" se implementa usando
+      	 * el estado comercial "seguimiento".
+      	 *
+      	 * Esto NO crea una entidad nueva en backend.
+      	 * Es solo una equivalencia operativa dentro del CRM.
+      	 *
+      	 * Ventajas:
+      	 * - no rompe nada
+      	 * - aprovecha el flujo existente
+      	 * - mejora la operación comercial real
+      	 */
+
+      	async function markAsAttended(leadId) {
+      	  await updateStatus(leadId, 'seguimiento');
+      	}
+
+          /**
+           * Cambia control de sesión.
+           */
+          async function changeSessionControl(sessionId, controlMode, leadId = null) {
+            try {
+              const payload = { controlMode };
+
+              if (controlMode === 'human') {
+                payload.takenBy = 'CRM';
+              }
+
+              const res = await crmFetch(`${API_BASE}/sessions/${encodeURIComponent(sessionId)}/control`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+              await loadLeads({ silent: false, preserveModal: true });
+
+              if (leadId && currentLeadId === leadId) {
+                await openDrawer(leadId, true);
+              }
+            } catch (error) {
+              console.error(error);
+              showSystemMessage({
+                title: 'Error cambiando control de conversación',
+                message: error.message,
+                tone: 'danger'
+              });
+            }
+          }
+
+          /**
+           * Trae detalle del lead + conversación.
+           */
+          async function fetchLeadConversation(leadId) {
+            const res = await crmFetch(`${API_BASE}/leads/${leadId}/messages`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return await res.json();
+          }
+
+          /**
+           * Render interno de mensajes.
+           */
+          function renderConversationMessages(messages) {
+            if (!Array.isArray(messages) || messages.length === 0) {
+              return `
+                <div class="detail-line">No hay mensajes registrados.</div>
+              `;
+            }
+
+            return messages.map(msg => {
+              let senderClass = 'bot';
+              let senderLabel = 'Bot';
+
+              if (msg.senderType === 'user') {
+                senderClass = 'user';
+                senderLabel = 'Cliente';
+              }
+
+              if (msg.senderType === 'human') {
+                senderClass = 'human';
+                senderLabel = 'Asesor';
+              }
+
+              return `
+                <div class="msg ${senderClass}">
+                  ${escapeHtml(msg.text || '')}
+                  <div class="msg-meta">${escapeHtml(senderLabel)} · ${escapeHtml(formatDate(msg.createdAt))}</div>
+                </div>
+              `;
+            }).join('');
+          }
+
+          /**
+           * Hace scroll automático al último mensaje.
+           */
+          function scrollConversationToBottom(force = false) {
+            const container = document.getElementById('conversationThread');
+            if (!container) return;
+
+            /**
+             * Solo forzamos scroll si:
+             * - el caller lo pide explícitamente
+             * - o el usuario ya estaba cerca del final
+             *
+             * Esto evita que el CRM "salte" hacia abajo
+             * cuando alguien está leyendo mensajes viejos.
+             */
+            const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+            const isNearBottom = distanceFromBottom < 120;
+
+            if (force || isNearBottom) {
+              container.scrollTop = container.scrollHeight;
+            }
+          }
+
+          /**
+           * Guarda nota interna.
+           */
+          async function saveInternalNote(leadId) {
+            const textarea = document.getElementById('internalNoteInput');
+            const statusBox = document.getElementById('noteSaveStatus');
+            if (!textarea || !statusBox) return;
+
+            const note = textarea.value;
+            statusBox.textContent = 'Guardando nota...';
+
+            try {
+              const res = await crmFetch(`${API_BASE}/leads/${leadId}/note`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ note })
+              });
+
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+              const data = await res.json();
+              const updatedLead = data.lead;
+              const index = allLeads.findIndex(x => x.id === leadId);
+              if (index !== -1) allLeads[index] = updatedLead;
+
+              statusBox.textContent = 'Nota guardada correctamente';
+              document.getElementById('modalRefreshBanner').classList.remove('show');
+              applyFilters();
+            } catch (error) {
+              console.error(error);
+              statusBox.textContent = 'Error guardando nota: ' + error.message;
+            }
+          }
+
+          /**
+           * Envía mensaje humano desde el CRM.
+           *
+           * REGLA:
+           * Solo se envía si la conversación está en HUMANO.
+           */
+          async function sendHumanMessage(leadId, sessionId, controlMode) {
+            const textarea = document.getElementById('humanMessageInput');
+            const statusBox = document.getElementById('humanSendStatus');
+            const button = document.getElementById('humanSendButton');
+
+            if (!textarea || !statusBox || !button) return;
+
+            if (isSendingHumanMessage) {
+              return;
+            }
+
+            const text = textarea.value.trim();
+
+            if (!text) {
+              statusBox.textContent = 'Escribí un mensaje antes de enviar.';
+              return;
+            }
+
+            if (String(controlMode || 'bot').toLowerCase() !== 'human') {
+              statusBox.textContent = 'Solo se puede enviar mensaje manual cuando la conversación está en HUMANO.';
+              return;
+            }
+
+            isSendingHumanMessage = true;
+            statusBox.textContent = 'Enviando mensaje al cliente...';
+            button.disabled = true;
+
+            try {
+              const res = await crmFetch(`${API_BASE}/sessions/${encodeURIComponent(sessionId)}/human-message`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+              });
+
+              const data = await res.json();
+
+              if (!res.ok) {
+                throw new Error(data.error || `HTTP ${res.status}`);
+              }
+
+              textarea.value = '';
+              statusBox.textContent = 'Mensaje enviado correctamente.';
+
+              /**
+               * Refrescamos datos generales y luego reabrimos
+               * el drawer para ver el nuevo mensaje ya persistido.
+               */
+              await loadLeads({ silent: false, preserveModal: true });
+              await openDrawer(leadId, true);
+
+              /**
+               * Después del re-render forzamos scroll al final
+               * porque este caso sí representa una acción nueva del asesor.
+               */
+              setTimeout(() => scrollConversationToBottom(true), 30);
+
+            } catch (error) {
+              console.error(error);
+              statusBox.textContent = 'Error enviando mensaje: ' + error.message;
+            } finally {
+              isSendingHumanMessage = false;
+              button.disabled = false;
+            }
+          }
+
+          /**
+           * Maneja Enter para enviar y Shift+Enter para salto de línea.
+           */
+          function attachHumanComposerEvents(leadId, sessionId, controlMode) {
+            const textarea = document.getElementById('humanMessageInput');
+            if (!textarea) return;
+
+            /**
+             * Enter envía
+             * Shift + Enter agrega salto de línea
+             */
+            textarea.addEventListener('keydown', async function (e) {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                await sendHumanMessage(leadId, sessionId, controlMode);
+              }
+            });
+          }
+      /**
+       * =========================================================
+       * DRAWER / DETALLE DEL LEAD
+       * =========================================================
+       */
+          /**
+           * Abre drawer/modal de lead.
+           */
+          async function openDrawer(leadId, silentRefresh = false) {
+            const lead = allLeads.find(x => x.id === leadId);
+            if (!lead) return;
+
+            currentLeadId = leadId;
+
+            const overlay = document.getElementById('leadModalOverlay');
+            const left = document.getElementById('drawerLeft');
+            const right = document.getElementById('drawerRight');
+            const banner = document.getElementById('modalRefreshBanner');
+
+            banner.classList.remove('show');
+            overlay.classList.add('open');
+
+            if (!silentRefresh) {
+              left.innerHTML = `
+                <div class="detail-block">
+                  <div class="detail-title">Cargando</div>
+                  <div class="loading">Cargando detalle y conversación...</div>
+                </div>
+              `;
+              right.innerHTML = '';
+            }
+
+            try {
+              const data = await fetchLeadConversation(leadId);
+              const fullLead = data.lead || lead;
+              const messages = data.messages || [];
+              const session = data.session || null;
+              const waUrl = buildWhatsAppUrl(fullLead.phone, fullLead.normalizedPhone);
+
+              document.getElementById('modalLeadTitle').textContent = fullLead.name || fullLead.businessName || 'Detalle del lead';
+              document.getElementById('modalLeadSub').textContent =
+                `${formatCategory(fullLead)} · ${fullLead.status || 'nuevo'} · ${formatDate(fullLead.createdAt)}`;
+
+              const isHumanMode = String(fullLead.controlMode || 'bot').toLowerCase() === 'human';
+
+              left.innerHTML = `
+                <div class="detail-block">
+                  <div class="detail-title">General</div>
+                  <div class="detail-grid">
+                    <div class="detail-line"><strong>ID:</strong> ${escapeHtml(fullLead.id)}</div>
+                    <div class="detail-line"><strong>Estado comercial:</strong> ${escapeHtml(fullLead.status || '-')}</div>
+                    <div class="detail-line"><strong>Modo operativo:</strong> ${escapeHtml(formatControlMode(fullLead.controlMode))}</div>
+                    <div class="detail-line"><strong>Categoría:</strong> ${escapeHtml(formatCategory(fullLead))}</div>
+                    <div class="detail-line"><strong>Creado:</strong> ${escapeHtml(formatDate(fullLead.createdAt))}</div>
+                    <div class="detail-line"><strong>Actualizado:</strong> ${escapeHtml(formatDate(fullLead.updatedAt || ''))}</div>
+                    <div class="detail-line"><strong>Total mensajes:</strong> ${escapeHtml(String(fullLead.messageCount || 0))}</div>
+                    <div class="detail-line"><strong>Último mensaje:</strong> ${escapeHtml(formatDate(fullLead.lastMessageAt || ''))}</div>
+                  </div>
+                </div>
+
+                <div class="detail-block">
+                  <div class="detail-title">Control de conversación</div>
+                  <div class="control-panel">
+                    <div class="badges">
+                      ${buildControlBadge(fullLead.controlMode)}
+                      ${fullLead.requiresHuman ? '<span class="badge human">Requiere asesor</span>' : ''}
+                    </div>
+
+                    <div class="detail-line"><strong>Session ID:</strong> ${escapeHtml(fullLead.sessionId || '-')}</div>
+                    <div class="detail-line"><strong>Step:</strong> ${escapeHtml(fullLead.sessionStep || session?.step || '-')}</div>
+                    <div class="detail-line"><strong>Tomado por:</strong> ${escapeHtml(fullLead.takenBy || '-')}</div>
+                    <div class="detail-line"><strong>Solicitado humano:</strong> ${escapeHtml(formatDate(fullLead.humanRequestedAt || ''))}</div>
+                    <div class="detail-line"><strong>Tomado humano:</strong> ${escapeHtml(formatDate(fullLead.humanTakenAt || ''))}</div>
+                    <div class="detail-line"><strong>Devuelto al bot:</strong> ${escapeHtml(formatDate(fullLead.humanReleasedAt || ''))}</div>
+                    <div class="detail-line"><strong>Cerrado:</strong> ${escapeHtml(formatDate(fullLead.closedAt || ''))}</div>
+
+                    <div class="control-actions">
+                      ${fullLead.controlMode !== 'human' ? `
+                        <button class="take-human" onclick="changeSessionControl('${fullLead.sessionId}', 'human', '${fullLead.id}')">
+                          Tomar como humano
+                        </button>
+                      ` : ''}
+
+                      ${fullLead.controlMode !== 'bot' ? `
+                        <button class="return-bot" onclick="changeSessionControl('${fullLead.sessionId}', 'bot', '${fullLead.id}')">
+                          Devolver al bot
+                        </button>
+                      ` : ''}
+
+                      ${fullLead.controlMode !== 'closed' ? `
+                        <button class="close-session" onclick="changeSessionControl('${fullLead.sessionId}', 'closed', '${fullLead.id}')">
+                          Cerrar conversación
+                        </button>
+                      ` : ''}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="detail-block">
+                  <div class="detail-title">Acciones rápidas</div>
+                  <div class="toolbar">
+                    ${waUrl ? `<button class="btn whatsapp small" onclick="openWhatsApp('${waUrl}')">Abrir WhatsApp del cliente</button>` : ''}
+                    <button class="btn secondary small" onclick="updateStatus('${fullLead.id}', 'seguimiento')">Mover a seguimiento</button>
+                    <button class="btn secondary small" onclick="updateStatus('${fullLead.id}', 'cerrado')">Cerrar lead</button>
+                  </div>
+                </div>
+
+                <div class="detail-block">
+                  <div class="detail-title">Cliente</div>
+                  <div class="detail-line"><strong>Nombre:</strong> ${escapeHtml(fullLead.name || '-')}</div>
+                  <div class="detail-line"><strong>Teléfono:</strong> ${escapeHtml(fullLead.phone || '-')}</div>
+                  <div class="detail-line"><strong>Teléfono normalizado:</strong> ${escapeHtml(fullLead.normalizedPhone || '-')}</div>
+                  <div class="detail-line"><strong>Canal:</strong> ${escapeHtml(fullLead.channel || fullLead.source || '-')}</div>
+                  <div class="detail-line"><strong>Origen:</strong> ${escapeHtml(fullLead.source || '-')}</div>
+                </div>
+
+                <div class="detail-block">
+                  <div class="detail-title">Detalle de consulta</div>
+                  <div class="detail-line"><strong>Plaga:</strong> ${escapeHtml(fullLead.pest || '-')}</div>
+                  <div class="detail-line"><strong>Tipo de lugar:</strong> ${escapeHtml(fullLead.placeType || '-')}</div>
+                  <div class="detail-line"><strong>Domicilio servicio:</strong> ${escapeHtml(fullLead.zone || '-')}</div>
+                  <div class="detail-line"><strong>Producto:</strong> ${escapeHtml(fullLead.product || '-')}</div>
+                  <div class="detail-line"><strong>Tipo de local:</strong> ${escapeHtml(fullLead.localType || '-')}</div>
+                  <div class="detail-line"><strong>Nombre del local:</strong> ${escapeHtml(fullLead.businessName || '-')}</div>
+                  <div class="detail-line"><strong>Domicilio del local:</strong> ${escapeHtml(fullLead.address || '-')}</div>
+                  <div class="detail-line"><strong>Motivo admin:</strong> ${escapeHtml(fullLead.adminReason || '-')}</div>
+                </div>
+
+                <div class="detail-block">
+                  <div class="detail-title">Estado comercial</div>
+                  <div class="detail-line"><strong>Requiere asesor:</strong> ${fullLead.requiresHuman ? 'Sí' : 'No'}</div>
+                  <div class="detail-line"><strong>Lead parcial:</strong> ${fullLead.partial ? 'Sí' : 'No'}</div>
+                  <div class="detail-line"><strong>Lead caliente:</strong> ${isHotLead(fullLead) ? 'Sí' : 'No'}</div>
+                  <div class="detail-line"><strong>Motivo parcial:</strong> ${escapeHtml(fullLead.partialReason || '-')}</div>
+                </div>
+
+                <div class="detail-block">
+                  <div class="detail-title">Nota interna</div>
+                  <textarea
+                    id="internalNoteInput"
+                    class="note-textarea"
+                    placeholder="Escribí una nota interna para este lead..."
+                  >${escapeHtml(fullLead.internalNote || '')}</textarea>
+
+                  <div class="note-actions">
+                    <button class="note-save-btn" onclick="saveInternalNote('${fullLead.id}')">Guardar nota</button>
+                  </div>
+
+                  <div id="noteSaveStatus" class="note-status"></div>
+                </div>
+              `;
+
+      /**
+       * =====================================================
+       * COLUMNA DERECHA PRO
+       * =====================================================
+       *
+       * - historial arriba
+       * - caja de respuesta abajo
+       * - input siempre visible
+       *
+       * IMPORTANTE:
+       * La caja de respuesta humana solo queda habilitada
+       * cuando la sesión está en modo HUMANO.
+       */
+              right.innerHTML = `
+                <div class="chat-shell">
+                  <div class="chat-thread-card">
+                    <div class="chat-thread-title">Conversación</div>
+
+                    <div id="conversationThread" class="conversation">
+                      ${renderConversationMessages(messages)}
+                    </div>
+                  </div>
+
+                  <div class="chat-composer-card human-send-block ${isHumanMode ? '' : 'disabled'}">
+                    <div class="detail-title">Responder al cliente</div>
+
+                    <div class="chat-composer-help">
+                      ${isHumanMode
+                        ? 'La conversación está en modo HUMANO. Escribí abajo y enviá el mensaje al cliente.'
+                        : 'Para responder desde el CRM, primero tomá la conversación como HUMANO.'}
+                    </div>
+
+                    <textarea
+                      id="humanMessageInput"
+                      class="human-textarea"
+                      placeholder="Escribí acá tu mensaje para el cliente..."
+                      ${isHumanMode ? '' : 'disabled'}
+                    ></textarea>
+
+                    <div class="chat-composer-footer">
+                      <div class="chat-composer-tip">Enter envía · Shift + Enter hace salto de línea</div>
+
+                      <button
+                        id="humanSendButton"
+                        class="human-send-btn"
+                        onclick="sendHumanMessage('${fullLead.id}', '${fullLead.sessionId}', '${fullLead.controlMode || 'bot'}')"
+                        ${isHumanMode ? '' : 'disabled'}
+                      >
+                        Enviar al cliente
+                      </button>
+                    </div>
+
+                    <div id="humanSendStatus" class="human-status"></div>
+                  </div>
+                </div>
+              `;
+
+              /**
+               * Después de renderizar:
+               * - enganchamos Enter / Shift+Enter
+               * - scroll al último mensaje
+               */
+              attachHumanComposerEvents(fullLead.id, fullLead.sessionId, fullLead.controlMode || 'bot');
+
+              /**
+               * Al abrir el drawer:
+               * - si el operador estaba abajo, mantenemos el scroll al final
+               * - si el modo es HUMANO, damos foco al input para responder rápido
+               */
+              setTimeout(() => {
+                scrollConversationToBottom();
+
+                const input = document.getElementById('humanMessageInput');
+                if (input && !input.disabled) {
+                  input.focus();
+                }
+              }, 30);
+
+            } catch (error) {
+              console.error(error);
+              left.innerHTML = `
+                <div class="detail-block">
+                  <div class="detail-title">Error</div>
+                  <div class="detail-line">No se pudo cargar la conversación.</div>
+                  <div class="detail-line">${escapeHtml(error.message)}</div>
+                </div>
+              `;
+              right.innerHTML = '';
+            }
+          }
+
+          function closeDrawer() {
+            currentLeadId = null;
+            document.getElementById('leadModalOverlay').classList.remove('open');
+            document.getElementById('modalRefreshBanner').classList.remove('show');
+          }
+
+          /**
+           * =========================================================
+           * ADMINISTRACIÓN DE USUARIOS
+           * =========================================================
+           */
+
+          function openUsersAdminModal() {
+            if (!isCrmAdmin()) {
+              showSystemMessage({
+                title: 'Acceso restringido',
+                message: 'Solo un administrador puede gestionar usuarios.',
+                tone: 'warning'
+              });
+              return;
+            }
+
+            const overlay = document.getElementById('usersAdminModalOverlay');
+            if (!overlay) return;
+
+            overlay.classList.add('open');
+            loadAdminUsers();
+          }
+
+          function closeUsersAdminModal() {
+            const overlay = document.getElementById('usersAdminModalOverlay');
+            if (overlay) {
+              overlay.classList.remove('open');
+            }
+          }
+
+          async function loadAdminUsers() {
+            const tableWrap = document.getElementById('adminUsersTableWrap');
+            const statusBox = document.getElementById('adminUsersListStatus');
+
+            if (!tableWrap || !statusBox) return;
+
+            tableWrap.innerHTML = '<div class="loading">Cargando usuarios...</div>';
+            statusBox.textContent = '';
+
+            try {
+              const res = await crmFetch(`${API_BASE}/admin/users`);
+              const data = await res.json();
+
+              if (!res.ok) {
+                throw new Error(data.error || `HTTP ${res.status}`);
+              }
+
+              const users = Array.isArray(data.users) ? data.users : [];
+
+              if (users.length === 0) {
+                tableWrap.innerHTML = '<div class="empty">No hay usuarios cargados.</div>';
+                return;
+              }
+
+              tableWrap.innerHTML = `
+                <table class="admin-users-table">
+                  <thead>
+                    <tr>
+                      <th>Usuario</th>
+                      <th>Rol</th>
+                      <th>Activo</th>
+                      <th>Creado</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${users.map(user => `
+                      <tr>
+                        <td>${escapeHtml(user.username || '')}</td>
+                        <td>
+                          <select
+                            class="admin-inline-select"
+                            onchange="changeAdminUserRole('${String(user.id || '').replaceAll("'", "\'")}', this.value, ${Number(user.is_active) === 1 ? 'true' : 'false'})"
+                          >
+                            <option value="admin" ${String(user.role) === 'admin' ? 'selected' : ''}>admin</option>
+                            <option value="user" ${String(user.role) === 'user' ? 'selected' : ''}>user</option>
+                          </select>
+                        </td>
+                        <td>${Number(user.is_active) === 1 ? 'Sí' : 'No'}</td>
+                        <td>${escapeHtml(formatDate(user.created_at || ''))}</td>
+                        <td>
+                          <div class="admin-users-actions">
+                            ${
+                              Number(user.is_active) === 1
+                                ? `<button class="deactivate-user" onclick="toggleAdminUserActive('${String(user.id || '').replaceAll("'", "\'")}', '${String(user.role || 'user').replaceAll("'", "\'")}', false)">Desactivar</button>`
+                                : `<button class="activate-user" onclick="toggleAdminUserActive('${String(user.id || '').replaceAll("'", "\'")}', '${String(user.role || 'user').replaceAll("'", "\'")}', true)">Activar</button>`
+                            }
+                            <button class="reset-pass" onclick="resetAdminUserPassword('${String(user.id || '').replaceAll("'", "\'")}', '${String(user.username || '').replaceAll("'", "\'")}')">Reset password</button>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              `;
+            } catch (error) {
+              console.error(error);
+              tableWrap.innerHTML = '<div class="empty">Error cargando usuarios.</div>';
+              statusBox.textContent = 'Error cargando usuarios: ' + error.message;
+            }
+          }
+
+          async function createAdminUser() {
+            const usernameInput = document.getElementById('adminNewUsername');
+            const passwordInput = document.getElementById('adminNewPassword');
+            const roleSelect = document.getElementById('adminNewRole');
+            const statusBox = document.getElementById('adminUsersCreateStatus');
+
+            if (!usernameInput || !passwordInput || !roleSelect || !statusBox) return;
+
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+            const role = roleSelect.value;
+
+            if (!username || !password) {
+              statusBox.textContent = 'Usuario y contraseña son obligatorios.';
+              return;
+            }
+
+            statusBox.textContent = 'Creando usuario...';
+
+            try {
+              const res = await crmFetch(`${API_BASE}/admin/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  username,
+                  password,
+                  role
+                })
+              });
+
+              const data = await res.json();
+
+              if (!res.ok) {
+                throw new Error(data.error || `HTTP ${res.status}`);
+              }
+
+              usernameInput.value = '';
+              passwordInput.value = '';
+              roleSelect.value = 'user';
+
+              statusBox.textContent = 'Usuario creado correctamente.';
+              await loadAdminUsers();
+            } catch (error) {
+              console.error(error);
+              statusBox.textContent = 'Error creando usuario: ' + error.message;
+            }
+          }
+
+          async function changeAdminUserRole(userId, role, isActive) {
+            try {
+              const res = await crmFetch(`${API_BASE}/admin/users/${encodeURIComponent(userId)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  role,
+                  is_active: isActive
+                })
+              });
+
+              const data = await res.json();
+
+              if (!res.ok) {
+                throw new Error(data.error || `HTTP ${res.status}`);
+              }
+
+              await loadAdminUsers();
+            } catch (error) {
+              console.error(error);
+              showSystemMessage({
+                title: 'Error actualizando rol',
+                message: error.message,
+                tone: 'danger'
+              });
+            }
+          }
+
+          async function toggleAdminUserActive(userId, role, nextIsActive) {
+            const confirmed = await askSystemConfirm({
+              title: nextIsActive ? 'Activar usuario' : 'Desactivar usuario',
+              message: nextIsActive
+                ? 'Vas a reactivar este usuario del CRM.'
+                : 'Vas a desactivar este usuario del CRM.',
+              tone: nextIsActive ? 'warning' : 'danger',
+              confirmText: nextIsActive ? 'Sí, activar' : 'Sí, desactivar',
+              cancelText: 'Cancelar'
+            });
+
+            if (!confirmed) {
+              await loadAdminUsers();
+              return;
+            }
+
+            try {
+              const res = await crmFetch(`${API_BASE}/admin/users/${encodeURIComponent(userId)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  role,
+                  is_active: nextIsActive
+                })
+              });
+
+              const data = await res.json();
+
+              if (!res.ok) {
+                throw new Error(data.error || `HTTP ${res.status}`);
+              }
+
+              await loadAdminUsers();
+            } catch (error) {
+              console.error(error);
+              showSystemMessage({
+                title: 'Error actualizando usuario',
+                message: error.message,
+                tone: 'danger'
+              });
+            }
+          }
+
+          async function resetAdminUserPassword(userId, username) {
+            const newPassword = await askSystemPrompt({
+              title: 'Reset de contraseña',
+              message: `Ingresá la nueva contraseña para ${username}.`,
+              label: 'Nueva contraseña',
+              placeholder: 'Nueva contraseña',
+              inputType: 'password',
+              confirmText: 'Guardar contraseña',
+              cancelText: 'Cancelar'
+            });
+
+            if (newPassword === null) {
+              return;
+            }
+
+            if (!String(newPassword || '').trim()) {
+              showSystemMessage({
+                title: 'Dato incompleto',
+                message: 'Tenés que ingresar una contraseña nueva.',
+                tone: 'warning'
+              });
+              return;
+            }
+
+            try {
+              const res = await crmFetch(`${API_BASE}/admin/users/${encodeURIComponent(userId)}/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  newPassword: String(newPassword)
+                })
+              });
+
+              const data = await res.json();
+
+              if (!res.ok) {
+                throw new Error(data.error || `HTTP ${res.status}`);
+              }
+
+              showSystemMessage({
+                title: 'Contraseña reseteada',
+                message: `La contraseña del usuario ${username} se actualizó correctamente.`
+              });
+            } catch (error) {
+              console.error(error);
+              showSystemMessage({
+                title: 'Error reseteando contraseña',
+                message: error.message,
+                tone: 'danger'
+              });
+            }
+          }
+
+          function openWhatsApp(url) {
+            if (!url) return;
+            window.open(url, '_blank');
+          }
+
+      	/**
+      	 * Resetea completamente los datos de testing del sistema.
+      	 *
+      	 * Qué borra:
+      	 * - leads
+      	 * - mensajes
+      	 * - sesiones
+      	 *
+      	 * Importante:
+      	 * - solo usar para pruebas
+      	 * - pide confirmación antes de ejecutar
+      	 */
+      	async function resetTestingData() {
+      	  const confirmed = await askSystemConfirm({
+      		  title: 'Reset de testing',
+      		  message: 'Vas a borrar todos los leads, mensajes y sesiones de testing.\n\n¿Querés continuar?',
+      		  tone: 'danger',
+      		  confirmText: 'Sí, borrar todo',
+      		  cancelText: 'Cancelar'
+      	  });
+
+      	  if (!confirmed) {
+      		return;
+      	  }
+
+      	  try {
+      		const res = await crmFetch(`${API_BASE}/admin/reset`, {
+      		  method: 'POST'
+      		});
+
+      		const data = await res.json();
+
+      		if (!res.ok) {
+      		  throw new Error(data.error || `HTTP ${res.status}`);
+      		}
+
+      		/**
+      		 * Cerramos modal abierto si existía.
+      		 */
+      		closeDrawer();
+
+      		/**
+      		 * Limpiamos estado local del CRM.
+      		 */
+      		allLeads = [];
+      		currentLeadId = null;
+
+      		/**
+      		 * Recargamos tablero ya vacío.
+      		 */
+      		await loadLeads({ silent: false, preserveModal: false });
+
+      		showSystemMessage({
+      		  title: 'Reset ejecutado',
+      		  message: 'Se borraron correctamente los leads, mensajes y sesiones de testing.'
+      		});
+
+      	  } catch (error) {
+      		console.error(error);
+      		showSystemMessage({
+      		  title: 'Error reseteando testing',
+      		  message: error.message,
+      		  tone: 'danger'
+      		});
+      	  }
+      	}
+
+          function startAutoRefresh() {
+            if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+            autoRefreshTimer = setInterval(() => {
+              loadLeads({ silent: true, preserveModal: true });
+            }, 30000);
+          }
+
+          /**
+           * Click fuera del modal = cerrar.
+           */
+          document.getElementById('leadModalOverlay').addEventListener('click', function (e) {
+            if (e.target === this) closeDrawer();
+          });
+
+          document.getElementById('usersAdminModalOverlay').addEventListener('click', function (e) {
+            if (e.target === this) closeUsersAdminModal();
+          });
+
+          /**
+           * Filtros.
+           */
+          searchInput.addEventListener('input', applyFilters);
+          categoryFilter.addEventListener('change', applyFilters);
+          statusFilter.addEventListener('change', applyFilters);
+          controlFilter.addEventListener('change', applyFilters);
+
+      	/**
+      	 * Una interacción mínima habilita audio en la mayoría de navegadores.
+      	 */
+      	document.addEventListener('click', async () => {
+        if (!crmAudioUnlocked) {
+          await unlockCrmAudio();
+        }
+      }, { once: true });
+
+      document.addEventListener('keydown', async () => {
+        if (!crmAudioUnlocked) {
+          await unlockCrmAudio();
+        }
+      }, { once: true });
+
+      window.addEventListener('focus', async () => {
+        if (crmAudioUnlocked) {
+          await unlockCrmAudio();
+        }
+      });
+
+      document.addEventListener('visibilitychange', async () => {{
+        if (document.visibilityState === 'visible' && crmAudioUnlocked) {
+          await unlockCrmAudio();
+        }
+      });
+      /**
+       * =========================================================
+       * BOOTSTRAP Y AUTO REFRESH
+       * =========================================================
+       */
+          /**
+           * Bootstrap inicial.
+           */
+      async function bootstrapCrm() {
+
+        if (crmBootstrapStarted) {
+          return;
+        }
+
+        crmBootstrapStarted = true;
+
+      const allowed = await ensureCrmAuthOrShowLogin();
+
+      if (!allowed) {
+        crmBootstrapStarted = false;
+        return;
+      }
+        /**
+         * Limpiamos el buscador al entrar al CRM.
+         *
+         * Esto evita que el navegador autocompletar
+         * meta el username del login y filtre leads sin querer.
+         */
+        if (searchInput) {
+          searchInput.value = '';
+        }
+
+          updateSoundButtonUI();
+        applyCrmRolePermissions();
+
+        /**
+         * Si el usuario ya había activado sonido antes,
+         * intentamos rehidratar el contexto al abrir.
+         * Si falla por política del navegador, no frenamos el CRM.
+         */
+      if (crmAudioUnlocked) {
+        unlockCrmAudio().catch(() => {});
+      }
+
+        /**
+         * Primera carga real del tablero.
+         */
+        await loadLeads({ silent: false, preserveModal: true });
+
+        /**
+         * Fallback defensivo:
+         * si por alguna razón el primer arranque no pobló allLeads,
+         * reintentamos una vez más apenas después.
+         *
+         * Esto ayuda en recargas duras F5 donde el navegador termina
+         * de estabilizar recursos unos milisegundos después.
+         */
+        setTimeout(async () => {
+          try {
+            if (allLeads.length === 0) {
+              await loadLeads({ silent: true, preserveModal: true });
+            }
+          } catch (error) {
+            console.error('Fallback de carga inicial del CRM falló:', error);
+          }
+        }, 400);
+
+        startAutoRefresh();
+      }
+
+      /**
+       * Arranque robusto:
+       * - si el DOM ya está listo, ejecuta directo
+       * - si no, espera a DOMContentLoaded
+       */
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootstrapCrm, { once: true });
+      } else {
+        bootstrapCrm();
+      }
+    </script>
+  </body>
+</html>

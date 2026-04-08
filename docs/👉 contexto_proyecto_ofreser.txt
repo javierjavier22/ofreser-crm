@@ -1,0 +1,66 @@
+Proyecto: Chatbot Comercial "Ofreser"
+
+Objetivo:
+Construir un sistema profesional de atención automatizada para una empresa de fumigación, con CRM integrado y futura conexión a WhatsApp real (Cloud API).
+
+Stack actual:
+
+* Backend: Node.js + Express
+* Frontend: HTML + JavaScript (chat web)
+* Persistencia temporal: archivos JSON (leads.json, messages.json)
+* CRM: interfaz web básica para gestión de leads
+
+Estado actual del sistema:
+
+1. Chatbot completamente funcional con múltiples flujos:
+
+   * Servicios de fumigación
+   * Compra de productos
+   * Certificados
+   * Consultas administrativas
+
+2. Lógica implementada:
+
+   * Manejo de sesiones en memoria
+   * Validación de inputs
+   * Menú navegable (volver / reiniciar)
+   * Fallback inteligente con opción de asesor humano
+   * Flujo estructurado tipo embudo comercial
+
+3. Persistencia:
+
+   * leads.json: guarda información comercial estructurada
+   * messages.json: guarda historial completo de conversación (user + bot)
+
+4. CRM actual:
+
+   * Visualización de leads
+   * Cambio de estado (nuevo, seguimiento, cerrado, etc.)
+   * Próximo paso: visualizar conversación completa por lead
+
+Arquitectura futura planificada:
+
+* Migración a PostgreSQL (reemplazo de JSON)
+* Persistencia de sesiones en DB
+* Integración con WhatsApp Cloud API
+* Webhooks para recepción/envío de mensajes reales
+* CRM más avanzado (filtros, historial, operadores)
+
+Requisitos clave:
+
+* No perder ningún flujo actual
+* Mantener lógica existente
+* Mejorar sin romper lo que ya funciona
+* Construir sistema escalable y profesional
+
+Modo de trabajo esperado:
+
+* Respuestas directas y técnicas
+* Código completo listo para copiar/pegar
+* Pensamiento como sistema productivo real, no demo
+
+Estado actual a continuar:
+Se implementó guardado de mensajes en messages.json.
+El siguiente paso es mostrar la conversación completa dentro del CRM.
+
+Continuar desde este punto sin rehacer lo anterior.

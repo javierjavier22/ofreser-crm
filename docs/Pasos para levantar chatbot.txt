@@ -1,0 +1,114 @@
+PASOS PARA LEVANTAR EL CHATBOT LOCALMENTE
+
+1) LEVANTAR BACKEND (NODE.JS)
+	Abrir una ventana CMD y ejecutar:
+
+	cd D:\ofreser-bot
+	node server.js
+
+	Deberías ver algo como:
+	Servidor corriendo en http://localhost:3000
+
+2) LEVANTAR NGROK
+	Abrir otra ventana CMD y ejecutar:
+
+	ngrok http 3000
+
+	Copiar la URL que aparece en "Forwarding", por ejemplo:
+	https://erumpent-brigida-fearsomely.ngrok-free.dev -> http://localhost:3000 
+
+3) CONFIGURAR WEBHOOK EN META
+	Entrar a:
+	https://developers.facebook.com/
+
+	Ruta:
+	My Apps
+	Ofreser ChatBot Test
+	Customize the Connect with customers trough Whatsapp use case
+	Configuration (Webhook)
+
+	Verificar que la URL en el campo Callback URL coincida con la devuelta por ngrok en el paso 3
+	Callback URL:
+		NGROK URL:	https://erumpent-brigida-fearsomely.ngrok-free.dev
+		WEBHOOK URL	https://erumpent-brigida-fearsomely.ngrok-free.dev/webhook/whatsapp
+
+	Verify Token:
+	ofreser_token
+
+4) VERIFICAR WEBHOOK MANUALMENTE
+	Abrir en el navegador:
+
+	https://erumpent-brigida-fearsomely.ngrok-free.dev/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=ofreser_token&hub.challenge=123456
+
+	Resultado esperado en navegador:
+	123456
+
+	Resultado esperado en consola de node:
+	Webhook verificado correctamente
+
+5) VERIFICAR TRAFICO EN NGROK
+	En la consola de ngrok debería verse tráfico hacia:
+	POST /webhook/whatsapp
+	GET /webhook/whatsapp
+
+	No debería haber errores 500.
+
+6) PROBAR ENVIO DESDE META
+	My Apps
+	Ofreser ChatBot Test
+	Customize the Connect with customers trough Whatsapp use case
+	API Setup
+	https://developers.facebook.com/apps/26274978078821934/use_cases/customize/?use_case_enum=WHATSAPP_BUSINESS_MESSAGING&product_route=whatsapp-business&selected_tab=wa-dev-console&business_id=1388692235781022
+
+	Usar el botón:
+	Send message
+
+	Si el mensaje llega al WhatsApp de prueba, la integración base está bien.
+
+7) SI META FALLA POR TOKEN O PERMISOS
+	En la misma pantalla de API Setup:
+	Click en "Generate access token"
+	Reconectar usando las credenciales de Facebook
+	
+	Usar el botón:
+	Send message
+	Si el mensaje llega al WhatsApp de prueba, la integración base está bien.
+	
+	Copiar el token nuevo.
+
+8) PEGAR EL TOKEN EN .ENV
+	NO pegar el token dentro del código.
+	NO modificar whatsapp.client.js para eso.
+
+	Editar este archivo:
+	D:\ofreser-bot\.env
+
+	Debe quedar así:
+
+	PORT=3000
+	WHATSAPP_TOKEN=PEGAR_AQUI_EL_TOKEN_NUEVO_COMPLETO
+	PHONE_NUMBER_ID=1029534900250106
+	VERIFY_TOKEN=ofreser_token
+
+9) REINICIAR NODE
+	En la consola donde corre node:
+	CTRL + C
+
+	Y volver a ejecutar:
+
+	node server.js
+
+10) PROBAR EL BOT
+	Mandar un mensaje al número de prueba de WhatsApp, por ejemplo:
+	Hola
+
+	Si todo está bien:
+	- se verá el webhook entrante en consola
+	- el motor responderá
+	- llegará la respuesta al WhatsApp
+
+
+
+CREAR TOKEN PERMANENTE
+
+https://business.facebook.com/latest/settings/system_users?business_id=1388692235781022&selected_user_id=61575357819192
