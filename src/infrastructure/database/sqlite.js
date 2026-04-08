@@ -16,7 +16,8 @@
  *
  * Importante:
  * -----------
- * - La base se guarda en /storage/ofreser.db
+ * - En local, la base sigue guardándose en /storage/ofreser.db
+ * - En Render, si existe disk persistente, usamos /var/data/ofreser.db
  * - Si el archivo no existe, SQLite lo crea automáticamente
  */
 
@@ -26,10 +27,14 @@ const Database = require('better-sqlite3');
 /**
  * Ruta absoluta al archivo físico de la base.
  *
- * Queda dentro de /storage para mantener la coherencia
- * con el resto del proyecto.
+ * Regla:
+ * - producción (Render): usar disk persistente
+ * - local: usar carpeta storage del proyecto
  */
-const dbPath = path.join(process.cwd(), 'storage', 'ofreser.db');
+const dbPath =
+  process.env.RENDER
+    ? '/var/data/ofreser.db'
+    : path.join(process.cwd(), 'storage', 'ofreser.db');
 
 /**
  * Creamos una única conexión compartida.
