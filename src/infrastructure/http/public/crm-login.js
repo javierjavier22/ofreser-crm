@@ -445,23 +445,54 @@
   /**
    * Fetch autenticado del CRM.
    */
-  function crmFetch(url, options = {}) {
-    const token = getStoredCrmToken();
-    const incomingHeaders = options.headers || {};
+/**
+ * Flag defensivo para evitar múltiples recargas
+ * si varias requests devuelven 401 al mismo tiempo.
+ */
+let crmAuthRedirectInProgress = false;
 
-    const headers = {
-      ...incomingHeaders
-    };
+/**
+ * Fetch autenticado del CRM.
+ *
+ * Mejora:
+ * - si el backend responde 401, limpiamos sesión local
+ * - evitamos loops raros del auto refresh
+ * - forzamos recarga para volver al login
+ */
+async function crmFetch(url, options = {}) {
+  const token = getStoredCrmToken();
+  const incomingHeaders = options.headers || {};
 
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
+  const headers = {
+    ...incomingHeaders
+  };
 
-    return fetch(url, {
-      ...options,
-      headers
-    });
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
+
+  const response = await fetch(url, {
+    ...options,
+    headers
+  });
+
+  /**
+   * Si el backend responde 401, la sesión dejó de ser válida.
+   *
+   * Hacemos limpieza local y recargamos una sola vez.
+   */
+  if (response.status === 401 && !crmAuthRedirectInProgress) {
+    crmAuthRedirectInProgress = true;
+
+    clearStoredCrmToken();
+    clearStoredCrmRole();
+    clearLastActivity();
+
+    window.location.reload();
+  }
+
+  return response;
+}
 
   /**
    * Valida si el token actual sigue siendo válido.
