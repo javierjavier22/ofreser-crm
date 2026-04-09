@@ -45,32 +45,6 @@ function normalizeDigits(value) {
 }
 
 /**
- * Valida formato de número para WhatsApp.
- *
- * Reglas básicas:
- * - solo dígitos
- * - empieza con 54 (Argentina)
- * - longitud razonable
- */
-function validateWhatsAppNumber(number) {
-  const digits = normalizeDigits(number);
-
-  if (!digits) {
-    return { valid: false, reason: 'empty_number' };
-  }
-
-  if (!digits.startsWith('54')) {
-    return { valid: false, reason: 'invalid_country_code' };
-  }
-
-  if (digits.length < 10 || digits.length > 15) {
-    return { valid: false, reason: 'invalid_length' };
-  }
-
-  return { valid: true, digits };
-}
-
-/**
  * Ajusta números argentinos en entorno de prueba (sandbox).
  *
  * IMPORTANTE:
@@ -189,18 +163,7 @@ async function postWhatsAppPayload(payload) {
  * Envía un mensaje de texto simple.
  */
 async function sendWhatsAppText(to, message) {
-  const validation = validateWhatsAppNumber(to);
-
-if (!validation.valid) {
-  logger.error('Número inválido para WhatsApp', {
-    original: to,
-    reason: validation.reason
-  });
-
-  throw new Error(`Invalid WhatsApp number: ${validation.reason}`);
-}
-
-const normalizedTo = convertArgentinaTestRecipient(validation.digits);
+  const normalizedTo = convertArgentinaTestRecipient(to);
 
   logger.info('Enviando texto a WhatsApp', {
     to: maskPhone(normalizedTo),
@@ -230,18 +193,7 @@ const normalizedTo = convertArgentinaTestRecipient(validation.digits);
  * Envía botones interactivos.
  */
 async function sendWhatsAppButtons(to, message, options = []) {
-  const validation = validateWhatsAppNumber(to);
-
-if (!validation.valid) {
-  logger.error('Número inválido para WhatsApp', {
-    original: to,
-    reason: validation.reason
-  });
-
-  throw new Error(`Invalid WhatsApp number: ${validation.reason}`);
-}
-
-const normalizedTo = convertArgentinaTestRecipient(validation.digits);
+  const normalizedTo = convertArgentinaTestRecipient(to);
   const mapped = mapOptionsForWhatsApp(options).slice(0, 3);
 
   logger.info('Enviando botones a WhatsApp', {
@@ -286,18 +238,7 @@ const normalizedTo = convertArgentinaTestRecipient(validation.digits);
  * Envía una lista interactiva.
  */
 async function sendWhatsAppList(to, message, options = []) {
-  const validation = validateWhatsAppNumber(to);
-
-if (!validation.valid) {
-  logger.error('Número inválido para WhatsApp', {
-    original: to,
-    reason: validation.reason
-  });
-
-  throw new Error(`Invalid WhatsApp number: ${validation.reason}`);
-}
-
-const normalizedTo = convertArgentinaTestRecipient(validation.digits);
+  const normalizedTo = convertArgentinaTestRecipient(to);
   const mapped = mapOptionsForWhatsApp(options).slice(0, 10);
 
   logger.info('Enviando lista a WhatsApp', {
@@ -385,11 +326,9 @@ async function sendWhatsAppReply(to, reply) {
     return await sendWhatsAppText(to, message);
 
   } catch (error) {
-logger.error('Error enviando reply interactivo a WhatsApp. Se aplica fallback a texto.', {
-  error: error.response?.data || error.message,
-  status: error.response?.status,
-  metaTraceId: error.response?.headers?.['x-fb-trace-id']
-});
+    logger.error('Error enviando reply interactivo a WhatsApp. Se aplica fallback a texto.', {
+      error: error.response?.data || error.message
+    });
 
     return await sendWhatsAppText(to, message);
   }
