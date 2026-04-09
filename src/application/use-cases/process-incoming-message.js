@@ -134,6 +134,38 @@ function processIncomingMessage({
   });
   
     /**
+   * 3B. Enriquecemos contexto conversacional liviano.
+   *
+   * Guardamos:
+   * - último mensaje del usuario
+   * - historial resumido de conversación
+   *
+   * Importante:
+   * - no cambiamos tablas
+   * - esto vive dentro de session.data
+   * - mantenemos máximo 10 entradas para no crecer infinito
+   */
+  if (!session.data) {
+    session.data = {};
+  }
+
+  session.data.lastUserMessage = message;
+
+  if (!Array.isArray(session.data.conversationHistory)) {
+    session.data.conversationHistory = [];
+  }
+
+  session.data.conversationHistory.push({
+    from: 'user',
+    text: message,
+    timestamp: new Date().toISOString()
+  });
+
+  if (session.data.conversationHistory.length > 10) {
+    session.data.conversationHistory = session.data.conversationHistory.slice(-10);
+  }
+  
+    /**
    * 4. Si la sesión ya está bajo control humano,
    * NO ejecutamos el motor conversacional.
    *
@@ -276,6 +308,38 @@ function processIncomingMessage({
    * de ambos lados: usuario + bot.
    */
   if (result.reply && result.reply.message) {
+    /**
+     * Guardamos también contexto conversacional del lado bot.
+     */
+    if (!persistedSession.data) {
+      persistedSession.data = {};
+    }
+
+    persistedSession.data.lastBotMessage = result.reply.message;
+
+    if (!Array.isArray(persistedSession.data.conversationHistory)) {
+      persistedSession.data.conversationHistory = [];
+    }
+
+    persistedSession.data.conversationHistory.push({
+      from: 'bot',
+      text: result.reply.message,
+      timestamp: new Date().toISOString()
+    });
+
+    if (persistedSession.data.conversationHistory.length > 10) {
+      persistedSession.data.conversationHistory =
+        persistedSession.data.conversationHistory.slice(-10);
+    }
+
+    /**
+     * Persistimos nuevamente la sesión ya enriquecida.
+     */
+    persistedSession = upsertSession(persistedSession);
+
+    /**
+     * Guardamos la respuesta del bot en historial de mensajes.
+     */
     saveMessage({
       sessionId: persistedSession.sessionId,
       channel: persistedSession.channel,
