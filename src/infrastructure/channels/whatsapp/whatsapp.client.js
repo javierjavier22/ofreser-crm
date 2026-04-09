@@ -52,9 +52,31 @@ function normalizeDigits(value) {
  * Esto es una adaptación específica para testing.
  * No debe asumirse como formato universal de producción.
  */
+/**
+ * Ajusta números argentinos según entorno.
+ *
+ * Reglas:
+ * - producción real: devuelve el número limpio, sin tocarlo
+ * - sandbox/testing: mantiene la lógica especial con "15"
+ *
+ * Importante:
+ * process.env.WA_PRODUCTION debe ser 'true'
+ * únicamente cuando ya querés usar formato real de producción.
+ */
 function convertArgentinaTestRecipient(to) {
   const digits = normalizeDigits(to);
 
+  /**
+   * En producción real NO aplicamos la adaptación sandbox.
+   */
+  if (process.env.WA_PRODUCTION === 'true') {
+    return digits;
+  }
+
+  /**
+   * Si no es un número argentino en formato 549...
+   * lo dejamos como está.
+   */
   if (!digits.startsWith('549')) {
     return digits;
   }
