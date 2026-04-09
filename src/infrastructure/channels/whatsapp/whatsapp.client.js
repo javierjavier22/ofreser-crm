@@ -352,9 +352,15 @@ async function sendWhatsAppReply(to, reply) {
     return await sendWhatsAppText(to, message);
 
   } catch (error) {
-    logger.error('Error enviando reply interactivo a WhatsApp. Se aplica fallback a texto.', {
-      error: error.response?.data || error.message
-    });
+logger.error('Error enviando reply interactivo a WhatsApp. Se aplica fallback a texto.', {
+  to: maskPhone(normalizeWhatsAppRecipient(to)),
+  error: error.response?.data || error.message,
+  status: error.response?.status || null,
+  metaTraceId:
+    error.response?.data?.fbtrace_id ||
+    error.response?.headers?.['x-fb-trace-id'] ||
+    null
+});	
 
     return await sendWhatsAppText(to, message);
   }
