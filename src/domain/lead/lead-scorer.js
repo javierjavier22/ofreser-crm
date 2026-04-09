@@ -34,7 +34,7 @@ function scoreLead(sessionData) {
   // -----------------------------
   // 📌 3. DATOS CLAVE
   // -----------------------------
-  const text = history.join(" ").toLowerCase();
+  const text = history.map(m => m.text).join(" ").toLowerCase();
 
   if (text.match(/\d{6,}/)) score += 20; // teléfono
   if (text.includes("direccion") || text.includes("domicilio")) score += 15;
