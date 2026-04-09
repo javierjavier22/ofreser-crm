@@ -45,6 +45,54 @@ function normalizeDigits(value) {
 }
 
 /**
+ * Normaliza un destinatario de WhatsApp de forma segura.
+ *
+ * Casos que corrige:
+ * - wa_549...
+ * - +54 ...
+ * - espacios
+ * - guiones
+ * - paréntesis
+ *
+ * Importante:
+ * - NO bloquea el envío
+ * - si el número parece raro, solo loguea warning
+ */
+function normalizeWhatsAppRecipient(to) {
+  const raw = String(to || '').trim();
+
+  /**
+   * Quitamos prefijo interno si existe.
+   * Ejemplo:
+   * wa_5493872213583 -> 5493872213583
+   */
+  const withoutPrefix = raw.replace(/^wa_/i, '');
+
+  /**
+   * Dejamos solo dígitos.
+   */
+  const digits = normalizeDigits(withoutPrefix);
+
+  /**
+   * Warning defensivo:
+   * no frenamos el envío, solo dejamos trazabilidad.
+   */
+  if (!digits) {
+    logger.warn('Destinatario WhatsApp vacío o inválido tras normalización', {
+      original: raw
+    });
+  } else if (digits.length < 10 || digits.length > 15) {
+    logger.warn('Destinatario WhatsApp con longitud inusual', {
+      original: raw,
+      normalized: maskPhone(digits),
+      digitsLength: digits.length
+    });
+  }
+
+  return digits;
+}
+
+/**
  * Ajusta números argentinos en entorno de prueba (sandbox).
  *
  * IMPORTANTE:
@@ -53,7 +101,7 @@ function normalizeDigits(value) {
  * No debe asumirse como formato universal de producción.
  */
 function convertArgentinaTestRecipient(to) {
-  const digits = normalizeDigits(to);
+  const digits = normalizeWhatsAppRecipient(to);
 
   if (!digits.startsWith('549')) {
     return digits;
