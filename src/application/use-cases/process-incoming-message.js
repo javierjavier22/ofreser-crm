@@ -44,6 +44,7 @@
 
 const { processConversation } = require('../../domain/conversation/conversation-engine');
 const { detectIntent } = require('../../domain/conversation/detect-intent');
+const { scoreLead } = require('../../domain/lead/lead-scorer');
 
 const {
   createNewSession,
@@ -238,17 +239,33 @@ function processIncomingMessage({
  * DETECCIÓN DE INTENCIÓN
  * ============================================
  */
-
 const intent = detectIntent(message);
 
 /**
- * Guardamos intención en sesión
+ * Inicializar sesión si no existe
  */
 if (!session.data) {
   session.data = {};
 }
 
+/**
+ * Guardamos intención en sesión
+ */
 session.data.lastIntent = intent;
+
+/**
+ * ============================================
+ * SCORING DEL LEAD
+ * ============================================
+ */
+const leadAnalysis = scoreLead(session.data);
+
+session.data.leadScore = leadAnalysis.score;
+session.data.leadCategory = leadAnalysis.category;
+
+/**
+ * Guardar sesión
+ */
 session = upsertSession(session);
   /**
    * 4. Ejecutamos el motor conversacional.
