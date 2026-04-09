@@ -1864,7 +1864,10 @@
       </div>
 
       <div class="top-actions">
-        <div class="last-sync" id="lastSyncLabel">Actualizado: --</div>
+        <div class="last-sync">
+  <span id="connStatus" style="color: #16a34a; margin-right: 6px;">●</span>
+  <span id="lastSyncLabel">Actualizado: --</span>
+</div>
         <button
           class="btn secondary"
           onclick="loadLeads({ silent: false, preserveModal: true })"
@@ -2950,6 +2953,11 @@ let resetPasswordTargetUsername = '';
           allLeads = incomingLeads;
           applyFilters();
           updateLastSyncLabel();
+		  const connStatus = document.getElementById("connStatus");
+if (connStatus) {
+  connStatus.style.color = "#16a34a";
+  connStatus.title = "Conectado";
+}
 
           /**
            * Regla correcta:
@@ -2995,6 +3003,12 @@ let resetPasswordTargetUsername = '';
           }
         } catch (error) {
           console.error(error);
+		  const connStatus = document.getElementById("connStatus");
+if (connStatus) {
+  connStatus.style.color = "#dc2626";
+  connStatus.title = "Error de conexión";
+}
+		  
           if (!silent) {
             alert("Error cargando leads: " + error.message);
           }
