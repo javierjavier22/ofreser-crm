@@ -25,6 +25,15 @@ const BUSINESS_CONFIG = require('../../config/business.config');
 const { buildResponse } = require('./response-builder');
 
 /**
+ * Remueve acentos de un texto.
+ */
+function removeAccents(text) {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+/**
  * Verifica si el mensaje contiene alguna palabra clave.
  *
  * @param {string} text
@@ -32,7 +41,12 @@ const { buildResponse } = require('./response-builder');
  * @returns {boolean}
  */
 function containsAny(text, keywords = []) {
-  return keywords.some(keyword => text.includes(keyword));
+  const normalizedText = removeAccents(text);
+
+  return keywords.some(keyword => {
+    const normalizedKeyword = removeAccents(keyword);
+    return normalizedText.includes(normalizedKeyword);
+  });
 }
 
 /**

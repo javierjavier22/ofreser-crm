@@ -22,12 +22,23 @@
  * Este sistema es basado en palabras clave (keyword matching).
  * No es IA ni NLP avanzado.
  */
+ 
+ function removeAccents(text) {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
 
  /**
   * Verifica si el texto contiene alguna palabra clave.
   */
 function containsAny(text, keywords = []) {
-  return keywords.some(keyword => text.includes(keyword));
+  const normalizedText = removeAccents(text);
+
+  return keywords.some(keyword => {
+    const normalizedKeyword = removeAccents(keyword);
+    return normalizedText.includes(normalizedKeyword);
+  });
 }
 
 /**
