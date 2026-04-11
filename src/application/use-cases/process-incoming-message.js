@@ -45,6 +45,7 @@
 const { processConversation } = require('../../domain/conversation/conversation-engine');
 const { detectIntent } = require('../../domain/conversation/detect-intent');
 const { scoreLead } = require('../../domain/lead/lead-scorer');
+const { parseContactData } = require('../../domain/lead/contact-parser');
 
 const {
   createNewSession,
@@ -152,6 +153,23 @@ function processIncomingMessage({
   }
 
   session.data.lastUserMessage = message;
+  
+  /**
+ * ============================================
+ * PARSER DE CONTACTO AUTOMÁTICO
+ * ============================================
+ */
+const parsedData = parseContactData(message);
+
+/**
+ * Merge inteligente (no pisa datos existentes)
+ */
+session.data = {
+  ...session.data,
+  ...Object.fromEntries(
+    Object.entries(parsedData).filter(([_, v]) => v)
+  )
+};
 
   if (!Array.isArray(session.data.conversationHistory)) {
     session.data.conversationHistory = [];
