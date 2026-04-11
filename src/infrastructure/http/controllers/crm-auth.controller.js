@@ -135,6 +135,7 @@ function postCrmLogin(req, res) {
    * 🎟️ Emitir token
    */
   const token = crmAuthMiddleware.issueCrmToken(
+    dbUser.id,
     dbUser.username,
     dbUser.role || 'admin'
   );

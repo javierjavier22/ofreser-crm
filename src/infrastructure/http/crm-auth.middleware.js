@@ -55,9 +55,14 @@ function purgeExpiredTokens() {
 }
 
 /**
- * Crea una nueva sesión en SQLite
+ * Crea una nueva sesión en SQLite.
+ *
+ * Mejora:
+ * -------
+ * Persistimos también userId para que luego
+ * el middleware pueda exponer req.crmAuth.userId.
  */
-function issueCrmToken(username, role = 'admin') {
+function issueCrmToken(userId, username, role = 'admin') {
   purgeExpiredTokens();
 
   const token = generateToken();
@@ -67,12 +72,13 @@ function issueCrmToken(username, role = 'admin') {
   db.prepare(`
     INSERT INTO crm_sessions (
       token,
+      user_id,
       username,
       role,
       issued_at,
       expires_at
-    ) VALUES (?, ?, ?, ?, ?)
-  `).run(token, username, role, now, expiresAt);
+    ) VALUES (?, ?, ?, ?, ?, ?)
+  `).run(token, userId, username, role, now, expiresAt);
 
   return token;
 }
@@ -85,8 +91,8 @@ function getCrmSessionByToken(token) {
 
   purgeExpiredTokens();
 
-  const row = db.prepare(`
-    SELECT token, username, role, issued_at, expires_at
+    const row = db.prepare(`
+    SELECT token, user_id, username, role, issued_at, expires_at
     FROM crm_sessions
     WHERE token = ?
     LIMIT 1
@@ -96,6 +102,7 @@ function getCrmSessionByToken(token) {
 
   return {
     token: row.token,
+    userId: row.user_id || null,
     username: row.username,
     role: row.role,
     issuedAt: row.issued_at,
@@ -166,6 +173,7 @@ function crmAuthMiddleware(req, res, next) {
     req.crmAuth = {
       mode: 'token',
       token,
+      userId: session.userId || null,
       username: session.username,
       role: session.role || 'admin'
     };

@@ -182,11 +182,18 @@ function createCrmUsersTable() {
  *
  * Esto reemplaza el almacenamiento en memoria
  * del middleware de autenticación.
+ *
+ * Mejora:
+ * -------
+ * Ahora también persistimos user_id para que
+ * req.crmAuth tenga identidad real del usuario,
+ * no solo username/role.
  */
 function createCrmSessionsTable() {
   db.prepare(`
     CREATE TABLE IF NOT EXISTS crm_sessions (
       token TEXT PRIMARY KEY,
+      user_id TEXT,
       username TEXT NOT NULL,
       role TEXT NOT NULL,
       issued_at INTEGER NOT NULL,
@@ -194,10 +201,28 @@ function createCrmSessionsTable() {
     )
   `).run();
 
+  /**
+   * Índice para limpieza rápida por expiración.
+   */
   db.prepare(`
     CREATE INDEX IF NOT EXISTS idx_crm_sessions_expires
     ON crm_sessions(expires_at)
   `).run();
+
+  /**
+   * Migración segura para instalaciones ya existentes.
+   *
+   * Si la columna ya existe, SQLite va a lanzar error
+   * y simplemente lo ignoramos.
+   */
+  try {
+    db.prepare(`
+      ALTER TABLE crm_sessions
+      ADD COLUMN user_id TEXT
+    `).run();
+  } catch (error) {
+    // La columna ya existe o la migración ya fue aplicada.
+  }
 }
 
 /**
