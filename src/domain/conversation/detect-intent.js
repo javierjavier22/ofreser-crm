@@ -37,8 +37,21 @@ function containsAny(text, keywords = []) {
 
   return keywords.some(keyword => {
     const normalizedKeyword = removeAccents(keyword);
-    return normalizedText.includes(normalizedKeyword);
+
+    // raíces tipo "fumig"
+    if (normalizedKeyword.length <= 5) {
+      return normalizedText.includes(normalizedKeyword);
+    }
+
+    // palabra completa
+    const pattern = new RegExp(`\\b${escapeRegex(normalizedKeyword)}\\b`, 'i');
+
+    return pattern.test(normalizedText);
   });
+}
+
+function escapeRegex(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /**

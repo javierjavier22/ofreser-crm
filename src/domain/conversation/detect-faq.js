@@ -45,8 +45,24 @@ function containsAny(text, keywords = []) {
 
   return keywords.some(keyword => {
     const normalizedKeyword = removeAccents(keyword);
-    return normalizedText.includes(normalizedKeyword);
+
+    // Si es una palabra "raíz" corta (ej: fumig), usamos includes controlado
+    if (normalizedKeyword.length <= 5) {
+      return normalizedText.includes(normalizedKeyword);
+    }
+
+    // Si es frase o palabra completa → match exacto por palabra
+    const pattern = new RegExp(`\\b${escapeRegex(normalizedKeyword)}\\b`, 'i');
+
+    return pattern.test(normalizedText);
   });
+}
+
+/**
+ * Escapa caracteres especiales para regex
+ */
+function escapeRegex(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /**
