@@ -292,26 +292,39 @@ function processIncomingMessage({
    */
   let effectiveMessage = message;
 
-  const shouldSkipPestQuestion =
-    (session.step === 'welcome' || session.step === 'main_menu') &&
-    intent === 'servicios' &&
-    !!session.data.pest;
+  /**
+   * =========================================================
+   * SKIP INTELIGENTE DE PREGUNTAS
+   * =========================================================
+   *
+   * Casos:
+   * - si ya tenemos plaga + tipo de lugar, salteamos ambas preguntas
+   *   y vamos directo a pedir domicilio / zona
+   * - si solo tenemos plaga, salteamos únicamente la pregunta de plaga
+   */
+  const isEntryPoint =
+    session.step === 'welcome' || session.step === 'main_menu';
 
-  if (shouldSkipPestQuestion) {
+  const isServiceIntent = intent === 'servicios';
+
+  const hasPest = !!session.data.pest;
+  const hasPlaceType = !!session.data.placeType;
+
+  const shouldSkipPlaceTypeQuestion =
+    isEntryPoint && isServiceIntent && hasPest && hasPlaceType;
+
+  const shouldSkipPestQuestion =
+    isEntryPoint && isServiceIntent && hasPest;
+
+  if (shouldSkipPlaceTypeQuestion) {
+    session.data.category = 'servicios';
+    session.step = 'services_place_type';
+    effectiveMessage = session.data.placeType;
+  } else if (shouldSkipPestQuestion) {
     session.data.category = 'servicios';
     session.step = 'services_pest';
     effectiveMessage = session.data.pest;
   }
-
-  /**
-   * 5. Ejecutamos el motor conversacional.
-   *
-   * Acá es donde se decide:
-   * - qué responder
-   * - si cambia el step
-   * - si se debe guardar un lead
-   * - si hay que derivar a un asesor
-   */
   const result = processConversation({
     session,
     rawMessage: effectiveMessage
