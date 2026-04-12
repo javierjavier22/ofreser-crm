@@ -325,10 +325,49 @@ function processIncomingMessage({
     session.step = 'services_pest';
     effectiveMessage = session.data.pest;
   }
-  const result = processConversation({
+  let result = processConversation({
     session,
     rawMessage: effectiveMessage
   });
+
+  /**
+   * =========================================================
+   * AUTO-SALTO DEL PASO DE CONTACTO
+   * =========================================================
+   *
+   * Si el flujo llegó a un paso de contacto
+   * y ya tenemos nombre + teléfono detectados previamente,
+   * evitamos pedirlos otra vez.
+   *
+   * Esto NO toca el motor conversacional.
+   * Simplemente le reenviamos un mensaje sintético
+   * como si el usuario hubiera respondido ese paso.
+   */
+  const contactSteps = [
+    'services_contact',
+    'products_contact',
+    'certificates_contact',
+    'admin_contact'
+  ];
+
+  const hasDetectedContact =
+    !!result.session?.data?.name &&
+    !!result.session?.data?.phone;
+
+  const shouldAutoCompleteContactStep =
+    contactSteps.includes(result.session?.step) &&
+    hasDetectedContact &&
+    !result.reply?.humanHandoff;
+
+  if (shouldAutoCompleteContactStep) {
+    const syntheticContactMessage =
+      `${result.session.data.name} ${result.session.data.phone}`;
+
+    result = processConversation({
+      session: result.session,
+      rawMessage: syntheticContactMessage
+    });
+  }
 
   /**
    * 6. Guardamos la sesión actualizada que devuelve el motor.

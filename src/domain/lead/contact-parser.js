@@ -3,19 +3,18 @@
  * CONTACT PARSER (detección automática PRO)
  * ============================================
  *
- * Extrae datos útiles desde texto libre:
+ * Detecta:
  * - nombre
- * - tipo de plaga
+ * - teléfono
+ * - plaga
  * - tipo de lugar
  * - ubicación simple
  *
  * IMPORTANTE:
  * -----------
- * Este parser NO reemplaza al parser de contacto final
- * de nombre + teléfono.
- *
- * Su objetivo es enriquecer la sesión en mensajes libres
- * para evitar preguntas repetidas.
+ * Este parser NO reemplaza al parser final de contacto.
+ * Solo enriquece session.data con datos detectados
+ * desde texto libre.
  */
 
 function parseContactData(message = '') {
@@ -25,13 +24,73 @@ function parseContactData(message = '') {
 
   /**
    * ============================================
-   * NOMBRE
+   * TELÉFONO
    * ============================================
    *
-   * Ejemplo:
-   * - "soy javier"
+   * Detecta secuencias razonables de números:
+   * - 387455456
+   * - 387 455 456
+   * - 387-455-456
+   * - +54 387 455456
    */
-  const nameMatch = text.match(/\bsoy\s+([a-záéíóúñ]+)/i);
+  const phoneMatch = text.match(/(\+?\d[\d\s\-()]{5,})/);
+
+  if (phoneMatch) {
+    const rawPhone = phoneMatch[1].trim();
+    const normalizedPhone = rawPhone.replace(/\D/g, '');
+
+    if (normalizedPhone.length >= 6 && normalizedPhone.length <= 13) {
+      result.phone = rawPhone;
+      result.normalizedPhone = normalizedPhone;
+    }
+  }
+
+  /**
+   * ============================================
+   * NOMBRE
+   * ============================================
+   */
+  let nameMatch = text.match(/\bsoy\s+([a-záéíóúñ]+)/i);
+
+  if (!nameMatch) {
+    nameMatch = text.match(/\bmi nombre es\s+([a-záéíóúñ]+)/i);
+  }
+
+  /**
+   * Fallback:
+   * si vino "javier 387455456", intentamos tomar
+   * la última palabra útil antes del número.
+   */
+  if (!nameMatch && result.phone) {
+    const beforePhone = text.split(phoneMatch[1])[0].trim();
+    const words = beforePhone.split(/\s+/).filter(Boolean);
+
+    if (words.length > 0) {
+      const possibleName = words[words.length - 1];
+
+      const forbiddenWords = [
+        'hola',
+        'buenas',
+        'tengo',
+        'necesito',
+        'quiero',
+        'para',
+        'con',
+        'de',
+        'en',
+        'mi'
+      ];
+
+      if (
+        possibleName &&
+        possibleName.length > 2 &&
+        !forbiddenWords.includes(possibleName)
+      ) {
+        result.name = capitalize(possibleName);
+      }
+    }
+  }
+
   if (nameMatch) {
     result.name = capitalize(nameMatch[1]);
   }
@@ -46,7 +105,7 @@ function parseContactData(message = '') {
     { keywords: ['rata', 'ratas', 'raton', 'ratones'], value: 'roedores' },
     { keywords: ['hormiga', 'hormigas'], value: 'hormigas' },
     { keywords: ['mosquito', 'mosquitos'], value: 'mosquitos' },
-    { keywords: ['alacran', 'alacranes', 'alacrán', 'alacranes'], value: 'alacranes' },
+    { keywords: ['alacran', 'alacranes', 'alacrán'], value: 'alacranes' },
     { keywords: ['arana', 'aranas', 'araña', 'arañas'], value: 'arañas' }
   ];
 
@@ -61,21 +120,12 @@ function parseContactData(message = '') {
    * ============================================
    * TIPO DE LUGAR
    * ============================================
-   *
-   * Estos valores se alinean con el motor conversacional:
-   * - casa
-   * - departamento
-   * - comercio
-   * - oficina
-   * - industria
-   * - galpon
    */
   if (
     text.includes('mi casa') ||
     text.includes('en casa') ||
     /\bcasa\b/.test(text) ||
-    /\bhogar\b/.test(text) ||
-    /\bvivienda\b/.test(text)
+    /\bhogar\b/.test(text)
   ) {
     result.placeType = 'casa';
   } else if (
@@ -109,15 +159,8 @@ function parseContactData(message = '') {
 
   /**
    * ============================================
-   * UBICACIÓN / ZONA SIMPLE
+   * UBICACIÓN SIMPLE
    * ============================================
-   *
-   * Intentamos detectar frases tipo:
-   * - en el centro
-   * - en zona sur
-   * - por tres cerritos
-   *
-   * Pero evitamos tomar "en mi casa" como ubicación.
    */
   const locationPatterns = [
     /\ben el ([a-záéíóúñ\s]+)$/i,
@@ -135,7 +178,6 @@ function parseContactData(message = '') {
       const forbidden = [
         'casa',
         'hogar',
-        'vivienda',
         'departamento',
         'depto',
         'depa',
