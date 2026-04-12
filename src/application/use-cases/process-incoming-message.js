@@ -88,7 +88,6 @@ function processIncomingMessage({
   channel = 'webchat',
   externalUserId = null
 }) {
-
   /**
    * 1. Buscamos la sesión actual.
    *
@@ -135,8 +134,8 @@ function processIncomingMessage({
     externalMessageId: null,
     rawPayload: null
   });
-  
-    /**
+
+  /**
    * 3B. Enriquecemos contexto conversacional liviano.
    *
    * Guardamos:
@@ -153,23 +152,23 @@ function processIncomingMessage({
   }
 
   session.data.lastUserMessage = message;
-  
-  /**
- * ============================================
- * PARSER DE CONTACTO AUTOMÁTICO
- * ============================================
- */
-const parsedData = parseContactData(message);
 
-/**
- * Merge inteligente (no pisa datos existentes)
- */
-session.data = {
-  ...session.data,
-  ...Object.fromEntries(
-    Object.entries(parsedData).filter(([_, v]) => v)
-  )
-};
+  /**
+   * ============================================
+   * PARSER DE CONTACTO AUTOMÁTICO
+   * ============================================
+   *
+   * Extraemos datos útiles desde texto libre
+   * y los mezclamos sin perder datos previos.
+   */
+  const parsedData = parseContactData(message);
+
+  session.data = {
+    ...session.data,
+    ...Object.fromEntries(
+      Object.entries(parsedData).filter(([_, value]) => value)
+    )
+  };
 
   if (!Array.isArray(session.data.conversationHistory)) {
     session.data.conversationHistory = [];
@@ -184,8 +183,8 @@ session.data = {
   if (session.data.conversationHistory.length > 10) {
     session.data.conversationHistory = session.data.conversationHistory.slice(-10);
   }
-  
-    /**
+
+  /**
    * 4. Si la sesión ya está bajo control humano,
    * NO ejecutamos el motor conversacional.
    *
@@ -252,41 +251,60 @@ session.data = {
     };
   }
 
-/**
- * ============================================
- * DETECCIÓN DE INTENCIÓN
- * ============================================
- */
-const intent = detectIntent(message);
-
-/**
- * Inicializar sesión si no existe
- */
-if (!session.data) {
-  session.data = {};
-}
-
-/**
- * Guardamos intención en sesión
- */
-session.data.lastIntent = intent;
-
-/**
- * ============================================
- * SCORING DEL LEAD
- * ============================================
- */
-const leadAnalysis = scoreLead(session.data);
-
-session.data.leadScore = leadAnalysis.score;
-session.data.leadCategory = leadAnalysis.category;
-
-/**
- * Guardar sesión
- */
-session = upsertSession(session);
   /**
-   * 4. Ejecutamos el motor conversacional.
+   * ============================================
+   * DETECCIÓN DE INTENCIÓN
+   * ============================================
+   */
+  const intent = detectIntent(message);
+
+  /**
+   * Guardamos intención en sesión
+   */
+  session.data.lastIntent = intent;
+
+  /**
+   * ============================================
+   * SCORING DEL LEAD
+   * ============================================
+   */
+  const leadAnalysis = scoreLead(session.data);
+
+  session.data.leadScore = leadAnalysis.score;
+  session.data.leadCategory = leadAnalysis.category;
+
+  /**
+   * Persistimos contexto enriquecido antes del motor.
+   */
+  session = upsertSession(session);
+
+  /**
+   * ============================================
+   * AJUSTE INTELIGENTE DEL FLUJO
+   * ============================================
+   *
+   * Si el usuario arranca diciendo directamente la plaga
+   * y el sistema detecta intención de servicios,
+   * evitamos preguntarle nuevamente cuál es la plaga.
+   *
+   * En ese caso, hacemos entrar el motor directamente
+   * por el step "services_pest" usando la plaga detectada.
+   */
+  let effectiveMessage = message;
+
+  const shouldSkipPestQuestion =
+    (session.step === 'welcome' || session.step === 'main_menu') &&
+    intent === 'servicios' &&
+    !!session.data.pest;
+
+  if (shouldSkipPestQuestion) {
+    session.data.category = 'servicios';
+    session.step = 'services_pest';
+    effectiveMessage = session.data.pest;
+  }
+
+  /**
+   * 5. Ejecutamos el motor conversacional.
    *
    * Acá es donde se decide:
    * - qué responder
@@ -296,11 +314,11 @@ session = upsertSession(session);
    */
   const result = processConversation({
     session,
-    rawMessage: message
+    rawMessage: effectiveMessage
   });
 
   /**
-   * 5. Guardamos la sesión actualizada que devuelve el motor.
+   * 6. Guardamos la sesión actualizada que devuelve el motor.
    *
    * Esto es crítico para mantener el contexto
    * de la conversación entre mensajes.
@@ -308,7 +326,7 @@ session = upsertSession(session);
   let persistedSession = upsertSession(result.session);
 
   /**
-   * 6. Si la respuesta del motor indica handoff humano,
+   * 7. Si la respuesta del motor indica handoff humano,
    * persistimos también el modo humano real en la sesión.
    *
    * IMPORTANTE:
@@ -324,12 +342,12 @@ session = upsertSession(session);
   }
 
   /**
-   * 7. Variable para guardar el lead si el flujo lo requiere.
+   * 8. Variable para guardar el lead si el flujo lo requiere.
    */
   let savedLead = null;
 
   /**
-   * 8. Si el motor indicó "save_lead",
+   * 9. Si el motor indicó "save_lead",
    * guardamos un lead completo.
    */
   if (result.action === 'save_lead') {
@@ -337,7 +355,7 @@ session = upsertSession(session);
   }
 
   /**
-   * 9. Si el motor indicó "save_partial_lead",
+   * 10. Si el motor indicó "save_partial_lead",
    * guardamos un lead parcial.
    *
    * Esto suele pasar cuando:
@@ -354,7 +372,7 @@ session = upsertSession(session);
   }
 
   /**
-   * 10. Si el bot generó una respuesta de texto,
+   * 11. Si el bot generó una respuesta de texto,
    * la guardamos también en el historial.
    *
    * Esto permite que el CRM pueda ver la conversación completa
@@ -406,7 +424,7 @@ session = upsertSession(session);
   }
 
   /**
-   * 11. Devolvemos la respuesta final en formato uniforme.
+   * 12. Devolvemos la respuesta final en formato uniforme.
    *
    * Este formato lo consumen los controllers
    * (webchat.controller, whatsapp-webhook.controller, etc.)
