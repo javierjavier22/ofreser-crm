@@ -118,14 +118,8 @@
   font-size: 11px;
   color: var(--muted);
 }
-	  
-	  <div class="user-session-box">
-  <div class="user-session-main" id="crmSessionUserLabel">Usuario: --</div>
-  <div class="user-session-sub" id="crmSessionRoleLabel">Rol: --</div>
-  <div class="user-session-sub" id="crmSessionActivityLabel">Última actividad: --</div>
-</div>
 
-      .btn {
+.btn {
         appearance: none;
         border: none;
         cursor: pointer;
@@ -1119,7 +1113,7 @@
 
 .audit-toolbar {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr auto;
   gap: 10px;
   margin-bottom: 14px;
 }
@@ -2061,38 +2055,50 @@
     <div class="user-session-sub" id="crmSessionRoleLabel">Rol: --</div>
     <div class="user-session-sub" id="crmSessionActivityLabel">Última actividad: --</div>
   </div>
-        <button
-          class="btn secondary"
-          onclick="loadLeads({ silent: false, preserveModal: true })"
-        >
-          Actualizar
-        </button>
-        <button
-          class="btn secondary"
-          id="soundToggleBtn"
-          onclick="activateCrmSound()"
-        >
-          🔔 Activar sonido
-        </button>
 
-<button
-  id="auditAdminBtn"
-  class="btn secondary"
-  onclick="openAuditModal()"
-  style="display: none"
->
-  Auditoría
-</button>
+  <button
+    class="btn secondary"
+    onclick="loadLeads({ silent: false, preserveModal: true })"
+  >
+    Actualizar
+  </button>
 
-        <button
-          id="resetTestingBtn"
-          class="btn secondary"
-          onclick="resetTestingData()"
-        >
-          Reset testing
-        </button>
+  <button
+    class="btn secondary"
+    id="soundToggleBtn"
+    onclick="activateCrmSound()"
+  >
+    🔔 Activar sonido
+  </button>
 
-        <button class="btn secondary" onclick="logoutCrm()">Salir</button>
+  <button
+    id="usersAdminBtn"
+    class="btn secondary"
+    onclick="openUsersAdminModal()"
+    style="display: none"
+  >
+    Usuarios
+  </button>
+
+  <button
+    id="auditAdminBtn"
+    class="btn secondary"
+    onclick="openAuditModal()"
+    style="display: none"
+  >
+    Auditoría
+  </button>
+
+  <button
+    id="resetTestingBtn"
+    class="btn secondary"
+    onclick="resetTestingData()"
+    style="display: none"
+  >
+    Reset testing
+  </button>
+
+  <button class="btn secondary" onclick="logoutCrm()">Salir</button>
         <button class="btn" onclick="window.open('index_chat.html', '_blank')">
           Abrir demo del cliente
         </button>
@@ -2429,7 +2435,7 @@
       <div class="modal-title-wrap">
         <h2>Auditoría del sistema</h2>
         <div class="modal-sub">
-          Historial de acciones sensibles del CRM y administración
+          Historial claro de acciones sensibles del CRM y administración
         </div>
       </div>
       <button class="modal-close" onclick="closeAuditModal()">✕</button>
@@ -2448,19 +2454,19 @@
 
           <select id="auditActionFilter">
             <option value="">Todas las acciones</option>
-            <option value="CRM_LOGIN_SUCCESS">CRM_LOGIN_SUCCESS</option>
-            <option value="CRM_LOGOUT">CRM_LOGOUT</option>
-            <option value="CRM_PASSWORD_CHANGED">CRM_PASSWORD_CHANGED</option>
-            <option value="ADMIN_RESET_SYSTEM">ADMIN_RESET_SYSTEM</option>
-            <option value="ADMIN_USER_CREATED">ADMIN_USER_CREATED</option>
-            <option value="ADMIN_USER_UPDATED">ADMIN_USER_UPDATED</option>
-            <option value="ADMIN_USER_PASSWORD_RESET">ADMIN_USER_PASSWORD_RESET</option>
-            <option value="LEAD_STATUS_CHANGED">LEAD_STATUS_CHANGED</option>
-            <option value="LEAD_NOTE_UPDATED">LEAD_NOTE_UPDATED</option>
-            <option value="SESSION_TAKEN_BY_HUMAN">SESSION_TAKEN_BY_HUMAN</option>
-            <option value="SESSION_RETURNED_TO_BOT">SESSION_RETURNED_TO_BOT</option>
-            <option value="SESSION_CLOSED">SESSION_CLOSED</option>
-            <option value="HUMAN_MESSAGE_SENT">HUMAN_MESSAGE_SENT</option>
+            <option value="CRM_LOGIN_SUCCESS">Inicio de sesión</option>
+            <option value="CRM_LOGOUT">Cierre de sesión</option>
+            <option value="CRM_PASSWORD_CHANGED">Cambio de contraseña propia</option>
+            <option value="ADMIN_RESET_SYSTEM">Reset del sistema</option>
+            <option value="ADMIN_USER_CREATED">Usuario creado</option>
+            <option value="ADMIN_USER_UPDATED">Usuario actualizado</option>
+            <option value="ADMIN_USER_PASSWORD_RESET">Reset de contraseña de usuario</option>
+            <option value="LEAD_STATUS_CHANGED">Cambio de estado del lead</option>
+            <option value="LEAD_NOTE_UPDATED">Actualización de nota</option>
+            <option value="SESSION_TAKEN_BY_HUMAN">Tomada por humano</option>
+            <option value="SESSION_RETURNED_TO_BOT">Devuelta al bot</option>
+            <option value="SESSION_CLOSED">Conversación cerrada</option>
+            <option value="HUMAN_MESSAGE_SENT">Mensaje humano enviado</option>
           </select>
 
 <input
@@ -2593,73 +2599,49 @@ let resetPasswordTargetUsername = '';
         document.getElementById("lastSyncLabel").textContent =
           `Actualizado: ${now.toLocaleTimeString("es-AR")}`;
       }
-	  
-	  function updateSessionActivityLabel() {
-  const label = document.getElementById("crmSessionActivityLabel");
-  if (!label) return;
 
-  const now = new Date();
-  label.textContent = `Última actividad: ${now.toLocaleTimeString("es-AR")}`;
-  localStorage.setItem("ofreser_crm_last_activity", String(Date.now()));
-}
+      function updateSessionActivityLabel() {
+        const label = document.getElementById("crmSessionActivityLabel");
+        if (!label) return;
 
-function renderCrmSessionBox() {
-  const userLabel = document.getElementById("crmSessionUserLabel");
-  const roleLabel = document.getElementById("crmSessionRoleLabel");
-  const activityLabel = document.getElementById("crmSessionActivityLabel");
+        const now = new Date();
+        label.textContent = `Última actividad: ${now.toLocaleTimeString("es-AR")}`;
+        localStorage.setItem("ofreser_crm_last_activity", String(Date.now()));
+      }
 
-  if (!userLabel || !roleLabel || !activityLabel) return;
+      function renderCrmSessionBox() {
+        const userLabel = document.getElementById("crmSessionUserLabel");
+        const roleLabel = document.getElementById("crmSessionRoleLabel");
+        const activityLabel = document.getElementById("crmSessionActivityLabel");
 
-  const username =
-    crmCurrentAuth?.username ||
-    localStorage.getItem("ofreser_crm_username") ||
-    "--";
+        if (!userLabel || !roleLabel || !activityLabel) return;
 
-  const role =
-    crmCurrentAuth?.role ||
-    localStorage.getItem("ofreser_crm_role") ||
-    window.getStoredCrmRole?.() ||
-    "--";
+        const username =
+          crmCurrentAuth?.username ||
+          localStorage.getItem("ofreser_crm_username") ||
+          "--";
 
-  const lastActivityTs = Number(localStorage.getItem("ofreser_crm_last_activity") || 0);
+        const role =
+          crmCurrentAuth?.role ||
+          localStorage.getItem("ofreser_crm_role") ||
+          window.getStoredCrmRole?.() ||
+          "--";
 
-  userLabel.textContent = `Usuario: ${username}`;
-  roleLabel.textContent = `Rol: ${role}`;
+        const lastActivityTs = Number(
+          localStorage.getItem("ofreser_crm_last_activity") || 0
+        );
 
-  if (lastActivityTs > 0) {
-    activityLabel.textContent = `Última actividad: ${new Date(lastActivityTs).toLocaleTimeString("es-AR")}`;
-  } else {
-    activityLabel.textContent = "Última actividad: --";
-  }
-}
-	  
-	  function updateSessionActivityLabel() {
-  const label = document.getElementById("crmSessionActivityLabel");
-  if (!label) return;
+        userLabel.textContent = `Usuario: ${username}`;
+        roleLabel.textContent = `Rol: ${role}`;
 
-  const now = new Date();
-  label.textContent = `Última actividad: ${now.toLocaleTimeString("es-AR")}`;
-}
+        if (lastActivityTs > 0) {
+          activityLabel.textContent =
+            `Última actividad: ${new Date(lastActivityTs).toLocaleTimeString("es-AR")}`;
+        } else {
+          activityLabel.textContent = "Última actividad: --";
+        }
+      }
 
-function renderCrmSessionBox() {
-  const userLabel = document.getElementById("crmSessionUserLabel");
-  const roleLabel = document.getElementById("crmSessionRoleLabel");
-
-  if (!userLabel || !roleLabel) return;
-
-  const username =
-    crmCurrentAuth?.username ||
-    localStorage.getItem("ofreser_crm_username") ||
-    "--";
-
-  const role =
-    crmCurrentAuth?.role ||
-    window.getStoredCrmRole?.() ||
-    "--";
-
-  userLabel.textContent = `Usuario: ${username}`;
-  roleLabel.textContent = `Rol: ${role}`;
-}
       /**
        * =========================================================
        * ROLES Y PERMISOS VISUALES
@@ -3278,10 +3260,11 @@ function applyCrmRolePermissions() {
             (lead) => !previousIds.has(String(lead.id)),
           ).length;
 
-allLeads = incomingLeads;
-applyFilters();
-updateLastSyncLabel();
-updateSessionActivityLabel();
+          allLeads = incomingLeads;
+          applyFilters();
+          updateLastSyncLabel();
+          updateSessionActivityLabel();
+          renderCrmSessionBox();
 		  const connStatus = document.getElementById("connStatus");
 if (connStatus) {
   connStatus.style.color = "#16a34a";
