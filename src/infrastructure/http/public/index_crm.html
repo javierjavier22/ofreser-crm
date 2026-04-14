@@ -71,6 +71,7 @@
         align-items: center;
         gap: 14px;
         min-width: 320px;
+        flex-shrink: 0;
       }
 
       .logo {
@@ -99,11 +100,14 @@
         margin-top: 4px;
       }
 
-      .top-actions {
+       .top-actions {
         display: flex;
         align-items: center;
+        justify-content: flex-end;
         gap: 10px;
         flex-wrap: wrap;
+        flex: 1;
+        min-width: 0;
       }
 
       .last-sync {
