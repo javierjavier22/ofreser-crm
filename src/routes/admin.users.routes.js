@@ -40,6 +40,9 @@ const crypto = require('crypto');
  * por eso la ruta correcta hacia sqlite es esta.
  */
 const db = require('../infrastructure/database/sqlite');
+const {
+  saveAuditLog
+} = require('../infrastructure/persistence/sqlite/audit.repository');
 
 const router = express.Router();
 
@@ -202,6 +205,21 @@ router.post('/', requireAdmin, (req, res) => {
       normalizedRole
     );
 
+    /**
+     * Registramos creación de usuario.
+     */
+    saveAuditLog({
+      action: 'ADMIN_USER_CREATED',
+      entityType: 'user',
+      entityId: id,
+      req,
+      details: {
+        createdUsername: normalizedUsername,
+        createdRole: normalizedRole,
+        isActive: true
+      }
+    });
+
     return res.json({
       ok: true,
       message: 'Usuario creado correctamente'
@@ -341,6 +359,27 @@ router.put('/:id', requireAdmin, (req, res) => {
       id
     );
 
+    /**
+     * Registramos cambio administrativo sobre usuario.
+     */
+    saveAuditLog({
+      action: 'ADMIN_USER_UPDATED',
+      entityType: 'user',
+      entityId: id,
+      req,
+      details: {
+        targetUsername: targetUser.username,
+        from: {
+          role: targetUser.role,
+          isActive: Number(targetUser.is_active) === 1
+        },
+        to: {
+          role: normalizedRole,
+          isActive: nextIsActive === 1
+        }
+      }
+    });
+
     return res.json({
       ok: true,
       message: 'Usuario actualizado correctamente'
@@ -388,13 +427,26 @@ router.post('/:id/reset-password', requireAdmin, (req, res) => {
 
     const passwordHash = hashPassword(rawPassword);
 
-    db.prepare(`
+        db.prepare(`
       UPDATE crm_users
       SET
         password_hash = ?,
         updated_at = datetime('now')
       WHERE id = ?
     `).run(passwordHash, id);
+
+    /**
+     * Registramos reset de contraseña por admin.
+     */
+    saveAuditLog({
+      action: 'ADMIN_USER_PASSWORD_RESET',
+      entityType: 'user',
+      entityId: id,
+      req,
+      details: {
+        targetUsername: targetUser.username
+      }
+    });
 
     return res.json({
       ok: true,

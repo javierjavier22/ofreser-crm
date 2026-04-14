@@ -30,6 +30,9 @@
  */
 
 const db = require('../../database/sqlite');
+const {
+  saveAuditLog
+} = require('../../persistence/sqlite/audit.repository');
 
 /**
  * Resetea completamente los datos operativos del sistema.
@@ -78,6 +81,19 @@ function postResetSystem(req, res) {
     });
 
     resetTransaction();
+
+    /**
+     * Registramos reset del sistema en auditoría.
+     */
+    saveAuditLog({
+      action: 'ADMIN_RESET_SYSTEM',
+      entityType: 'system',
+      entityId: 'global',
+      req,
+      details: {
+        deletedTables: ['messages', 'leads', 'sessions']
+      }
+    });
 
     return res.json({
       ok: true,

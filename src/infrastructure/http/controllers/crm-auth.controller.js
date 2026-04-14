@@ -28,6 +28,9 @@
 const crypto = require('crypto');
 const crmAuthMiddleware = require('../crm-auth.middleware');
 const db = require('../../database/sqlite');
+const {
+  saveAuditLog
+} = require('../../persistence/sqlite/audit.repository');
 
 /**
  * Verifica password contra hash almacenado.
@@ -140,6 +143,22 @@ function postCrmLogin(req, res) {
     dbUser.role || 'admin'
   );
 
+  /**
+   * Registramos login exitoso en auditoría.
+   */
+  saveAuditLog({
+    action: 'CRM_LOGIN_SUCCESS',
+    entityType: 'auth',
+    entityId: dbUser.id,
+    actorUserId: dbUser.id,
+    actorUsername: dbUser.username,
+    actorRole: dbUser.role || 'admin',
+    req,
+    details: {
+      username: dbUser.username
+    }
+  });
+
   return res.json({
     ok: true,
     token,
@@ -237,6 +256,19 @@ function postCrmChangePassword(req, res) {
     WHERE id = ?
   `).run(newHash, dbUser.id);
 
+  /**
+   * Registramos cambio de contraseña propia.
+   */
+  saveAuditLog({
+    action: 'CRM_PASSWORD_CHANGED',
+    entityType: 'user',
+    entityId: dbUser.id,
+    req,
+    details: {
+      username: currentUsername
+    }
+  });
+
   return res.json({
     ok: true
   });
@@ -253,6 +285,19 @@ function postCrmLogout(req, res) {
   if (token) {
     crmAuthMiddleware.revokeCrmToken(token);
   }
+
+  /**
+   * Registramos logout del usuario autenticado.
+   */
+  saveAuditLog({
+    action: 'CRM_LOGOUT',
+    entityType: 'auth',
+    entityId: req.crmAuth?.userId || null,
+    req,
+    details: {
+      username: req.crmAuth?.username || null
+    }
+  });
 
   return res.json({ ok: true });
 }
