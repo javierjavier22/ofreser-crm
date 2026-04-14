@@ -50,7 +50,8 @@ const {
  * Controller administrativo interno.
  */
 const {
-  postResetSystem
+  postResetSystem,
+  getAuditLogs
 } = require('./controllers/admin.controller');
 
 /**
@@ -151,6 +152,13 @@ app.post(
   crmAuthMiddleware,
   crmAuthMiddleware.requireAdmin,
   postResetSystem
+);
+
+app.get(
+  '/admin/audit',
+  crmAuthMiddleware,
+  crmAuthMiddleware.requireAdmin,
+  getAuditLogs
 );
 
 /**

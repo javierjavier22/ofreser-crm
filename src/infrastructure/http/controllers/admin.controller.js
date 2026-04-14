@@ -31,7 +31,8 @@
 
 const db = require('../../database/sqlite');
 const {
-  saveAuditLog
+  saveAuditLog,
+  getAuditLogsFiltered
 } = require('../../persistence/sqlite/audit.repository');
 
 /**
@@ -109,6 +110,52 @@ function postResetSystem(req, res) {
   }
 }
 
+/**
+ * Devuelve auditoría del sistema.
+ *
+ * Seguridad:
+ * ----------
+ * Esta función debe quedar montada solo detrás de:
+ * - crmAuthMiddleware
+ * - requireAdmin
+ *
+ * Filtros opcionales por query string:
+ * - username
+ * - action
+ * - entityType
+ * - entityId
+ */
+function getAuditLogs(req, res) {
+  try {
+    const {
+      username = '',
+      action = '',
+      entityType = '',
+      entityId = ''
+    } = req.query || {};
+
+    const logs = getAuditLogsFiltered({
+      username,
+      action,
+      entityType,
+      entityId
+    });
+
+    return res.json({
+      ok: true,
+      total: logs.length,
+      logs
+    });
+  } catch (error) {
+    console.error('❌ Error consultando auditoría:', error.message);
+
+    return res.status(500).json({
+      error: 'No se pudo consultar la auditoría'
+    });
+  }
+}
+
 module.exports = {
-  postResetSystem
+  postResetSystem,
+  getAuditLogs
 };

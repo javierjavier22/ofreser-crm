@@ -292,9 +292,75 @@ function getAuditLogsByEntity(entityType, entityId) {
   return rows.map(mapRowToAuditLog);
 }
 
+/**
+ * Devuelve auditoría con filtros opcionales.
+ *
+ * Filtros soportados:
+ * - username
+ * - action
+ * - entityType
+ * - entityId
+ *
+ * Siempre ordena por fecha descendente.
+ */
+function getAuditLogsFiltered({
+  username = '',
+  action = '',
+  entityType = '',
+  entityId = ''
+} = {}) {
+  const conditions = [];
+  const params = [];
+
+  if (String(username || '').trim()) {
+    conditions.push('actor_username = ?');
+    params.push(String(username).trim());
+  }
+
+  if (String(action || '').trim()) {
+    conditions.push('action = ?');
+    params.push(String(action).trim());
+  }
+
+  if (String(entityType || '').trim()) {
+    conditions.push('entity_type = ?');
+    params.push(String(entityType).trim());
+  }
+
+  if (String(entityId || '').trim()) {
+    conditions.push('entity_id = ?');
+    params.push(String(entityId).trim());
+  }
+
+  const whereClause = conditions.length
+    ? `WHERE ${conditions.join(' AND ')}`
+    : '';
+
+  const rows = db.prepare(`
+    SELECT
+      id,
+      actor_user_id,
+      actor_username,
+      actor_role,
+      action,
+      entity_type,
+      entity_id,
+      details_json,
+      ip_address,
+      user_agent,
+      created_at
+    FROM audit_logs
+    ${whereClause}
+    ORDER BY datetime(created_at) DESC
+  `).all(...params);
+
+  return rows.map(mapRowToAuditLog);
+}
+
 module.exports = {
   saveAuditLog,
   getAllAuditLogs,
   getAuditLogsByUsername,
-  getAuditLogsByEntity
+  getAuditLogsByEntity,
+  getAuditLogsFiltered
 };
