@@ -96,6 +96,34 @@
         border-radius: 10px;
         background: rgba(255, 255, 255, 0.02);
       }
+	  
+	  .user-session-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  min-width: 190px;
+}
+
+.user-session-main {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.user-session-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+	  
+	  <div class="user-session-box">
+  <div class="user-session-main" id="crmSessionUserLabel">Usuario: --</div>
+  <div class="user-session-sub" id="crmSessionRoleLabel">Rol: --</div>
+  <div class="user-session-sub" id="crmSessionActivityLabel">Última actividad: --</div>
+</div>
 
       .btn {
         appearance: none;
@@ -2572,6 +2600,45 @@ let resetPasswordTargetUsername = '';
 
   const now = new Date();
   label.textContent = `Última actividad: ${now.toLocaleTimeString("es-AR")}`;
+  localStorage.setItem("ofreser_crm_last_activity", String(Date.now()));
+}
+
+function renderCrmSessionBox() {
+  const userLabel = document.getElementById("crmSessionUserLabel");
+  const roleLabel = document.getElementById("crmSessionRoleLabel");
+  const activityLabel = document.getElementById("crmSessionActivityLabel");
+
+  if (!userLabel || !roleLabel || !activityLabel) return;
+
+  const username =
+    crmCurrentAuth?.username ||
+    localStorage.getItem("ofreser_crm_username") ||
+    "--";
+
+  const role =
+    crmCurrentAuth?.role ||
+    localStorage.getItem("ofreser_crm_role") ||
+    window.getStoredCrmRole?.() ||
+    "--";
+
+  const lastActivityTs = Number(localStorage.getItem("ofreser_crm_last_activity") || 0);
+
+  userLabel.textContent = `Usuario: ${username}`;
+  roleLabel.textContent = `Rol: ${role}`;
+
+  if (lastActivityTs > 0) {
+    activityLabel.textContent = `Última actividad: ${new Date(lastActivityTs).toLocaleTimeString("es-AR")}`;
+  } else {
+    activityLabel.textContent = "Última actividad: --";
+  }
+}
+	  
+	  function updateSessionActivityLabel() {
+  const label = document.getElementById("crmSessionActivityLabel");
+  if (!label) return;
+
+  const now = new Date();
+  label.textContent = `Última actividad: ${now.toLocaleTimeString("es-AR")}`;
 }
 
 function renderCrmSessionBox() {
@@ -2602,11 +2669,15 @@ function renderCrmSessionBox() {
       /**
        * Devuelve true si el usuario autenticado es admin.
        */
-      function isCrmAdmin() {
-        return (
-          String(window.getStoredCrmRole?.() || "").toLowerCase() === "admin"
-        );
-      }
+function isCrmAdmin() {
+  const role =
+    crmCurrentAuth?.role ||
+    localStorage.getItem("ofreser_crm_role") ||
+    window.getStoredCrmRole?.() ||
+    "";
+
+  return String(role).toLowerCase() === "admin";
+}
 
       /**
        * Aplica permisos visuales del CRM según role.
@@ -4733,6 +4804,14 @@ try {
 
   if (meRes.ok && meData?.auth) {
     crmCurrentAuth = meData.auth;
+
+    if (crmCurrentAuth.username) {
+      localStorage.setItem("ofreser_crm_username", crmCurrentAuth.username);
+    }
+
+    if (crmCurrentAuth.role) {
+      localStorage.setItem("ofreser_crm_role", crmCurrentAuth.role);
+    }
   }
 } catch (error) {
   console.error("No se pudo cargar /crm/me:", error);
