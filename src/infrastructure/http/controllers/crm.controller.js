@@ -65,6 +65,10 @@ const {
   sendWhatsAppText
 } = require('../../channels/whatsapp/whatsapp.client');
 
+const {
+  saveAuditLog
+} = require('../../persistence/sqlite/audit.repository');
+
 /**
  * Devuelve todos los leads enriquecidos.
  *
@@ -179,27 +183,53 @@ function patchLeadStatus(req, res) {
   const leadId = req.params.id;
   const { status } = req.body;
 
-  // Lista blanca de estados válidos
   const validStatuses = ['nuevo', 'calificado', 'seguimiento', 'cerrado'];
 
-  // Validamos que el estado enviado sea uno permitido
   if (!validStatuses.includes(status)) {
     return res.status(400).json({
       error: 'Estado inválido'
     });
   }
 
-  // Intentamos actualizar el lead
+  /**
+   * Leemos el lead actual antes de modificarlo
+   * para poder auditar from -> to.
+   */
+  const currentLead = getLeadById(leadId);
+
+  if (!currentLead) {
+    return res.status(404).json({
+      error: 'Lead no encontrado'
+    });
+  }
+
+  const previousStatus = currentLead.status || 'nuevo';
+
   const updated = updateLeadStatus(leadId, status);
 
-  // Si no existe el lead, devolvemos 404
   if (!updated) {
     return res.status(404).json({
       error: 'Lead no encontrado'
     });
   }
 
-  // Si todo salió bien, devolvemos el lead actualizado
+  /**
+   * Registramos auditoría del movimiento comercial.
+   */
+  saveAuditLog({
+    action: 'LEAD_STATUS_CHANGED',
+    entityType: 'lead',
+    entityId: leadId,
+    req,
+    details: {
+      from: previousStatus,
+      to: status,
+      leadName: updated.name || '',
+      phone: updated.phone || '',
+      category: updated.category || ''
+    }
+  });
+
   res.json({
     ok: true,
     lead: updated
@@ -223,24 +253,56 @@ function patchLeadNote(req, res) {
   const leadId = req.params.id;
   const { note } = req.body;
 
-  // Validamos que note sea texto
   if (typeof note !== 'string') {
     return res.status(400).json({
       error: 'La nota debe ser texto'
     });
   }
 
-  // Intentamos actualizar la nota del lead
+  /**
+   * Leemos el lead actual antes del cambio
+   * para poder auditar.
+   */
+  const currentLead = getLeadById(leadId);
+
+  if (!currentLead) {
+    return res.status(404).json({
+      error: 'Lead no encontrado'
+    });
+  }
+
+  const previousNote = String(currentLead.internalNote || '');
+  const nextNote = String(note || '').trim();
+
   const updated = updateLeadNote(leadId, note);
 
-  // Si el lead no existe, devolvemos 404
   if (!updated) {
     return res.status(404).json({
       error: 'Lead no encontrado'
     });
   }
 
-  // Si salió bien, devolvemos el lead actualizado
+  /**
+   * Registramos auditoría de nota interna.
+   *
+   * Guardamos solo previews para no hacer la auditoría
+   * innecesariamente pesada.
+   */
+  saveAuditLog({
+    action: 'LEAD_NOTE_UPDATED',
+    entityType: 'lead',
+    entityId: leadId,
+    req,
+    details: {
+      previousLength: previousNote.length,
+      newLength: nextNote.length,
+      previousPreview: previousNote.slice(0, 120),
+      newPreview: nextNote.slice(0, 120),
+      leadName: updated.name || '',
+      phone: updated.phone || ''
+    }
+  });
+
   res.json({
     ok: true,
     lead: updated
@@ -267,9 +329,6 @@ function patchSessionControl(req, res) {
   const sessionId = req.params.sessionId;
   const { controlMode, takenBy } = req.body;
 
-  /**
-   * Validamos el valor recibido.
-   */
   const validModes = ['bot', 'human', 'closed'];
 
   if (!validModes.includes(controlMode)) {
@@ -278,9 +337,6 @@ function patchSessionControl(req, res) {
     });
   }
 
-  /**
-   * Buscamos la sesión actual.
-   */
   const session = getBySessionId(sessionId);
 
   if (!session) {
@@ -290,8 +346,10 @@ function patchSessionControl(req, res) {
   }
 
   /**
-   * Aplicamos el cambio de estado de forma explícita.
+   * Guardamos el modo anterior para auditoría.
    */
+  const previousMode = session.controlMode || 'bot';
+
   if (controlMode === 'human') {
     session.controlMode = 'human';
     session.step = 'handoff';
@@ -315,10 +373,35 @@ function patchSessionControl(req, res) {
     session.closedAt = new Date().toISOString();
   }
 
-  /**
-   * Persistimos la sesión actualizada.
-   */
   const updatedSession = upsertSession(session);
+
+  /**
+   * Acción de auditoría según destino.
+   */
+  let action = 'SESSION_CONTROL_CHANGED';
+
+  if (controlMode === 'human') {
+    action = 'SESSION_TAKEN_BY_HUMAN';
+  } else if (controlMode === 'bot') {
+    action = 'SESSION_RETURNED_TO_BOT';
+  } else if (controlMode === 'closed') {
+    action = 'SESSION_CLOSED';
+  }
+
+  saveAuditLog({
+    action,
+    entityType: 'session',
+    entityId: sessionId,
+    req,
+    details: {
+      from: previousMode,
+      to: controlMode,
+      step: updatedSession.step || '',
+      takenBy: updatedSession.takenBy || null,
+      externalUserId: updatedSession.externalUserId || null,
+      channel: updatedSession.channel || ''
+    }
+  });
 
   return res.json({
     ok: true,
@@ -344,18 +427,12 @@ async function postHumanMessage(req, res) {
   const sessionId = req.params.sessionId;
   const { text } = req.body;
 
-  /**
-   * Validación básica del texto.
-   */
   if (typeof text !== 'string' || !text.trim()) {
     return res.status(400).json({
       error: 'El mensaje es obligatorio'
     });
   }
 
-  /**
-   * Buscamos la sesión.
-   */
   const session = getBySessionId(sessionId);
 
   if (!session) {
@@ -364,29 +441,18 @@ async function postHumanMessage(req, res) {
     });
   }
 
-  /**
-   * Solo permitimos envío manual si la sesión está en modo HUMANO.
-   */
   if (session.controlMode !== 'human') {
     return res.status(400).json({
       error: 'Solo se puede enviar mensaje manual cuando la conversación está en modo HUMANO'
     });
   }
 
-  /**
-   * Por ahora el envío manual desde CRM
-   * solo aplica a conversaciones de WhatsApp.
-   */
   if (session.channel !== 'whatsapp') {
     return res.status(400).json({
       error: 'El envío manual desde CRM solo está habilitado para WhatsApp'
     });
   }
 
-  /**
-   * El número real del destinatario es externalUserId.
-   * En WhatsApp guardamos ahí el número del cliente.
-   */
   const to = session.externalUserId;
 
   if (!to) {
@@ -399,12 +465,12 @@ async function postHumanMessage(req, res) {
 
   try {
     /**
-     * 1. Enviamos el mensaje real a WhatsApp.
+     * 1. Enviamos mensaje real al proveedor.
      */
     const providerResponse = await sendWhatsAppText(to, cleanText);
 
     /**
-     * 2. Guardamos el mensaje en historial como HUMANO.
+     * 2. Guardamos mensaje en historial como humano.
      */
     const savedMessage = saveMessage({
       sessionId: session.sessionId,
@@ -415,6 +481,23 @@ async function postHumanMessage(req, res) {
       text: cleanText,
       externalMessageId: null,
       rawPayload: providerResponse || null
+    });
+
+    /**
+     * 3. Registramos auditoría del envío manual.
+     */
+    saveAuditLog({
+      action: 'HUMAN_MESSAGE_SENT',
+      entityType: 'message',
+      entityId: savedMessage.id,
+      req,
+      details: {
+        sessionId: session.sessionId,
+        channel: session.channel,
+        to: session.externalUserId,
+        textPreview: cleanText.slice(0, 160),
+        textLength: cleanText.length
+      }
     });
 
     return res.json({
