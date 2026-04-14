@@ -226,6 +226,78 @@ function createCrmSessionsTable() {
 }
 
 /**
+ * Crea la tabla de auditoría del CRM.
+ *
+ * Objetivo:
+ * - registrar acciones sensibles del sistema
+ * - saber quién hizo qué
+ * - saber sobre qué entidad actuó
+ * - guardar metadata útil para trazabilidad
+ *
+ * Campos:
+ * - id: identificador único del evento
+ * - actor_user_id: id del usuario que ejecutó la acción
+ * - actor_username: username visible
+ * - actor_role: rol del usuario al momento de la acción
+ * - action: tipo de acción realizada
+ * - entity_type: tipo de entidad afectada (lead, session, user, auth, system, message)
+ * - entity_id: id de la entidad afectada
+ * - details_json: detalle estructurado del cambio
+ * - ip_address: IP del request si existe
+ * - user_agent: navegador o cliente si existe
+ * - created_at: fecha/hora del evento
+ */
+function createAuditLogsTable() {
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id TEXT PRIMARY KEY,
+      actor_user_id TEXT,
+      actor_username TEXT,
+      actor_role TEXT,
+      action TEXT NOT NULL,
+      entity_type TEXT NOT NULL,
+      entity_id TEXT,
+      details_json TEXT,
+      ip_address TEXT,
+      user_agent TEXT,
+      created_at TEXT NOT NULL
+    )
+  `).run();
+
+  /**
+   * Índice por fecha para listar auditoría reciente rápido.
+   */
+  db.prepare(`
+    CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at
+    ON audit_logs(created_at)
+  `).run();
+
+  /**
+   * Índice por usuario para filtrar acciones por actor.
+   */
+  db.prepare(`
+    CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_username
+    ON audit_logs(actor_username)
+  `).run();
+
+  /**
+   * Índice por acción para búsquedas rápidas.
+   */
+  db.prepare(`
+    CREATE INDEX IF NOT EXISTS idx_audit_logs_action
+    ON audit_logs(action)
+  `).run();
+
+  /**
+   * Índice por entidad para auditoría contextual.
+   */
+  db.prepare(`
+    CREATE INDEX IF NOT EXISTS idx_audit_logs_entity
+    ON audit_logs(entity_type, entity_id)
+  `).run();
+}
+
+/**
  * Hashea una contraseña usando scrypt nativo de Node.
  *
  * Formato guardado:
@@ -381,6 +453,7 @@ function initDb() {
   createLeadsTable();
   createCrmUsersTable();
   createCrmSessionsTable();
+  createAuditLogsTable();
 
   runSafeMigrations();
   seedInitialCrmUserFromEnv();
