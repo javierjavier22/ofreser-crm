@@ -1067,6 +1067,107 @@
   animation: fadeIn 0.2s ease;
 }
 
+.user-session-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  min-width: 170px;
+}
+
+.user-session-main {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.user-session-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.audit-toolbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.audit-toolbar input,
+.audit-toolbar select {
+  width: 100%;
+  padding: 12px 13px;
+  border-radius: 12px;
+  border: 1px solid var(--line-2);
+  background: #0b1220;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.audit-list {
+  display: grid;
+  gap: 10px;
+}
+
+.audit-item {
+  background: var(--panel-2);
+  border: 1px solid var(--line-2);
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.audit-item-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.audit-action {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.audit-date {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.audit-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.audit-details {
+  font-size: 12px;
+  color: #cbd5e1;
+  background: #0f172a;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.45;
+}
+
+@media (max-width: 768px) {
+  .user-session-box {
+    width: 100%;
+  }
+
+  .audit-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
 .toast.success {
   background: #2ecc71;
 }
@@ -1863,11 +1964,17 @@
         </div>
       </div>
 
-      <div class="top-actions">
-        <div class="last-sync">
-  <span id="connStatus" style="color: #16a34a; margin-right: 6px;">●</span>
-  <span id="lastSyncLabel">Actualizado: --</span>
-</div>
+<div class="top-actions">
+  <div class="last-sync">
+    <span id="connStatus" style="color: #16a34a; margin-right: 6px;">●</span>
+    <span id="lastSyncLabel">Actualizado: --</span>
+  </div>
+
+  <div class="user-session-box">
+    <div class="user-session-main" id="crmSessionUserLabel">Usuario: --</div>
+    <div class="user-session-sub" id="crmSessionRoleLabel">Rol: --</div>
+    <div class="user-session-sub" id="crmSessionActivityLabel">Última actividad: --</div>
+  </div>
         <button
           class="btn secondary"
           onclick="loadLeads({ silent: false, preserveModal: true })"
@@ -1882,14 +1989,14 @@
           🔔 Activar sonido
         </button>
 
-        <button
-          id="usersAdminBtn"
-          class="btn secondary"
-          onclick="openUsersAdminModal()"
-          style="display: none"
-        >
-          Usuarios
-        </button>
+<button
+  id="auditAdminBtn"
+  class="btn secondary"
+  onclick="openAuditModal()"
+  style="display: none"
+>
+  Auditoría
+</button>
 
         <button
           id="resetTestingBtn"
@@ -2230,6 +2337,58 @@
   </div>
 </div>
 
+<div id="auditModalOverlay" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title-wrap">
+        <h2>Auditoría del sistema</h2>
+        <div class="modal-sub">
+          Historial de acciones sensibles del CRM y administración
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeAuditModal()">✕</button>
+    </div>
+
+    <div class="modal-body" style="grid-template-columns: 1fr">
+      <div class="detail-block" style="margin-bottom: 0">
+        <div class="detail-title">Filtros</div>
+
+        <div class="audit-toolbar">
+          <input
+            id="auditUsernameFilter"
+            type="text"
+            placeholder="Filtrar por usuario..."
+          />
+
+          <select id="auditActionFilter">
+            <option value="">Todas las acciones</option>
+            <option value="CRM_LOGIN_SUCCESS">CRM_LOGIN_SUCCESS</option>
+            <option value="CRM_LOGOUT">CRM_LOGOUT</option>
+            <option value="CRM_PASSWORD_CHANGED">CRM_PASSWORD_CHANGED</option>
+            <option value="ADMIN_RESET_SYSTEM">ADMIN_RESET_SYSTEM</option>
+            <option value="ADMIN_USER_CREATED">ADMIN_USER_CREATED</option>
+            <option value="ADMIN_USER_UPDATED">ADMIN_USER_UPDATED</option>
+            <option value="ADMIN_USER_PASSWORD_RESET">ADMIN_USER_PASSWORD_RESET</option>
+            <option value="LEAD_STATUS_CHANGED">LEAD_STATUS_CHANGED</option>
+            <option value="LEAD_NOTE_UPDATED">LEAD_NOTE_UPDATED</option>
+            <option value="SESSION_TAKEN_BY_HUMAN">SESSION_TAKEN_BY_HUMAN</option>
+            <option value="SESSION_RETURNED_TO_BOT">SESSION_RETURNED_TO_BOT</option>
+            <option value="SESSION_CLOSED">SESSION_CLOSED</option>
+            <option value="HUMAN_MESSAGE_SENT">HUMAN_MESSAGE_SENT</option>
+          </select>
+
+          <button class="btn secondary" onclick="loadAuditLogs()">
+            Actualizar
+          </button>
+        </div>
+
+        <div id="auditStatusBox" class="note-status"></div>
+        <div id="auditListWrap" class="loading">Cargando auditoría...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toastContainer" class="toast-container"></div>
 
     <script src="crm-login.js"></script>
@@ -2242,9 +2401,10 @@
       const API_BASE = window.location.origin;
       const CRM_SOUND_STORAGE_KEY = "ofreser_crm_sound_enabled";
 
-      let allLeads = [];
-      let currentLeadId = null;
-      let autoRefreshTimer = null;
+let allLeads = [];
+let currentLeadId = null;
+let autoRefreshTimer = null;
+let crmCurrentAuth = null;
 
       /**
        * Evita ejecutar el bootstrap del CRM múltiples veces.
@@ -2341,6 +2501,34 @@ let resetPasswordTargetUsername = '';
         document.getElementById("lastSyncLabel").textContent =
           `Actualizado: ${now.toLocaleTimeString("es-AR")}`;
       }
+	  
+	  function updateSessionActivityLabel() {
+  const label = document.getElementById("crmSessionActivityLabel");
+  if (!label) return;
+
+  const now = new Date();
+  label.textContent = `Última actividad: ${now.toLocaleTimeString("es-AR")}`;
+}
+
+function renderCrmSessionBox() {
+  const userLabel = document.getElementById("crmSessionUserLabel");
+  const roleLabel = document.getElementById("crmSessionRoleLabel");
+
+  if (!userLabel || !roleLabel) return;
+
+  const username =
+    crmCurrentAuth?.username ||
+    localStorage.getItem("ofreser_crm_username") ||
+    "--";
+
+  const role =
+    crmCurrentAuth?.role ||
+    window.getStoredCrmRole?.() ||
+    "--";
+
+  userLabel.textContent = `Usuario: ${username}`;
+  roleLabel.textContent = `Rol: ${role}`;
+}
       /**
        * =========================================================
        * ROLES Y PERMISOS VISUALES
@@ -2362,19 +2550,24 @@ let resetPasswordTargetUsername = '';
        * En esta etapa solo ocultamos acciones sensibles.
        * Más adelante vamos a reforzar esto también en backend.
        */
-      function applyCrmRolePermissions() {
-        const resetBtn = document.getElementById("resetTestingBtn");
-        const usersBtn = document.getElementById("usersAdminBtn");
-        const isAdmin = isCrmAdmin();
+function applyCrmRolePermissions() {
+  const resetBtn = document.getElementById("resetTestingBtn");
+  const usersBtn = document.getElementById("usersAdminBtn");
+  const auditBtn = document.getElementById("auditAdminBtn");
+  const isAdmin = isCrmAdmin();
 
-        if (resetBtn) {
-          resetBtn.style.display = isAdmin ? "" : "none";
-        }
+  if (resetBtn) {
+    resetBtn.style.display = isAdmin ? "" : "none";
+  }
 
-        if (usersBtn) {
-          usersBtn.style.display = isAdmin ? "" : "none";
-        }
-      }
+  if (usersBtn) {
+    usersBtn.style.display = isAdmin ? "" : "none";
+  }
+
+  if (auditBtn) {
+    auditBtn.style.display = isAdmin ? "" : "none";
+  }
+}
       /**
        * Actualiza el título de la pestaña del navegador.
        *
@@ -2950,9 +3143,10 @@ let resetPasswordTargetUsername = '';
             (lead) => !previousIds.has(String(lead.id)),
           ).length;
 
-          allLeads = incomingLeads;
-          applyFilters();
-          updateLastSyncLabel();
+allLeads = incomingLeads;
+applyFilters();
+updateLastSyncLabel();
+updateSessionActivityLabel();
 		  const connStatus = document.getElementById("connStatus");
 if (connStatus) {
   connStatus.style.color = "#16a34a";
@@ -3875,6 +4069,119 @@ async function confirmResetAdminUserPassword() {
         window.open(url, "_blank");
       }
 	  
+	  function formatAuditDetails(details) {
+  if (!details) return "-";
+
+  try {
+    return JSON.stringify(details, null, 2);
+  } catch {
+    return String(details);
+  }
+}
+
+function openAuditModal() {
+  if (!isCrmAdmin()) {
+    alert("Solo un admin puede ver la auditoría.");
+    return;
+  }
+
+  const overlay = document.getElementById("auditModalOverlay");
+  if (!overlay) return;
+
+  overlay.classList.add("open");
+  loadAuditLogs();
+}
+
+function closeAuditModal() {
+  const overlay = document.getElementById("auditModalOverlay");
+  const statusBox = document.getElementById("auditStatusBox");
+  const listWrap = document.getElementById("auditListWrap");
+
+  if (overlay) {
+    overlay.classList.remove("open");
+  }
+
+  if (statusBox) {
+    statusBox.textContent = "";
+  }
+
+  if (listWrap) {
+    listWrap.innerHTML = "";
+  }
+}
+
+async function loadAuditLogs() {
+  const usernameInput = document.getElementById("auditUsernameFilter");
+  const actionSelect = document.getElementById("auditActionFilter");
+  const statusBox = document.getElementById("auditStatusBox");
+  const listWrap = document.getElementById("auditListWrap");
+
+  if (!statusBox || !listWrap) return;
+
+  const username = usernameInput?.value?.trim() || "";
+  const action = actionSelect?.value || "";
+
+  const params = new URLSearchParams();
+  if (username) params.set("username", username);
+  if (action) params.set("action", action);
+
+  const query = params.toString() ? `?${params.toString()}` : "";
+
+  statusBox.textContent = "Cargando auditoría...";
+  listWrap.innerHTML = '<div class="loading">Cargando auditoría...</div>';
+
+  try {
+    const res = await crmFetch(`${API_BASE}/admin/audit${query}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+
+    const logs = Array.isArray(data.logs) ? data.logs : [];
+    statusBox.textContent = `Eventos encontrados: ${logs.length}`;
+
+    if (logs.length === 0) {
+      listWrap.innerHTML = '<div class="empty">No hay eventos de auditoría para esos filtros.</div>';
+      return;
+    }
+
+    listWrap.innerHTML = `
+      <div class="audit-list">
+        ${logs
+          .map(
+            (log) => `
+              <div class="audit-item">
+                <div class="audit-item-top">
+                  <div class="audit-action">${escapeHtml(log.action || "-")}</div>
+                  <div class="audit-date">${escapeHtml(formatDate(log.createdAt || ""))}</div>
+                </div>
+
+                <div class="audit-meta">
+                  <span class="badge category">${escapeHtml(log.entityType || "-")}</span>
+                  <span class="badge status">${escapeHtml(log.actorUsername || "sin_usuario")}</span>
+                  <span class="badge channel">${escapeHtml(log.actorRole || "-")}</span>
+                  ${
+                    log.entityId
+                      ? `<span class="badge control-bot">${escapeHtml(log.entityId)}</span>`
+                      : ""
+                  }
+                </div>
+
+                <div class="audit-details">${escapeHtml(formatAuditDetails(log.details))}</div>
+              </div>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+  } catch (error) {
+    console.error(error);
+    statusBox.textContent = "Error cargando auditoría: " + error.message;
+    listWrap.innerHTML = '<div class="empty">No se pudo cargar la auditoría.</div>';
+  }
+}
+	  
 	  /**
  * Muestra una notificación tipo toast en pantalla.
  *
@@ -4014,6 +4321,12 @@ async function confirmResetTestingData() {
         });
 		
 		document
+  .getElementById("auditModalOverlay")
+  .addEventListener("click", function (e) {
+    if (e.target === this) closeAuditModal();
+  });
+		
+		document
   .getElementById('resetPasswordModalOverlay')
   .addEventListener('click', function (e) {
     if (e.target === this) closeResetPasswordModal();
@@ -4032,6 +4345,20 @@ async function confirmResetTestingData() {
       categoryFilter.addEventListener("change", applyFilters);
       statusFilter.addEventListener("change", applyFilters);
       controlFilter.addEventListener("change", applyFilters);
+	  
+	  document
+  .getElementById("auditUsernameFilter")
+  .addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      loadAuditLogs();
+    }
+  });
+
+document
+  .getElementById("auditActionFilter")
+  .addEventListener("change", function () {
+    loadAuditLogs();
+  });
 
       /**
        * Una interacción mínima habilita audio en la mayoría de navegadores.
@@ -4098,8 +4425,22 @@ async function confirmResetTestingData() {
           searchInput.value = "";
         }
 
-        updateSoundButtonUI();
-        applyCrmRolePermissions();
+updateSoundButtonUI();
+
+try {
+  const meRes = await crmFetch(`${API_BASE}/crm/me`);
+  const meData = await meRes.json();
+
+  if (meRes.ok && meData?.auth) {
+    crmCurrentAuth = meData.auth;
+  }
+} catch (error) {
+  console.error("No se pudo cargar /crm/me:", error);
+}
+
+renderCrmSessionBox();
+applyCrmRolePermissions();
+updateSessionActivityLabel();
 
         /**
          * Si el usuario ya había activado sonido antes,
