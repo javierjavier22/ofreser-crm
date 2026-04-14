@@ -1,4 +1,22 @@
 <!doctype html>
+<!--
+  =========================================================
+  OFRESER CRM - ARCHIVO PRINCIPAL DEL FRONTEND
+  =========================================================
+  Este archivo concentra:
+  - estilos del CRM
+  - tablero comercial de leads
+  - drawer de detalle y conversación
+  - administración de usuarios
+  - auditoría
+  - utilidades de sesión, sonido y auto refresh
+
+  Importante:
+  - esta versión mantiene la lógica existente
+  - se agregan comentarios y orden visual
+  - no se hizo refactor agresivo para no romper funcionamiento
+  =========================================================
+-->
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
@@ -2028,6 +2046,10 @@
     </style>
   </head>
   <body>
+    
+    <!-- =========================================================
+         TOPBAR / CABECERA PRINCIPAL DEL CRM
+         ========================================================= -->
     <div class="topbar">
       <div class="brand">
         <img
@@ -2044,6 +2066,8 @@
         </div>
       </div>
 
+
+      <!-- Acciones rápidas del CRM + sesión visible del usuario -->
 <div class="top-actions">
   <div class="last-sync">
     <span id="connStatus" style="color: #16a34a; margin-right: 6px;">●</span>
@@ -2105,6 +2129,10 @@
       </div>
     </div>
 
+    
+    <!-- =========================================================
+         CONTENIDO PRINCIPAL DEL CRM
+         ========================================================= -->
     <div class="layout">
       <div class="hero">
         <div>
@@ -2229,6 +2257,10 @@
       </div>
     </div>
 
+    
+    <!-- =========================================================
+         MODAL DE DETALLE DEL LEAD Y CONVERSACIÓN
+         ========================================================= -->
     <div id="leadModalOverlay" class="modal-overlay">
       <div class="modal">
         <div class="modal-header">
@@ -2256,6 +2288,10 @@
       </div>
     </div>
 
+    
+    <!-- =========================================================
+         MODAL DE ADMINISTRACIÓN DE USUARIOS
+         ========================================================= -->
     <div id="usersAdminModalOverlay" class="modal-overlay">
       <div class="modal">
         <div class="modal-header">
@@ -2334,6 +2370,8 @@
       </div>
     </div>
 
+
+    <!-- Modal pequeño para resetear contraseña de un usuario -->
 <div id="resetPasswordModalOverlay" class="modal-overlay">
   <div class="modal" style="width:min(520px, 100%);">
     <div class="modal-header">
@@ -2382,6 +2420,8 @@
   </div>
 </div>
 
+
+    <!-- Modal pequeño para confirmar reset de datos de testing -->
 <div id="resetTestingModalOverlay" class="modal-overlay">
   <div class="modal" style="width:min(560px, 100%);">
     <div class="modal-header">
@@ -2429,6 +2469,10 @@
   </div>
 </div>
 
+
+    <!-- =========================================================
+         MODAL DE AUDITORÍA
+         ========================================================= -->
 <div id="auditModalOverlay" class="modal-overlay">
   <div class="modal">
     <div class="modal-header">
@@ -2489,6 +2533,8 @@
 
 <div id="toastContainer" class="toast-container"></div>
 
+    
+    <!-- Script externo de login y auth del CRM -->
     <script src="crm-login.js"></script>
     <script>
       /**
@@ -2651,6 +2697,10 @@ let resetPasswordTargetUsername = '';
       /**
        * Devuelve true si el usuario autenticado es admin.
        */
+      /**
+       * Determina si el usuario actual tiene rol admin.
+       * Prioriza el dato cargado desde /crm/me y luego usa localStorage como respaldo.
+       */
 function isCrmAdmin() {
   const role =
     crmCurrentAuth?.role ||
@@ -2666,6 +2716,10 @@ function isCrmAdmin() {
        *
        * En esta etapa solo ocultamos acciones sensibles.
        * Más adelante vamos a reforzar esto también en backend.
+       */
+      /**
+       * Muestra u oculta acciones sensibles según el rol actual.
+       * Esto es una capa visual; la seguridad real también debe existir en backend.
        */
 function applyCrmRolePermissions() {
   const resetBtn = document.getElementById("resetTestingBtn");
@@ -4187,6 +4241,11 @@ async function confirmResetAdminUserPassword() {
         window.open(url, "_blank");
       }
 	  
+      /**
+       * =========================================================
+       * AUDITORÍA - UTILIDADES DE PRESENTACIÓN
+       * =========================================================
+       */
 function formatAuditDetails(details) {
   if (!details) return "-";
 
@@ -4432,6 +4491,10 @@ function closeAuditModal() {
   }
 }
 
+/**
+ * Carga los eventos de auditoría desde backend,
+ * aplica filtros y renderiza una vista amigable para negocio.
+ */
 async function loadAuditLogs() {
   const usernameInput = document.getElementById("auditUsernameFilter");
   const actionSelect = document.getElementById("auditActionFilter");
@@ -4534,6 +4597,9 @@ async function loadAuditLogs() {
  * @param {string} message - Mensaje a mostrar
  * @param {'success'|'error'|'info'} type - Tipo de mensaje
  */
+      /**
+       * Notificación visual simple para acciones exitosas o errores controlados.
+       */
 function showToast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
   if (!container) return;
@@ -4568,6 +4634,9 @@ function showToast(message, type = 'info') {
 	  
 	  /**
  * Abre el modal de confirmación para reset de testing.
+ */
+/**
+ * Abre el modal de confirmación antes de borrar datos de testing.
  */
 function openResetTestingModal() {
   const overlay = document.getElementById('resetTestingModalOverlay');
