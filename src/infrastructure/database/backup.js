@@ -17,15 +17,26 @@
  * - crear backup con timestamp
  * - crear carpeta /backups si no existe
  * - listar backups existentes
+ * - limpiar backups viejos automáticamente
  *
  * En resumen:
  * -----------
  * Este archivo centraliza la lógica de respaldo de la base.
  */
-const { logger } = require('../../../shared/logger/logger');
+
 const path = require('path');
 const fs = require('fs');
 const db = require('./sqlite');
+const { logger } = require('../../../shared/logger/logger');
+
+/**
+ * Cantidad máxima de backups que queremos conservar.
+ *
+ * Política actual:
+ * - mantener solo los 10 backups más recientes
+ * - borrar automáticamente los más viejos
+ */
+const MAX_BACKUPS_TO_KEEP = 10;
 
 /**
  * Devuelve la ruta absoluta de la carpeta de backups.
@@ -42,6 +53,10 @@ function ensureBackupsDirExists() {
 
   if (!fs.existsSync(backupsDir)) {
     fs.mkdirSync(backupsDir, { recursive: true });
+
+    logger.info('Carpeta de backups creada correctamente', {
+      backupsDir
+    });
   }
 
   return backupsDir;
@@ -65,39 +80,6 @@ function getTimestamp() {
   const ss = String(now.getSeconds()).padStart(2, '0');
 
   return `${yyyy}-${mm}-${dd}_${hh}-${min}-${ss}`;
-}
-
-/**
- * Crea un backup consistente de la base SQLite.
- *
- * Devuelve:
- * - ruta absoluta del backup generado
- */
-function createBackup() {
-  try {
-    const backupsDir = ensureBackupsDirExists();
-
-    const fileName = `ofreser_${getTimestamp()}.db`;
-    const backupPath = path.join(backupsDir, fileName);
-
-    /**
-     * SQLite requiere barras "/" dentro del string SQL.
-     */
-    const sqliteSafePath = backupPath.replace(/\\/g, '/');
-
-    db.exec(`VACUUM INTO '${sqliteSafePath}'`);
-
-    logger.info('Backup creado correctamente', {
-	backupPath
-	});
-
-    return backupPath;
-  } catch (error) {
-    logger.error(`Error creando backup: ${error.message}`, {
-  stack: error.stack || null
-});
-    throw error;
-  }
 }
 
 /**
@@ -125,7 +107,95 @@ function listBackups() {
   return files;
 }
 
+/**
+ * Limpia backups viejos si se supera el máximo configurado.
+ *
+ * Regla:
+ * - conserva solo los más recientes
+ * - borra los sobrantes
+ *
+ * Devuelve:
+ * - arreglo con los archivos eliminados
+ */
+function cleanupOldBackups() {
+  const backups = listBackups();
+
+  if (backups.length <= MAX_BACKUPS_TO_KEEP) {
+    return [];
+  }
+
+  const backupsToDelete = backups.slice(MAX_BACKUPS_TO_KEEP);
+  const deletedFiles = [];
+
+  for (const backup of backupsToDelete) {
+    try {
+      fs.unlinkSync(backup.fullPath);
+
+      deletedFiles.push({
+        fileName: backup.fileName,
+        fullPath: backup.fullPath
+      });
+    } catch (error) {
+      logger.error(`Error eliminando backup viejo: ${error.message}`, {
+        backupPath: backup.fullPath,
+        stack: error.stack || null
+      });
+    }
+  }
+
+  if (deletedFiles.length > 0) {
+    logger.warn('Se eliminaron backups viejos automáticamente', {
+      maxBackupsToKeep: MAX_BACKUPS_TO_KEEP,
+      deletedCount: deletedFiles.length,
+      deletedFiles
+    });
+  }
+
+  return deletedFiles;
+}
+
+/**
+ * Crea un backup consistente de la base SQLite.
+ *
+ * Devuelve:
+ * - ruta absoluta del backup generado
+ */
+function createBackup() {
+  try {
+    const backupsDir = ensureBackupsDirExists();
+
+    const fileName = `ofreser_${getTimestamp()}.db`;
+    const backupPath = path.join(backupsDir, fileName);
+
+    /**
+     * SQLite requiere barras "/" dentro del string SQL.
+     */
+    const sqliteSafePath = backupPath.replace(/\\/g, '/');
+
+    db.exec(`VACUUM INTO '${sqliteSafePath}'`);
+
+    logger.info('Backup creado correctamente', {
+      backupPath
+    });
+
+    /**
+     * Después de crear el backup, limpiamos los más viejos
+     * si se superó el máximo permitido.
+     */
+    cleanupOldBackups();
+
+    return backupPath;
+  } catch (error) {
+    logger.error(`Error creando backup: ${error.message}`, {
+      stack: error.stack || null
+    });
+
+    throw error;
+  }
+}
+
 module.exports = {
   createBackup,
-  listBackups
+  listBackups,
+  cleanupOldBackups
 };
