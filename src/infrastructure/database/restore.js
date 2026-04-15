@@ -12,12 +12,14 @@
  * -----------
  * Este script debe ejecutarse con el servidor apagado.
  *
- * ¿Qué hace exactamente?
- * ----------------------
- * - valida que exista el archivo backup origen
- * - valida que exista la carpeta /storage
- * - hace una copia de seguridad extra del archivo actual
- * - reemplaza la base activa por el backup elegido
+ * Mejoras aplicadas:
+ * ------------------
+ * - validación de existencia del archivo origen
+ * - validación de extensión .db
+ * - validación de tamaño mínimo
+ * - validación de cabecera SQLite
+ * - confirmación obligatoria antes de sobrescribir
+ * - logger centralizado
  *
  * En resumen:
  * -----------
@@ -28,11 +30,28 @@
 
 const path = require('path');
 const fs = require('fs');
+const { logger } = require('../../../shared/logger/logger');
 
 /**
  * Ruta actual de la base activa.
  */
 const activeDbPath = path.join(process.cwd(), 'storage', 'ofreser.db');
+
+/**
+ * Tamaño mínimo razonable para una base SQLite.
+ *
+ * No pretende ser una validación matemática exacta,
+ * solo evita restaurar archivos vacíos o absurdamente pequeños.
+ */
+const MIN_SQLITE_FILE_SIZE_BYTES = 100;
+
+/**
+ * Cabecera esperada de un archivo SQLite válido.
+ *
+ * SQLite usa al inicio:
+ * "SQLite format 3"
+ */
+const SQLITE_HEADER_PREFIX = 'SQLite format 3';
 
 /**
  * Genera timestamp para respaldos previos a restauración.
@@ -52,21 +71,106 @@ function getTimestamp() {
 }
 
 /**
+ * Valida que el archivo tenga extensión .db.
+ */
+function hasValidBackupExtension(filePath) {
+  return String(filePath || '').toLowerCase().endsWith('.db');
+}
+
+/**
+ * Valida que el archivo exista y sea un archivo real.
+ */
+function validateBackupFileExists(filePath) {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`No existe el archivo backup: ${filePath}`);
+  }
+
+  const stats = fs.statSync(filePath);
+
+  if (!stats.isFile()) {
+    throw new Error(`La ruta indicada no es un archivo válido: ${filePath}`);
+  }
+
+  return stats;
+}
+
+/**
+ * Valida tamaño mínimo razonable.
+ */
+function validateBackupFileSize(stats, filePath) {
+  if (!stats || typeof stats.size !== 'number') {
+    throw new Error(`No se pudo obtener el tamaño del archivo backup: ${filePath}`);
+  }
+
+  if (stats.size < MIN_SQLITE_FILE_SIZE_BYTES) {
+    throw new Error(
+      `El archivo backup es demasiado pequeño para ser una base SQLite válida: ${filePath}`
+    );
+  }
+}
+
+/**
+ * Valida la cabecera del archivo para descartar basura evidente.
+ *
+ * Esto NO garantiza al 100% que la base esté perfecta,
+ * pero sí reduce mucho el riesgo de restaurar un archivo cualquiera.
+ */
+function validateSQLiteHeader(filePath) {
+  const fd = fs.openSync(filePath, 'r');
+
+  try {
+    const buffer = Buffer.alloc(16);
+    fs.readSync(fd, buffer, 0, 16, 0);
+
+    const header = buffer.toString('utf8').replace(/\0/g, '').trim();
+
+    if (!header.startsWith(SQLITE_HEADER_PREFIX)) {
+      throw new Error(
+        `El archivo no parece ser una base SQLite válida: ${filePath}`
+      );
+    }
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+/**
+ * Valida confirmación explícita antes de sobrescribir.
+ */
+function validateRestoreConfirmation(options = {}) {
+  if (!options || options.confirmRestore !== true) {
+    throw new Error(
+      'Restore cancelado: debés confirmar explícitamente con { confirmRestore: true }'
+    );
+  }
+}
+
+/**
  * Restaura la base desde un backup.
  *
  * @param {string} backupFilePath
  * Ruta absoluta o relativa del archivo .db a restaurar
+ *
+ * @param {object} options
+ * Opciones de seguridad:
+ * - confirmRestore: boolean obligatorio para permitir el restore
  */
-function restoreBackup(backupFilePath) {
+function restoreBackup(backupFilePath, options = {}) {
   try {
+    validateRestoreConfirmation(options);
+
     const resolvedBackupPath = path.resolve(backupFilePath);
 
     /**
-     * Verificamos que exista el backup origen.
+     * Validaciones del backup origen.
      */
-    if (!fs.existsSync(resolvedBackupPath)) {
-      throw new Error(`No existe el archivo backup: ${resolvedBackupPath}`);
+    if (!hasValidBackupExtension(resolvedBackupPath)) {
+      throw new Error(`El archivo backup debe tener extensión .db: ${resolvedBackupPath}`);
     }
+
+    const stats = validateBackupFileExists(resolvedBackupPath);
+    validateBackupFileSize(stats, resolvedBackupPath);
+    validateSQLiteHeader(resolvedBackupPath);
 
     /**
      * Verificamos que exista la carpeta storage.
@@ -75,6 +179,10 @@ function restoreBackup(backupFilePath) {
 
     if (!fs.existsSync(storageDir)) {
       fs.mkdirSync(storageDir, { recursive: true });
+
+      logger.info('Carpeta storage creada automáticamente', {
+        storageDir
+      });
     }
 
     /**
@@ -90,7 +198,9 @@ function restoreBackup(backupFilePath) {
 
       fs.copyFileSync(activeDbPath, emergencyBackupPath);
 
-      console.log('🛟 Backup de seguridad previo a restore creado:', emergencyBackupPath);
+      logger.warn('Backup de seguridad previo a restore creado', {
+        emergencyBackupPath
+      });
     }
 
     /**
@@ -98,9 +208,10 @@ function restoreBackup(backupFilePath) {
      */
     fs.copyFileSync(resolvedBackupPath, activeDbPath);
 
-    console.log('♻️ Restore completado correctamente.');
-    console.log('📂 Base restaurada desde:', resolvedBackupPath);
-    console.log('📂 Base activa actual:', activeDbPath);
+    logger.info('Restore completado correctamente', {
+      restoredFrom: resolvedBackupPath,
+      activeDbPath
+    });
 
     return {
       ok: true,
@@ -108,7 +219,11 @@ function restoreBackup(backupFilePath) {
       activeDbPath
     };
   } catch (error) {
-    console.error('❌ Error restaurando backup:', error.message);
+    logger.error(`Error restaurando backup: ${error.message}`, {
+      backupFilePath,
+      stack: error.stack || null
+    });
+
     throw error;
   }
 }
