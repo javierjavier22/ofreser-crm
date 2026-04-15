@@ -22,7 +22,7 @@
  * -----------
  * Este archivo centraliza la lógica de respaldo de la base.
  */
-
+const { logger } = require('../../../shared/logger/logger');
 const path = require('path');
 const fs = require('fs');
 const db = require('./sqlite');
@@ -87,11 +87,15 @@ function createBackup() {
 
     db.exec(`VACUUM INTO '${sqliteSafePath}'`);
 
-    console.log('💾 Backup creado correctamente:', backupPath);
+    logger.info('Backup creado correctamente', {
+	backupPath
+	});
 
     return backupPath;
   } catch (error) {
-    console.error('❌ Error creando backup:', error.message);
+    logger.error(`Error creando backup: ${error.message}`, {
+  stack: error.stack || null
+});
     throw error;
   }
 }
