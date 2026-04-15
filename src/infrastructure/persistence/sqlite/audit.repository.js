@@ -34,6 +34,7 @@
  */
 
 const db = require('../../database/sqlite');
+const { logger } = require('../../../shared/logger/logger');
 
 /**
  * Devuelve fecha actual en formato ISO.
@@ -57,7 +58,7 @@ function safeParseJson(value, fallback = null) {
     if (!value) return fallback;
     return JSON.parse(value);
   } catch (error) {
-    console.error('❌ Error parseando details_json de audit log:', error.message);
+    logger.error(`Error parseando details_json de audit log: ${error.message}`);
     return fallback;
   }
 }
