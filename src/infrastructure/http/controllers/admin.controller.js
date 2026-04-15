@@ -40,6 +40,7 @@
  */
 
 const db = require('../../database/sqlite');
+const { logger } = require('../../../shared/logger/logger');
 const {
   saveAuditLog,
   getAuditLogsFiltered
@@ -96,6 +97,13 @@ function postResetSystem(req, res) {
      * explícitamente por variable de entorno.
      */
     if (!isAdminResetAllowed()) {
+      logger.warn('Intento de reset administrativo bloqueado por configuración de entorno', {
+        nodeEnv: String(process.env.NODE_ENV || 'development'),
+        allowAdminReset: String(process.env.ALLOW_ADMIN_RESET || ''),
+        actorUsername: req?.crmAuth?.username || '',
+        actorRole: req?.crmAuth?.role || ''
+      });
+
       return res.status(403).json({
         error: 'Reset administrativo deshabilitado en este entorno',
         code: 'ADMIN_RESET_DISABLED',
@@ -147,12 +155,22 @@ function postResetSystem(req, res) {
       }
     });
 
+    logger.warn('Reset administrativo ejecutado correctamente', {
+      actorUsername: req?.crmAuth?.username || '',
+      actorRole: req?.crmAuth?.role || '',
+      deletedTables: ['messages', 'leads', 'sessions']
+    });
+
     return res.json({
       ok: true,
       message: 'Sistema reseteado correctamente. Se borraron messages, leads y sessions.'
     });
   } catch (error) {
-    console.error('❌ Error reseteando sistema:', error.message);
+    logger.error(`Error reseteando sistema: ${error.message}`, {
+      actorUsername: req?.crmAuth?.username || '',
+      actorRole: req?.crmAuth?.role || '',
+      stack: error.stack || null
+    });
 
     return res.status(500).json({
       error: 'No se pudo resetear el sistema'
@@ -191,13 +209,29 @@ function getAuditLogs(req, res) {
       entityId
     });
 
+    logger.info('Consulta de auditoría ejecutada', {
+      actorUsername: req?.crmAuth?.username || '',
+      actorRole: req?.crmAuth?.role || '',
+      filters: {
+        username,
+        action,
+        entityType,
+        entityId
+      },
+      total: logs.length
+    });
+
     return res.json({
       ok: true,
       total: logs.length,
       logs
     });
   } catch (error) {
-    console.error('❌ Error consultando auditoría:', error.message);
+    logger.error(`Error consultando auditoría: ${error.message}`, {
+      actorUsername: req?.crmAuth?.username || '',
+      actorRole: req?.crmAuth?.role || '',
+      stack: error.stack || null
+    });
 
     return res.status(500).json({
       error: 'No se pudo consultar la auditoría'
