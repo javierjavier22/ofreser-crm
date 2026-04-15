@@ -10,6 +10,7 @@
  *
  * En esta etapa incorpora:
  * - reset completo de la base de datos de testing
+ * - consulta de auditoría
  *
  * ¿Qué borra el reset?
  * --------------------
@@ -27,6 +28,15 @@
  * -----------
  * Este endpoint debe estar protegido por autenticación del CRM.
  * No debe quedar público.
+ *
+ * Blindaje extra agregado:
+ * ------------------------
+ * El reset solo se permite si:
+ * - ALLOW_ADMIN_RESET=true
+ *
+ * Además:
+ * - por defecto queda bloqueado
+ * - especialmente protege producción
  */
 
 const db = require('../../database/sqlite');
@@ -34,6 +44,33 @@ const {
   saveAuditLog,
   getAuditLogsFiltered
 } = require('../../persistence/sqlite/audit.repository');
+
+/**
+ * Devuelve true solo si el reset administrativo
+ * está explícitamente habilitado.
+ *
+ * Regla:
+ * - debe existir ALLOW_ADMIN_RESET=true
+ *
+ * Esto evita depender únicamente de:
+ * - middleware
+ * - entorno
+ * - suposiciones de deploy
+ */
+function isAdminResetAllowed() {
+  return String(process.env.ALLOW_ADMIN_RESET || '').trim().toLowerCase() === 'true';
+}
+
+/**
+ * Devuelve información básica de contexto
+ * para explicar por qué el reset fue bloqueado.
+ */
+function buildResetBlockContext() {
+  return {
+    nodeEnv: String(process.env.NODE_ENV || 'development'),
+    allowAdminReset: String(process.env.ALLOW_ADMIN_RESET || '')
+  };
+}
 
 /**
  * Resetea completamente los datos operativos del sistema.
@@ -53,6 +90,19 @@ const {
  */
 function postResetSystem(req, res) {
   try {
+    /**
+     * Blindaje crítico:
+     * este endpoint solo se ejecuta si está habilitado
+     * explícitamente por variable de entorno.
+     */
+    if (!isAdminResetAllowed()) {
+      return res.status(403).json({
+        error: 'Reset administrativo deshabilitado en este entorno',
+        code: 'ADMIN_RESET_DISABLED',
+        context: buildResetBlockContext()
+      });
+    }
+
     /**
      * Usamos transacción explícita para evitar
      * estados parciales si algo falla.
@@ -92,7 +142,8 @@ function postResetSystem(req, res) {
       entityId: 'global',
       req,
       details: {
-        deletedTables: ['messages', 'leads', 'sessions']
+        deletedTables: ['messages', 'leads', 'sessions'],
+        nodeEnv: String(process.env.NODE_ENV || 'development')
       }
     });
 
@@ -100,7 +151,6 @@ function postResetSystem(req, res) {
       ok: true,
       message: 'Sistema reseteado correctamente. Se borraron messages, leads y sessions.'
     });
-
   } catch (error) {
     console.error('❌ Error reseteando sistema:', error.message);
 
