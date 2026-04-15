@@ -293,7 +293,13 @@ router.put('/:id', requireAdmin, (req, res) => {
      *
      * Aceptamos boolean, 0/1 o equivalentes truthy/falsy.
      */
-    const nextIsActive = Boolean(is_active) ? 1 : 0;
+    const nextIsActive =
+	  is_active === true ||
+	  is_active === 1 ||
+	  is_active === '1' ||
+	  is_active === 'true'
+		? 1
+		: 0;
 
     /**
      * Blindaje 1:
