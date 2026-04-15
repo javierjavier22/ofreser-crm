@@ -25,8 +25,12 @@
  * Este archivo prepara el entorno, levanta el servidor
  * y además gestiona un cierre limpio del proceso.
  */
-
 require('dotenv').config();
+
+/**
+ * Validación central de variables de entorno.
+ */
+const { validateEnvironment } = require('./src/config/env');
 
 /**
  * Aplicación Express configurada (rutas, middlewares, etc).
@@ -67,6 +71,11 @@ const PORT = process.env.PORT || 3000;
  * - errores fatales
  */
 let isShuttingDown = false;
+
+/**
+ * Validamos entorno ANTES de inicializar DB y servidor.
+ */
+validateEnvironment();
 
 /**
  * Inicializa la base de datos SQLite.
