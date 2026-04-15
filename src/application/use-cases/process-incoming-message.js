@@ -348,42 +348,22 @@ function processIncomingMessage({
 
   /**
    * =========================================================
-   * AUTO-SALTO DEL PASO DE CONTACTO
+   * BLINDAJE DE CONTACTO
    * =========================================================
    *
-   * Si el flujo llegó a un paso de contacto
-   * y ya tenemos nombre + teléfono detectados previamente,
-   * evitamos pedirlos otra vez.
+   * Desactivamos el auto-salto del paso de contacto.
    *
-   * Esto NO toca el motor conversacional.
-   * Simplemente le reenviamos un mensaje sintético
-   * como si el usuario hubiera respondido ese paso.
+   * Motivo:
+   * - evita que datos detectados previamente contaminen otros pasos
+   * - evita completar contactos "por deducción"
+   * - deja toda la validación en manos del engine, solo cuando
+   *   el usuario responde explícitamente en un paso *_contact
+   *
+   * Regla final:
+   * - el contacto se captura únicamente cuando el flujo está
+   *   en services_contact / products_contact / certificates_contact / admin_contact
+   * - no se autocompleta
    */
-  const contactSteps = [
-    'services_contact',
-    'products_contact',
-    'certificates_contact',
-    'admin_contact'
-  ];
-
-  const hasDetectedContact =
-    !!result.session?.data?.name &&
-    !!result.session?.data?.phone;
-
-  const shouldAutoCompleteContactStep =
-    contactSteps.includes(result.session?.step) &&
-    hasDetectedContact &&
-    !result.reply?.humanHandoff;
-
-  if (shouldAutoCompleteContactStep) {
-    const syntheticContactMessage =
-      `${result.session.data.name} ${result.session.data.phone}`;
-
-    result = processConversation({
-      session: result.session,
-      rawMessage: syntheticContactMessage
-    });
-  }
 
   /**
    * 6. Guardamos la sesión actualizada que devuelve el motor.
