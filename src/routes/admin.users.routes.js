@@ -5,7 +5,7 @@
  *
  * ¿Qué hace este archivo?
  * -----------------------
- * Maneja la administración de usuarios del sistema.
+ * Maneja la administración de usuarios del sistema CRM.
  *
  * Permite:
  * - listar usuarios
@@ -27,6 +27,12 @@
  * - No permite quitarte a vos mismo el rol admin
  * - No permite dejar al sistema sin admins activos
  * - Verifica que el usuario objetivo exista antes de modificarlo
+ *
+ * Mejora aplicada en esta versión:
+ * --------------------------------
+ * - validación de username
+ * - validación mínima de contraseña
+ * - límites razonables de longitud
  */
 
 const express = require('express');
@@ -47,8 +53,44 @@ const {
 const router = express.Router();
 
 /**
- * Middleware interno de autorización.
+ * ============================================
+ * CONSTANTES DE VALIDACIÓN
+ * ============================================
+ */
+
+/**
+ * Username:
+ * - mínimo 3 caracteres
+ * - máximo 40
+ * - solo letras, números, punto, guion y guion bajo
+ */
+const USERNAME_MIN_LENGTH = 3;
+const USERNAME_MAX_LENGTH = 40;
+const USERNAME_REGEX = /^[a-zA-Z0-9._-]+$/;
+
+/**
+ * Password:
+ * - mínimo 8 caracteres
+ * - máximo 100
  *
+ * No exigimos complejidad extra por ahora
+ * para mantener compatibilidad operativa.
+ */
+const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_MAX_LENGTH = 100;
+
+/**
+ * Roles válidos del sistema.
+ */
+const ALLOWED_ROLES = ['admin', 'user'];
+
+/**
+ * ============================================
+ * MIDDLEWARE DE AUTORIZACIÓN
+ * ============================================
+ */
+
+/**
  * Valida que el usuario autenticado tenga rol admin.
  *
  * IMPORTANTE:
@@ -72,6 +114,12 @@ function requireAdmin(req, res, next) {
 }
 
 /**
+ * ============================================
+ * HELPERS DE SEGURIDAD
+ * ============================================
+ */
+
+/**
  * Genera hash de contraseña usando scrypt,
  * alineado con el esquema actual del proyecto.
  *
@@ -80,9 +128,118 @@ function requireAdmin(req, res, next) {
  */
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.scryptSync(String(password || ''), salt, 64).toString('hex');
+  const hash = crypto
+    .scryptSync(String(password || ''), salt, 64)
+    .toString('hex');
+
   return `${salt}:${hash}`;
 }
+
+/**
+ * ============================================
+ * HELPERS DE VALIDACIÓN
+ * ============================================
+ */
+
+/**
+ * Normaliza un username.
+ *
+ * Regla:
+ * - trim
+ * - se guarda tal como fue escrito
+ *
+ * Nota:
+ * no forzamos lowercase para no cambiar comportamiento
+ * existente del sistema sin necesidad.
+ */
+function normalizeUsername(username) {
+  return String(username || '').trim();
+}
+
+/**
+ * Normaliza rol entrante.
+ */
+function normalizeRole(role) {
+  return String(role || 'user').trim().toLowerCase();
+}
+
+/**
+ * Devuelve true si el username cumple formato permitido.
+ */
+function isValidUsername(username) {
+  if (!username) return false;
+  if (username.length < USERNAME_MIN_LENGTH) return false;
+  if (username.length > USERNAME_MAX_LENGTH) return false;
+  if (!USERNAME_REGEX.test(username)) return false;
+
+  return true;
+}
+
+/**
+ * Devuelve true si la contraseña cumple
+ * longitud mínima y máxima.
+ */
+function isValidPassword(password) {
+  const value = String(password || '');
+
+  if (!value) return false;
+  if (value.length < PASSWORD_MIN_LENGTH) return false;
+  if (value.length > PASSWORD_MAX_LENGTH) return false;
+
+  return true;
+}
+
+/**
+ * Devuelve mensaje de error de username.
+ *
+ * Esto ayuda a dar errores más claros al frontend.
+ */
+function getUsernameValidationError(username) {
+  if (!username) {
+    return 'username requerido';
+  }
+
+  if (username.length < USERNAME_MIN_LENGTH) {
+    return `username debe tener al menos ${USERNAME_MIN_LENGTH} caracteres`;
+  }
+
+  if (username.length > USERNAME_MAX_LENGTH) {
+    return `username no puede superar ${USERNAME_MAX_LENGTH} caracteres`;
+  }
+
+  if (!USERNAME_REGEX.test(username)) {
+    return 'username solo puede contener letras, números, punto, guion y guion bajo';
+  }
+
+  return '';
+}
+
+/**
+ * Devuelve mensaje de error de contraseña.
+ */
+function getPasswordValidationError(password, fieldName = 'password') {
+  const value = String(password || '');
+
+  if (!value) {
+    return `${fieldName} requerido`;
+  }
+
+  if (value.length < PASSWORD_MIN_LENGTH) {
+    return `${fieldName} debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres`;
+  }
+
+  if (value.length > PASSWORD_MAX_LENGTH) {
+    return `${fieldName} no puede superar ${PASSWORD_MAX_LENGTH} caracteres`;
+  }
+
+  return '';
+}
+
+/**
+ * ============================================
+ * HELPERS DE USUARIOS
+ * ============================================
+ */
 
 /**
  * Busca un usuario por ID.
@@ -90,24 +247,26 @@ function hashPassword(password) {
  * Devuelve null si no existe.
  */
 function getUserById(id) {
-  return db.prepare(`
-    SELECT
-      id,
-      username,
-      role,
-      is_active,
-      created_at,
-      updated_at
-    FROM crm_users
-    WHERE id = ?
-    LIMIT 1
-  `).get(id) || null;
+  return (
+    db.prepare(`
+      SELECT
+        id,
+        username,
+        role,
+        is_active,
+        created_at,
+        updated_at
+      FROM crm_users
+      WHERE id = ?
+      LIMIT 1
+    `).get(id) || null
+  );
 }
 
 /**
  * Cuenta cuántos admins activos hay en el sistema.
  *
- * Esto se usa para evitar dejar el sistema sin administradores.
+ * Esto se usa para evitar dejar al sistema sin administradores.
  */
 function countActiveAdmins() {
   const row = db.prepare(`
@@ -119,6 +278,12 @@ function countActiveAdmins() {
 
   return Number(row?.total || 0);
 }
+
+/**
+ * ============================================
+ * RUTAS
+ * ============================================
+ */
 
 /**
  * GET /admin/users
@@ -169,17 +334,34 @@ router.post('/', requireAdmin, (req, res) => {
   try {
     const { username, password, role } = req.body || {};
 
-    const normalizedUsername = String(username || '').trim();
+    const normalizedUsername = normalizeUsername(username);
     const rawPassword = String(password || '');
-    const normalizedRole = String(role || 'user').trim().toLowerCase();
+    const normalizedRole = normalizeRole(role);
 
-    if (!normalizedUsername || !rawPassword) {
+    /**
+     * Validación fuerte de username.
+     */
+    const usernameError = getUsernameValidationError(normalizedUsername);
+    if (usernameError) {
       return res.status(400).json({
-        error: 'username y password requeridos'
+        error: usernameError
       });
     }
 
-    if (!['admin', 'user'].includes(normalizedRole)) {
+    /**
+     * Validación fuerte de password.
+     */
+    const passwordError = getPasswordValidationError(rawPassword, 'password');
+    if (passwordError) {
+      return res.status(400).json({
+        error: passwordError
+      });
+    }
+
+    /**
+     * Validación de role.
+     */
+    if (!ALLOWED_ROLES.includes(normalizedRole)) {
       return res.status(400).json({
         error: 'role inválido'
       });
@@ -264,14 +446,16 @@ router.put('/:id', requireAdmin, (req, res) => {
      *
      * Viene del middleware CRM.
      */
-    const currentUserId = String(req.crmAuth?.userId || req.crmAuth?.id || '').trim();
+    const currentUserId = String(
+      req.crmAuth?.userId || req.crmAuth?.id || ''
+    ).trim();
 
     /**
      * Normalizamos el rol entrante.
      */
-    const normalizedRole = String(role || '').trim().toLowerCase();
+    const normalizedRole = normalizeRole(role);
 
-    if (!['admin', 'user'].includes(normalizedRole)) {
+    if (!ALLOWED_ROLES.includes(normalizedRole)) {
       return res.status(400).json({
         error: 'role inválido'
       });
@@ -294,18 +478,22 @@ router.put('/:id', requireAdmin, (req, res) => {
      * Aceptamos boolean, 0/1 o equivalentes truthy/falsy.
      */
     const nextIsActive =
-	  is_active === true ||
-	  is_active === 1 ||
-	  is_active === '1' ||
-	  is_active === 'true'
-		? 1
-		: 0;
+      is_active === true ||
+      is_active === 1 ||
+      is_active === '1' ||
+      is_active === 'true'
+        ? 1
+        : 0;
 
     /**
      * Blindaje 1:
      * No permitir que el admin actual se desactive a sí mismo.
      */
-    if (currentUserId && currentUserId === String(targetUser.id) && nextIsActive === 0) {
+    if (
+      currentUserId &&
+      currentUserId === String(targetUser.id) &&
+      nextIsActive === 0
+    ) {
       return res.status(400).json({
         error: 'No podés desactivarte a vos mismo'
       });
@@ -331,7 +519,9 @@ router.put('/:id', requireAdmin, (req, res) => {
      * Si el usuario objetivo es admin activo y el cambio lo desactiva
      * o lo baja a user, verificamos que no sea el último admin activo.
      */
-    const targetIsAdmin = String(targetUser.role || '').toLowerCase() === 'admin';
+    const targetIsAdmin =
+      String(targetUser.role || '').toLowerCase() === 'admin';
+
     const targetIsActive = Number(targetUser.is_active || 0) === 1;
 
     const adminWouldBeRemoved =
@@ -414,9 +604,17 @@ router.post('/:id/reset-password', requireAdmin, (req, res) => {
 
     const rawPassword = String(newPassword || '');
 
-    if (!rawPassword) {
+    /**
+     * Validación fuerte de nueva contraseña.
+     */
+    const passwordError = getPasswordValidationError(
+      rawPassword,
+      'newPassword'
+    );
+
+    if (passwordError) {
       return res.status(400).json({
-        error: 'newPassword requerido'
+        error: passwordError
       });
     }
 
@@ -433,7 +631,7 @@ router.post('/:id/reset-password', requireAdmin, (req, res) => {
 
     const passwordHash = hashPassword(rawPassword);
 
-        db.prepare(`
+    db.prepare(`
       UPDATE crm_users
       SET
         password_hash = ?,
