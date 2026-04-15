@@ -69,18 +69,24 @@ function isValidName(name) {
   const lower = name.toLowerCase();
 
   // 🚫 Evitar direcciones disfrazadas de nombre
-  // Importante:
-  // no usamos includes() porque "av" rompe nombres como "Javier"
   const invalidWords = ['calle', 'av', 'avenida', 'barrio', 'pasaje'];
   const words = lower.split(/\s+/);
 
   if (invalidWords.some(w => words.includes(w))) return false;
 
-  // Debe tener al menos 2 palabras (nombre + apellido)
   const parts = name.trim().split(/\s+/);
 
-  if (parts.length < 2) return false;
+  // 🧠 NUEVA REGLA:
+  // Permitimos 1 palabra, pero con mínimo 3 caracteres
+  if (parts.length === 1) {
+    const single = parts[0].trim();
 
+    if (single.length < 3) return false;
+
+    return true;
+  }
+
+  // 2 o más palabras → válido
   return true;
 }
 
