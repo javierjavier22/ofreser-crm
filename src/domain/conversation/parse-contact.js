@@ -69,9 +69,12 @@ function isValidName(name) {
   const lower = name.toLowerCase();
 
   // 🚫 Evitar direcciones disfrazadas de nombre
+  // Importante:
+  // no usamos includes() porque "av" rompe nombres como "Javier"
   const invalidWords = ['calle', 'av', 'avenida', 'barrio', 'pasaje'];
+  const words = lower.split(/\s+/);
 
-  if (invalidWords.some(w => lower.includes(w))) return false;
+  if (invalidWords.some(w => words.includes(w))) return false;
 
   // Debe tener al menos 2 palabras (nombre + apellido)
   const parts = name.trim().split(/\s+/);
