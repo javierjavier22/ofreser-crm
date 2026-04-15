@@ -173,18 +173,47 @@ function processIncomingMessage({
     'admin_contact'
   ];
 
-  const shouldParseContactAutomatically = contactCaptureSteps.includes(session.step);
+const parsedData = parseContactData(message);
 
-  if (shouldParseContactAutomatically) {
-    const parsedData = parseContactData(message);
+/**
+ * =========================================================
+ * PARSEO INTELIGENTE DE DATOS
+ * =========================================================
+ *
+ * Reglas:
+ *
+ * - pest, placeType, location → SIEMPRE se parsean
+ * - name, phone → SOLO en pasos de contacto
+ */
 
-    session.data = {
-      ...session.data,
-      ...Object.fromEntries(
-        Object.entries(parsedData).filter(([_, value]) => value)
-      )
-    };
-  }
+const contactCaptureSteps = [
+  'services_contact',
+  'products_contact',
+  'certificates_contact',
+  'admin_contact'
+];
+
+const isContactStep = contactCaptureSteps.includes(session.step);
+
+// Separación explícita
+const safeData = {};
+
+// Siempre permitidos
+if (parsedData.pest) safeData.pest = parsedData.pest;
+if (parsedData.placeType) safeData.placeType = parsedData.placeType;
+if (parsedData.location) safeData.location = parsedData.location;
+
+// Solo en contacto
+if (isContactStep) {
+  if (parsedData.name) safeData.name = parsedData.name;
+  if (parsedData.phone) safeData.phone = parsedData.phone;
+  if (parsedData.normalizedPhone) safeData.normalizedPhone = parsedData.normalizedPhone;
+}
+
+session.data = {
+  ...session.data,
+  ...safeData
+};
 
   if (!Array.isArray(session.data.conversationHistory)) {
     session.data.conversationHistory = [];
