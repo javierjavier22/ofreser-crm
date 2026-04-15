@@ -166,34 +166,24 @@ function processIncomingMessage({
    * - interpretar un domicilio como nombre + teléfono
    * - interpretar textos libres como contacto
    */
-  const contactCaptureSteps = [
-    'services_contact',
-    'products_contact',
-    'certificates_contact',
-    'admin_contact'
-  ];
-
 const parsedData = parseContactData(message);
-
 /**
  * =========================================================
  * PARSEO INTELIGENTE DE DATOS
  * =========================================================
  *
  * Reglas:
- *
- * - pest, placeType, location → SIEMPRE se parsean
+ * - pest, placeType, location → SIEMPRE
  * - name, phone → SOLO en pasos de contacto
  */
-
-const contactCaptureSteps = [
+const contactOnlySteps = [
   'services_contact',
   'products_contact',
   'certificates_contact',
   'admin_contact'
 ];
 
-const isContactStep = contactCaptureSteps.includes(session.step);
+const isContactStep = contactOnlySteps.includes(session.step);
 
 // Separación explícita
 const safeData = {};
