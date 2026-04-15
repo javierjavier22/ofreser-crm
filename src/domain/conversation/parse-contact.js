@@ -40,7 +40,7 @@ function cleanPhone(phone) {
  * Valida el teléfono de forma flexible.
  *
  * IMPORTANTE:
- * ----------
+ * -----------
  * No somos estrictos porque esto es un bot comercial.
  * Preferimos aceptar más y validar después manualmente.
  */
@@ -63,8 +63,22 @@ function isValidPhone(phone) {
 function isValidName(name) {
   if (!name) return false;
 
-  // Debe tener al menos una letra
-  return /[a-zA-ZáéíóúÁÉÍÓÚñÑ]/.test(name);
+  // Debe tener letras
+  if (!/[a-zA-ZáéíóúÁÉÍÓÚñÑ]/.test(name)) return false;
+
+  const lower = name.toLowerCase();
+
+  // 🚫 Evitar direcciones disfrazadas de nombre
+  const invalidWords = ['calle', 'av', 'avenida', 'barrio', 'pasaje'];
+
+  if (invalidWords.some(w => lower.includes(w))) return false;
+
+  // Debe tener al menos 2 palabras (nombre + apellido)
+  const parts = name.trim().split(/\s+/);
+
+  if (parts.length < 2) return false;
+
+  return true;
 }
 
 /**
