@@ -158,17 +158,33 @@ function processIncomingMessage({
    * PARSER DE CONTACTO AUTOMÁTICO
    * ============================================
    *
-   * Extraemos datos útiles desde texto libre
-   * y los mezclamos sin perder datos previos.
+   * IMPORTANTE:
+   * Solo intentamos parsear contacto cuando el flujo
+   * realmente está esperando datos de contacto.
+   *
+   * Esto evita bugs como:
+   * - interpretar un domicilio como nombre + teléfono
+   * - interpretar textos libres como contacto
    */
-  const parsedData = parseContactData(message);
+  const contactCaptureSteps = [
+    'services_contact',
+    'products_contact',
+    'certificates_contact',
+    'admin_contact'
+  ];
 
-  session.data = {
-    ...session.data,
-    ...Object.fromEntries(
-      Object.entries(parsedData).filter(([_, value]) => value)
-    )
-  };
+  const shouldParseContactAutomatically = contactCaptureSteps.includes(session.step);
+
+  if (shouldParseContactAutomatically) {
+    const parsedData = parseContactData(message);
+
+    session.data = {
+      ...session.data,
+      ...Object.fromEntries(
+        Object.entries(parsedData).filter(([_, value]) => value)
+      )
+    };
+  }
 
   if (!Array.isArray(session.data.conversationHistory)) {
     session.data.conversationHistory = [];
