@@ -32,22 +32,30 @@ function scoreLead(sessionData) {
   if (history.length >= 6) score += 10;
 
   // -----------------------------
-  // 📌 3. DATOS CLAVE
+  // 📌 3. DATOS ESTRUCTURADOS (PRIORIDAD)
+  // -----------------------------
+  if (sessionData.phone) score += 20;
+  if (sessionData.address) score += 15;
+  if (sessionData.placeType) score += 10;
+  if (sessionData.pest) score += 15;
+
+  // -----------------------------
+  // 📌 4. HISTORIAL (FALLBACK)
   // -----------------------------
   const text = history.map(m => m.text).join(" ").toLowerCase();
 
-  if (text.match(/\d{6,}/)) score += 20; // teléfono
-  if (text.includes("direccion") || text.includes("domicilio")) score += 15;
-  if (text.includes("casa") || text.includes("departamento")) score += 10;
-  if (text.includes("cucaracha") || text.includes("rata") || text.includes("plaga")) score += 15;
+  if (!sessionData.phone && text.match(/\d{6,}/)) score += 20;
+  if (!sessionData.address && (text.includes("direccion") || text.includes("domicilio"))) score += 15;
+  if (!sessionData.placeType && (text.includes("casa") || text.includes("departamento"))) score += 10;
+  if (!sessionData.pest && (text.includes("cucaracha") || text.includes("rata") || text.includes("plaga"))) score += 15;
 
   // -----------------------------
-  // 📌 4. NORMALIZAR
+  // 📌 5. NORMALIZAR
   // -----------------------------
   if (score > 100) score = 100;
 
   // -----------------------------
-  // 📌 5. CATEGORIZACIÓN
+  // 📌 6. CATEGORIZACIÓN
   // -----------------------------
   let category = "cold";
 
