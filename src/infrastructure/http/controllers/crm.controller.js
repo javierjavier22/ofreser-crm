@@ -252,10 +252,19 @@ function patchLeadStatus(req, res) {
 function patchLeadNote(req, res) {
   const leadId = req.params.id;
   const { note } = req.body;
+  const MAX_NOTE_LENGTH = 2000;
 
   if (typeof note !== 'string') {
     return res.status(400).json({
       error: 'La nota debe ser texto'
+    });
+  }
+
+  const nextNote = String(note || '').trim();
+
+  if (nextNote.length > MAX_NOTE_LENGTH) {
+    return res.status(400).json({
+      error: `La nota no puede superar los ${MAX_NOTE_LENGTH} caracteres`
     });
   }
 
@@ -272,8 +281,7 @@ function patchLeadNote(req, res) {
   }
 
   const previousNote = String(currentLead.internalNote || '');
-  const nextNote = String(note || '').trim();
-
+  
   const updated = updateLeadNote(leadId, note);
 
   if (!updated) {
@@ -426,10 +434,19 @@ function patchSessionControl(req, res) {
 async function postHumanMessage(req, res) {
   const sessionId = req.params.sessionId;
   const { text } = req.body;
+  const MAX_HUMAN_MESSAGE_LENGTH = 2000;
 
   if (typeof text !== 'string' || !text.trim()) {
     return res.status(400).json({
       error: 'El mensaje es obligatorio'
+    });
+  }
+
+  const cleanText = String(text || '').trim();
+
+  if (cleanText.length > MAX_HUMAN_MESSAGE_LENGTH) {
+    return res.status(400).json({
+      error: `El mensaje no puede superar los ${MAX_HUMAN_MESSAGE_LENGTH} caracteres`
     });
   }
 
@@ -460,8 +477,6 @@ async function postHumanMessage(req, res) {
       error: 'La sesión no tiene externalUserId para envío'
     });
   }
-
-  const cleanText = text.trim();
 
   try {
     /**

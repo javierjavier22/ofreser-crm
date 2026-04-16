@@ -170,6 +170,7 @@ function postChat(req, res) {
    */
   const sessionId = req.body.sessionId;
   const rawMessage = req.body.message;
+  const MAX_WEBCHAT_MESSAGE_LENGTH = 1000;
 
   /**
    * Validación básica.
@@ -177,6 +178,14 @@ function postChat(req, res) {
   if (!sessionId || rawMessage === undefined || rawMessage === null) {
     return res.status(400).json({
       error: 'Faltan sessionId o message'
+    });
+  }
+
+  const cleanMessage = String(rawMessage || '').trim();
+
+  if (cleanMessage.length > MAX_WEBCHAT_MESSAGE_LENGTH) {
+    return res.status(400).json({
+      error: `El mensaje no puede superar los ${MAX_WEBCHAT_MESSAGE_LENGTH} caracteres`
     });
   }
 
@@ -217,7 +226,7 @@ function postChat(req, res) {
      * Igual que en WhatsApp, esto lo resolvemos
      * a nivel controller como adaptación visual del canal.
      */
-    if (String(rawMessage || '').trim().toLowerCase() === 'menu_mas_opciones') {
+    if (cleanMessage.toLowerCase() === 'menu_mas_opciones') {
       return res.json({
         ok: true,
         sessionId,
@@ -228,12 +237,12 @@ function postChat(req, res) {
     /**
      * Delegamos el resto del procesamiento al caso de uso principal.
      */
-    const result = processIncomingMessage({
-      sessionId,
-      message: rawMessage,
-      channel: 'webchat',
-      externalUserId: sessionId
-    });
+const result = processIncomingMessage({
+  sessionId,
+  message: cleanMessage,
+  channel: 'webchat',
+  externalUserId: sessionId
+});
 
     /**
      * Adaptamos ciertas respuestas del engine para que
