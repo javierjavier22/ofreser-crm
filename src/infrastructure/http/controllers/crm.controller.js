@@ -282,7 +282,7 @@ function patchLeadNote(req, res) {
 
   const previousNote = String(currentLead.internalNote || '');
   
-  const updated = updateLeadNote(leadId, note);
+  const updated = updateLeadNote(leadId, nextNote);
 
   if (!updated) {
     return res.status(404).json({
