@@ -42,6 +42,14 @@
 const db = require('../../database/sqlite');
 const { logger } = require('../../../shared/logger/logger');
 const {
+  createBackup,
+  listBackups
+} = require('../../database/backup');
+
+const {
+  restoreBackup
+} = require('../../database/restore');
+const {
   saveAuditLog,
   getAuditLogsFiltered
 } = require('../../persistence/sqlite/audit.repository');
@@ -239,7 +247,159 @@ function getAuditLogs(req, res) {
   }
 }
 
+/**
+ * Crea un backup manual desde el panel admin.
+ *
+ * Seguridad:
+ * ----------
+ * Esta función debe quedar montada solo detrás de:
+ * - crmAuthMiddleware
+ * - requireAdmin
+ */
+function postCreateBackup(req, res) {
+  try {
+    const backupPath = createBackup();
+
+    saveAuditLog({
+      action: 'ADMIN_BACKUP_CREATED',
+      entityType: 'system',
+      entityId: 'backup',
+      req,
+      details: {
+        backupPath
+      }
+    });
+
+    logger.info('Backup creado desde admin', {
+      actorUsername: req?.crmAuth?.username || '',
+      actorRole: req?.crmAuth?.role || '',
+      backupPath
+    });
+
+    return res.json({
+      ok: true,
+      backupPath
+    });
+  } catch (error) {
+    logger.error(`Error creando backup desde admin: ${error.message}`, {
+      actorUsername: req?.crmAuth?.username || '',
+      actorRole: req?.crmAuth?.role || '',
+      stack: error.stack || null
+    });
+
+    return res.status(500).json({
+      error: 'No se pudo crear el backup'
+    });
+  }
+}
+
+/**
+ * Lista backups disponibles.
+ *
+ * Seguridad:
+ * ----------
+ * Esta función debe quedar montada solo detrás de:
+ * - crmAuthMiddleware
+ * - requireAdmin
+ */
+function getBackups(req, res) {
+  try {
+    const backups = listBackups();
+
+    logger.info('Listado de backups consultado', {
+      actorUsername: req?.crmAuth?.username || '',
+      actorRole: req?.crmAuth?.role || '',
+      total: backups.length
+    });
+
+    return res.json({
+      ok: true,
+      total: backups.length,
+      backups
+    });
+  } catch (error) {
+    logger.error(`Error listando backups: ${error.message}`, {
+      actorUsername: req?.crmAuth?.username || '',
+      actorRole: req?.crmAuth?.role || '',
+      stack: error.stack || null
+    });
+
+    return res.status(500).json({
+      error: 'No se pudieron listar los backups'
+    });
+  }
+}
+
+/**
+ * Restaura la base activa desde un backup elegido.
+ *
+ * IMPORTANTE:
+ * -----------
+ * Esta operación es delicada.
+ *
+ * Seguridad:
+ * ----------
+ * Esta función debe quedar montada solo detrás de:
+ * - crmAuthMiddleware
+ * - requireAdmin
+ *
+ * Body esperado:
+ * {
+ *   backupPath: string
+ * }
+ */
+function postRestoreBackup(req, res) {
+  try {
+    const { backupPath } = req.body || {};
+
+    if (!backupPath) {
+      return res.status(400).json({
+        error: 'backupPath es requerido'
+      });
+    }
+
+    const result = restoreBackup(backupPath, {
+      confirmRestore: true
+    });
+
+    saveAuditLog({
+      action: 'ADMIN_RESTORE_EXECUTED',
+      entityType: 'system',
+      entityId: 'restore',
+      req,
+      details: {
+        restoredFrom: result.restoredFrom
+      }
+    });
+
+    logger.warn('Restore ejecutado desde admin', {
+      actorUsername: req?.crmAuth?.username || '',
+      actorRole: req?.crmAuth?.role || '',
+      restoredFrom: result.restoredFrom
+    });
+
+    return res.json({
+      ok: true,
+      result
+    });
+  } catch (error) {
+    logger.error(`Error en restore desde admin: ${error.message}`, {
+      actorUsername: req?.crmAuth?.username || '',
+      actorRole: req?.crmAuth?.role || '',
+      stack: error.stack || null
+    });
+
+    return res.status(500).json({
+      error: error.message || 'No se pudo restaurar el backup'
+    });
+  }
+}
+
+
 module.exports = {
   postResetSystem,
-  getAuditLogs
+  getAuditLogs,
+  postCreateBackup,
+  getBackups,
+  postRestoreBackup
 };

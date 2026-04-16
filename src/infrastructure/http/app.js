@@ -51,7 +51,10 @@ const {
  */
 const {
   postResetSystem,
-  getAuditLogs
+  getAuditLogs,
+  postCreateBackup,
+  getBackups,
+  postRestoreBackup
 } = require('./controllers/admin.controller');
 
 /**
@@ -159,6 +162,36 @@ app.get(
   crmAuthMiddleware,
   crmAuthMiddleware.requireAdmin,
   getAuditLogs
+);
+
+/**
+ * Backup manual del sistema.
+ */
+app.post(
+  '/admin/backup',
+  crmAuthMiddleware,
+  crmAuthMiddleware.requireAdmin,
+  postCreateBackup
+);
+
+/**
+ * Listado de backups disponibles.
+ */
+app.get(
+  '/admin/backups',
+  crmAuthMiddleware,
+  crmAuthMiddleware.requireAdmin,
+  getBackups
+);
+
+/**
+ * Restaurar sistema desde backup.
+ */
+app.post(
+  '/admin/restore',
+  crmAuthMiddleware,
+  crmAuthMiddleware.requireAdmin,
+  postRestoreBackup
 );
 
 /**
