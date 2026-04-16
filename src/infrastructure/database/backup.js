@@ -27,7 +27,7 @@
 const path = require('path');
 const fs = require('fs');
 const db = require('./sqlite');
-const { logger } = require('../../../shared/logger/logger');
+const { logger } = require('../../shared/logger/logger');
 
 /**
  * Cantidad máxima de backups que queremos conservar.

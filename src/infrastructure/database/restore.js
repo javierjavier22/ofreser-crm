@@ -30,7 +30,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const { logger } = require('../../../shared/logger/logger');
+const { logger } = require('../../shared/logger/logger');
 
 /**
  * Ruta actual de la base activa.
