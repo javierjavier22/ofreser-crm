@@ -198,17 +198,17 @@ function postCrmChangePassword(req, res) {
     });
   }
 
-  if (!currentPassword || !newPassword) {
-    return res.status(400).json({
-      error: 'Datos incompletos'
-    });
-  }
+	if (!currentPassword || !newPassword) {
+	  return res.status(400).json({
+		error: 'Datos incompletos'
+	  });
+	}
 
-  if (newPassword.length < 6) {
-    return res.status(400).json({
-      error: 'Mínimo 6 caracteres'
-    });
-  }
+	if (String(newPassword).length < 8) {
+	  return res.status(400).json({
+		error: 'Mínimo 8 caracteres'
+	  });
+	}
 
   /**
    * 🔎 Buscar usuario
