@@ -304,11 +304,32 @@ function getAuditLogsByEntity(entityType, entityId) {
  *
  * Siempre ordena por fecha descendente.
  */
+/**
+ * Devuelve auditoría con filtros opcionales y paginación.
+ *
+ * Filtros soportados:
+ * - username
+ * - action
+ * - entityType
+ * - entityId
+ *
+ * Paginación:
+ * - limit
+ * - offset
+ *
+ * Devuelve:
+ * {
+ *   total,
+ *   logs
+ * }
+ */
 function getAuditLogsFiltered({
   username = '',
   action = '',
   entityType = '',
-  entityId = ''
+  entityId = '',
+  limit = 20,
+  offset = 0
 } = {}) {
   const conditions = [];
   const params = [];
@@ -337,6 +358,24 @@ function getAuditLogsFiltered({
     ? `WHERE ${conditions.join(' AND ')}`
     : '';
 
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 20, 100));
+  const safeOffset = Math.max(0, Number(offset) || 0);
+
+  /**
+   * Total de eventos que cumplen filtros
+   * antes de aplicar paginación.
+   */
+  const totalRow = db.prepare(`
+    SELECT COUNT(*) AS total
+    FROM audit_logs
+    ${whereClause}
+  `).get(...params);
+
+  const total = Number(totalRow?.total || 0);
+
+  /**
+   * Datos paginados.
+   */
   const rows = db.prepare(`
     SELECT
       id,
@@ -353,9 +392,14 @@ function getAuditLogsFiltered({
     FROM audit_logs
     ${whereClause}
     ORDER BY datetime(created_at) DESC
-  `).all(...params);
+    LIMIT ?
+    OFFSET ?
+  `).all(...params, safeLimit, safeOffset);
 
-  return rows.map(mapRowToAuditLog);
+  return {
+    total,
+    logs: rows.map(mapRowToAuditLog)
+  };
 }
 
 module.exports = {

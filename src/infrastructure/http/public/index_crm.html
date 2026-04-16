@@ -2544,8 +2544,36 @@
 </button>
         </div>
 
-        <div id="auditStatusBox" class="note-status"></div>
-        <div id="auditListWrap" class="loading">Cargando auditoría...</div>
+<div id="auditStatusBox" class="note-status"></div>
+
+<div
+  id="auditPaginationBar"
+  style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:12px;"
+>
+  <div id="auditPaginationInfo" class="user-session-sub">Página --</div>
+
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <button
+      id="auditPrevBtn"
+      class="btn secondary"
+      type="button"
+      onclick="goToAuditPrevPage()"
+    >
+      Anterior
+    </button>
+
+    <button
+      id="auditNextBtn"
+      class="btn secondary"
+      type="button"
+      onclick="goToAuditNextPage()"
+    >
+      Siguiente
+    </button>
+  </div>
+</div>
+
+<div id="auditListWrap" class="loading">Cargando auditoría...</div>
       </div>
     </div>
   </div>
@@ -2619,6 +2647,10 @@ let allLeads = [];
 let currentLeadId = null;
 let autoRefreshTimer = null;
 let crmCurrentAuth = null;
+
+let auditCurrentOffset = 0;
+const AUDIT_PAGE_SIZE = 20;
+let auditLastTotal = 0;
 
       /**
        * Evita ejecutar el bootstrap del CRM múltiples veces.
@@ -4647,6 +4679,7 @@ function openAuditModal() {
   const overlay = document.getElementById("auditModalOverlay");
   if (!overlay) return;
 
+  auditCurrentOffset = 0;
   overlay.classList.add("open");
   loadAuditLogs();
 }
@@ -4655,6 +4688,7 @@ function closeAuditModal() {
   const overlay = document.getElementById("auditModalOverlay");
   const statusBox = document.getElementById("auditStatusBox");
   const listWrap = document.getElementById("auditListWrap");
+  const paginationInfo = document.getElementById("auditPaginationInfo");
 
   if (overlay) {
     overlay.classList.remove("open");
@@ -4667,6 +4701,48 @@ function closeAuditModal() {
   if (listWrap) {
     listWrap.innerHTML = "";
   }
+
+  if (paginationInfo) {
+    paginationInfo.textContent = "Página --";
+  }
+
+  auditCurrentOffset = 0;
+  auditLastTotal = 0;
+}
+
+function updateAuditPaginationUi(total, returnedCount) {
+  const paginationInfo = document.getElementById("auditPaginationInfo");
+  const prevBtn = document.getElementById("auditPrevBtn");
+  const nextBtn = document.getElementById("auditNextBtn");
+
+  const currentPage = Math.floor(auditCurrentOffset / AUDIT_PAGE_SIZE) + 1;
+  const totalPages = Math.max(1, Math.ceil((Number(total) || 0) / AUDIT_PAGE_SIZE));
+
+  if (paginationInfo) {
+    paginationInfo.textContent = `Página ${currentPage} de ${totalPages} · Total eventos: ${total}`;
+  }
+
+  if (prevBtn) {
+    prevBtn.disabled = auditCurrentOffset <= 0;
+  }
+
+  if (nextBtn) {
+    nextBtn.disabled = auditCurrentOffset + returnedCount >= total;
+  }
+}
+
+function goToAuditPrevPage() {
+  if (auditCurrentOffset <= 0) return;
+
+  auditCurrentOffset = Math.max(0, auditCurrentOffset - AUDIT_PAGE_SIZE);
+  loadAuditLogs();
+}
+
+function goToAuditNextPage() {
+  if (auditCurrentOffset + AUDIT_PAGE_SIZE >= auditLastTotal) return;
+
+  auditCurrentOffset += AUDIT_PAGE_SIZE;
+  loadAuditLogs();
 }
 
 /**
@@ -4880,10 +4956,13 @@ async function loadAuditLogs() {
   const search = searchInput?.value?.trim() || "";
 
   const params = new URLSearchParams();
-  if (username) params.set("username", username);
-  if (action) params.set("action", action);
+if (username) params.set("username", username);
+if (action) params.set("action", action);
 
-  const query = params.toString() ? `?${params.toString()}` : "";
+params.set("limit", String(AUDIT_PAGE_SIZE));
+params.set("offset", String(auditCurrentOffset));
+
+const query = params.toString() ? `?${params.toString()}` : "";
 
   statusBox.textContent = "Cargando auditoría...";
   listWrap.innerHTML = '<div class="loading">Cargando auditoría...</div>';
@@ -4896,10 +4975,13 @@ async function loadAuditLogs() {
       throw new Error(data.error || `HTTP ${res.status}`);
     }
 
-    let logs = Array.isArray(data.logs) ? data.logs : [];
-    logs = logs.filter((log) => auditMatchesSearch(log, search));
+let logs = Array.isArray(data.logs) ? data.logs : [];
+logs = logs.filter((log) => auditMatchesSearch(log, search));
 
-    statusBox.textContent = `Eventos encontrados: ${logs.length}`;
+auditLastTotal = Number(data.total || 0);
+
+statusBox.textContent = `Eventos encontrados en página: ${logs.length} · Total: ${auditLastTotal}`;
+updateAuditPaginationUi(auditLastTotal, logs.length);
 
     if (logs.length === 0) {
       listWrap.innerHTML = '<div class="empty">No hay eventos de auditoría para esos filtros.</div>';
@@ -5157,6 +5239,7 @@ document
 document
   .getElementById("auditActionFilter")
   .addEventListener("change", function () {
+    auditCurrentOffset = 0;
     loadAuditLogs();
   });
 

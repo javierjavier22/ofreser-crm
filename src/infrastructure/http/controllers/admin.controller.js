@@ -207,14 +207,18 @@ function getAuditLogs(req, res) {
       username = '',
       action = '',
       entityType = '',
-      entityId = ''
+      entityId = '',
+      limit = '20',
+      offset = '0'
     } = req.query || {};
 
-    const logs = getAuditLogsFiltered({
+    const result = getAuditLogsFiltered({
       username,
       action,
       entityType,
-      entityId
+      entityId,
+      limit: Number(limit),
+      offset: Number(offset)
     });
 
     logger.info('Consulta de auditoría ejecutada', {
@@ -226,13 +230,20 @@ function getAuditLogs(req, res) {
         entityType,
         entityId
       },
-      total: logs.length
+      pagination: {
+        limit: Number(limit),
+        offset: Number(offset)
+      },
+      total: result.total,
+      returned: result.logs.length
     });
 
     return res.json({
       ok: true,
-      total: logs.length,
-      logs
+      total: result.total,
+      limit: Math.max(1, Math.min(Number(limit) || 20, 100)),
+      offset: Math.max(0, Number(offset) || 0),
+      logs: result.logs
     });
   } catch (error) {
     logger.error(`Error consultando auditoría: ${error.message}`, {
