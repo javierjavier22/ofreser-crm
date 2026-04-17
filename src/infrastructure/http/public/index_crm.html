@@ -2202,6 +2202,45 @@
           <option value="closed">CERRADO</option>
         </select>
       </div>
+	  
+	  <!-- =========================================================
+     PAGINACIÓN DEL TABLERO DE LEADS
+     ========================================================= -->
+<div
+  id="leadsPaginationBar"
+  style="
+    display:flex;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+  "
+>
+  <div id="leadsPaginationInfo" class="user-session-sub">
+    Página --
+  </div>
+
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <button
+      id="leadsPrevBtn"
+      class="btn secondary"
+      type="button"
+      onclick="goToLeadsPrevPage()"
+    >
+      Anterior
+    </button>
+
+    <button
+      id="leadsNextBtn"
+      class="btn secondary"
+      type="button"
+      onclick="goToLeadsNextPage()"
+    >
+      Siguiente
+    </button>
+  </div>
+</div>
 
       <div class="stats">
         <div class="stat">
@@ -2647,6 +2686,19 @@ let allLeads = [];
 let currentLeadId = null;
 let autoRefreshTimer = null;
 let crmCurrentAuth = null;
+
+/**
+ * =========================================================
+ * ESTADO GLOBAL DE PAGINACIÓN DE LEADS
+ * =========================================================
+ *
+ * Importante:
+ * - el tablero ahora consume una página por vez
+ * - los filtros actuales siguen funcionando sobre la página cargada
+ */
+let leadsCurrentOffset = 0;
+const LEADS_PAGE_SIZE = 50;
+let leadsLastTotal = 0;
 
 let auditCurrentOffset = 0;
 const AUDIT_PAGE_SIZE = 20;
@@ -3405,88 +3457,203 @@ function applyCrmRolePermissions() {
       /**
        * Carga general de leads.
        */
-      async function loadLeads({ silent = false, preserveModal = true } = {}) {
-        try {
-          const res = await crmFetch(`${API_BASE}/leads`);
+	   
+	   /**
+ * =========================================================
+ * HELPERS DE PAGINACIÓN DE LEADS
+ * =========================================================
+ */
 
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+/**
+ * Actualiza la UI del paginador del tablero.
+ *
+ * @param {number} total
+ * Total real informado por backend
+ *
+ * @param {number} returnedCount
+ * Cantidad de leads recibidos en esta página
+ */
+function updateLeadsPaginationUi(total, returnedCount) {
+  const info = document.getElementById("leadsPaginationInfo");
+  const prevBtn = document.getElementById("leadsPrevBtn");
+  const nextBtn = document.getElementById("leadsNextBtn");
 
-          const incomingLeads = await res.json();
+  const currentPage = Math.floor(leadsCurrentOffset / LEADS_PAGE_SIZE) + 1;
+  const totalPages = Math.max(1, Math.ceil((Number(total) || 0) / LEADS_PAGE_SIZE));
 
-          /**
-           * Detectamos IDs nuevos antes de reemplazar el estado local.
-           */
-          const previousIds = new Set(allLeads.map((lead) => String(lead.id)));
-          const newLeadCount = incomingLeads.filter(
-            (lead) => !previousIds.has(String(lead.id)),
-          ).length;
+  if (info) {
+    info.textContent = `Página ${currentPage} de ${totalPages} · Total leads: ${total}`;
+  }
 
-          allLeads = incomingLeads;
-          applyFilters();
-          updateLastSyncLabel();
-          updateSessionActivityLabel();
-          renderCrmSessionBox();
-		  const connStatus = document.getElementById("connStatus");
-if (connStatus) {
-  connStatus.style.color = "#16a34a";
-  connStatus.title = "Conectado";
+  if (prevBtn) {
+    prevBtn.disabled = leadsCurrentOffset <= 0;
+  }
+
+  if (nextBtn) {
+    nextBtn.disabled = leadsCurrentOffset + returnedCount >= total;
+  }
 }
 
-          /**
-           * Regla correcta:
-           * - la primera carga del CRM NO debe sonar
-           * - cualquier carga posterior con nuevos leads SÍ debe sonar
-           *
-           * Esto permite que:
-           * - si abrís el CRM vacío y entra el primer lead, suene
-           * - si ya había leads y entra otro, también suene
-           */
-          if (crmHasCompletedInitialLoad && newLeadCount > 0) {
-            if (crmAudioUnlocked) {
-              await playNewLeadSound();
-            }
-          }
+/**
+ * Va a la página anterior de leads.
+ */
+function goToLeadsPrevPage() {
+  if (leadsCurrentOffset <= 0) return;
 
-          /**
-           * Marcamos que la primera carga ya ocurrió.
-           */
-          crmHasCompletedInitialLoad = true;
-
-          if (
-            preserveModal &&
-            currentLeadId &&
-            document
-              .getElementById("leadModalOverlay")
-              .classList.contains("open")
-          ) {
-            const noteFocused =
-              document.activeElement &&
-              document.activeElement.id === "internalNoteInput";
-            const humanFocused =
-              document.activeElement &&
-              document.activeElement.id === "humanMessageInput";
-
-            if (!noteFocused && !humanFocused) {
-              await openDrawer(currentLeadId, true);
-            } else {
-              document
-                .getElementById("modalRefreshBanner")
-                .classList.add("show");
-            }
-          }
-        } catch (error) {
-          console.error(error);
-		  const connStatus = document.getElementById("connStatus");
-if (connStatus) {
-  connStatus.style.color = "#dc2626";
-  connStatus.title = "Error de conexión";
+  leadsCurrentOffset = Math.max(0, leadsCurrentOffset - LEADS_PAGE_SIZE);
+  loadLeads({ silent: false, preserveModal: true });
 }
-		  
-          if (!silent) {
-            alert("Error cargando leads: " + error.message);
-          }
-        }
+
+/**
+ * Va a la página siguiente de leads.
+ */
+function goToLeadsNextPage() {
+  if (leadsCurrentOffset + LEADS_PAGE_SIZE >= leadsLastTotal) return;
+
+  leadsCurrentOffset += LEADS_PAGE_SIZE;
+  loadLeads({ silent: false, preserveModal: true });
+}
+
+/**
+ * Resetea la paginación del tablero.
+ *
+ * Se usa cuando cambian filtros locales o al abrir el CRM.
+ */
+function resetLeadsPagination() {
+  leadsCurrentOffset = 0;
+}
+	   
+	   
+/**
+ * Carga general de leads.
+ *
+ * Nueva versión:
+ * --------------
+ * Consume backend paginado.
+ *
+ * Importante:
+ * -----------
+ * - no rompe compatibilidad con el drawer
+ * - no rompe sonido
+ * - no rompe el tablero actual
+ * - los filtros siguen siendo locales sobre la página cargada
+ */
+async function loadLeads({ silent = false, preserveModal = true } = {}) {
+  try {
+    const params = new URLSearchParams();
+    params.set("limit", String(LEADS_PAGE_SIZE));
+    params.set("offset", String(leadsCurrentOffset));
+
+    const query = `?${params.toString()}`;
+    const res = await crmFetch(`${API_BASE}/leads${query}`);
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+
+    /**
+     * Compatibilidad defensiva:
+     * - si backend responde paginado usamos data.leads
+     * - si por algún motivo responde legacy, usamos el array directo
+     */
+    const incomingLeads = Array.isArray(data?.leads)
+      ? data.leads
+      : Array.isArray(data)
+        ? data
+        : [];
+
+    /**
+     * Total real informado por backend.
+     */
+    leadsLastTotal = Number(data?.total || incomingLeads.length || 0);
+
+    /**
+     * Detectamos IDs nuevos antes de reemplazar el estado local.
+     */
+    const previousIds = new Set(allLeads.map((lead) => String(lead.id)));
+    const newLeadCount = incomingLeads.filter(
+      (lead) => !previousIds.has(String(lead.id)),
+    ).length;
+
+    allLeads = incomingLeads;
+
+    /**
+     * Render local de la página actual.
+     */
+    applyFilters();
+
+    /**
+     * Actualizamos la UI del paginador.
+     */
+    updateLeadsPaginationUi(leadsLastTotal, incomingLeads.length);
+
+    updateLastSyncLabel();
+    updateSessionActivityLabel();
+    renderCrmSessionBox();
+
+    const connStatus = document.getElementById("connStatus");
+    if (connStatus) {
+      connStatus.style.color = "#16a34a";
+      connStatus.title = "Conectado";
+    }
+
+    /**
+     * Regla correcta:
+     * - la primera carga del CRM NO debe sonar
+     * - cualquier carga posterior con nuevos leads SÍ debe sonar
+     */
+    if (crmHasCompletedInitialLoad && newLeadCount > 0) {
+      if (crmAudioUnlocked) {
+        await playNewLeadSound();
       }
+    }
+
+    /**
+     * Marcamos que la primera carga ya ocurrió.
+     */
+    crmHasCompletedInitialLoad = true;
+
+    /**
+     * Si el drawer está abierto, refrescamos solo si no
+     * hay foco en nota o mensaje humano.
+     */
+    if (
+      preserveModal &&
+      currentLeadId &&
+      document
+        .getElementById("leadModalOverlay")
+        .classList.contains("open")
+    ) {
+      const noteFocused =
+        document.activeElement &&
+        document.activeElement.id === "internalNoteInput";
+
+      const humanFocused =
+        document.activeElement &&
+        document.activeElement.id === "humanMessageInput";
+
+      if (!noteFocused && !humanFocused) {
+        await openDrawer(currentLeadId, true);
+      } else {
+        document
+          .getElementById("modalRefreshBanner")
+          .classList.add("show");
+      }
+    }
+  } catch (error) {
+    console.error(error);
+
+    const connStatus = document.getElementById("connStatus");
+    if (connStatus) {
+      connStatus.style.color = "#dc2626";
+      connStatus.title = "Error de conexión";
+    }
+
+    if (!silent) {
+      alert("Error cargando leads: " + error.message);
+    }
+  }
+}
 
       /**
        * Actualiza estado comercial.
@@ -5215,10 +5382,32 @@ async function confirmResetTestingData() {
       /**
        * Filtros.
        */
-      searchInput.addEventListener("input", applyFilters);
-      categoryFilter.addEventListener("change", applyFilters);
-      statusFilter.addEventListener("change", applyFilters);
-      controlFilter.addEventListener("change", applyFilters);
+      /**
+ * Filtros del tablero.
+ *
+ * Regla actual:
+ * - resetean paginación visual
+ * - aplican filtro local sobre la página cargada
+ */
+searchInput.addEventListener("input", () => {
+  resetLeadsPagination();
+  applyFilters();
+});
+
+categoryFilter.addEventListener("change", () => {
+  resetLeadsPagination();
+  applyFilters();
+});
+
+statusFilter.addEventListener("change", () => {
+  resetLeadsPagination();
+  applyFilters();
+});
+
+controlFilter.addEventListener("change", () => {
+  resetLeadsPagination();
+  applyFilters();
+});
 	  
 	 document
   .getElementById("auditUsernameFilter")
@@ -5341,6 +5530,11 @@ updateSessionActivityLabel();
         if (crmAudioUnlocked) {
           unlockCrmAudio().catch(() => {});
         }
+
+/**
+ * Al abrir el CRM arrancamos desde la primera página.
+ */
+resetLeadsPagination();
 
         /**
          * Primera carga real del tablero.
