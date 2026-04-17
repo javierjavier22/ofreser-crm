@@ -31,9 +31,11 @@ const {
   getCrmUserAuthByUsername,
   updateCrmUserPasswordHash
 } = require('../../persistence/sqlite/crm-users.repository');
+
 const {
-  saveAuditLog
-} = require('../../persistence/sqlite/audit.repository');
+  CRM_PASSWORD,
+  CRM_ROLES
+} = require('../../../shared/constants/app.constants');
 
 /**
  * Verifica password contra hash almacenado.
@@ -133,7 +135,7 @@ const dbUser = getCrmUserAuthByUsername(normalizedUsername);
   const token = crmAuthMiddleware.issueCrmToken(
     dbUser.id,
     dbUser.username,
-    dbUser.role || 'admin'
+    dbUser.role || CRM_ROLES.ADMIN
   );
 
   /**
@@ -145,7 +147,7 @@ const dbUser = getCrmUserAuthByUsername(normalizedUsername);
     entityId: dbUser.id,
     actorUserId: dbUser.id,
     actorUsername: dbUser.username,
-    actorRole: dbUser.role || 'admin',
+    actorRole: dbUser.role || CRM_ROLES.ADMIN,
     req,
     details: {
       username: dbUser.username
@@ -156,7 +158,7 @@ const dbUser = getCrmUserAuthByUsername(normalizedUsername);
     ok: true,
     token,
     username: dbUser.username,
-    role: dbUser.role || 'admin'
+    role: dbUser.role || CRM_ROLES.ADMIN
   });
 }
 
@@ -197,11 +199,11 @@ function postCrmChangePassword(req, res) {
 	  });
 	}
 
-	if (String(newPassword).length < 8) {
-	  return res.status(400).json({
-		error: 'Mínimo 8 caracteres'
-	  });
-	}
+if (String(newPassword).length < CRM_PASSWORD.MIN_LENGTH) {
+  return res.status(400).json({
+    error: `Mínimo ${CRM_PASSWORD.MIN_LENGTH} caracteres`
+  });
+}
 
   /**
    * 🔎 Buscar usuario

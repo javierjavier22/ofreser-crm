@@ -44,6 +44,9 @@
 const db = require('../../database/sqlite');
 const { getMessagesBySessionId } = require('./messages.repository');
 const { getBySessionId } = require('./sessions.repository');
+const {
+  PAGINATION
+} = require('../../../shared/constants/app.constants');
 
 /**
  * Devuelve fecha actual en formato ISO.
@@ -576,9 +579,15 @@ function updateLeadNote(leadId, note) {
  * - NO rompe el sistema actual
  * - Se usa solo si el controller la invoca
  */
-function getEnrichedLeadsPaginated({ limit = 50, offset = 0 }) {
+function getEnrichedLeadsPaginated({
+  limit = PAGINATION.LEADS_DEFAULT_LIMIT,
+  offset = 0
+}) {
   // 🔒 Sanitizamos valores para evitar errores o abuso
-  const safeLimit = Math.min(Number(limit) || 50, 100);
+  const safeLimit = Math.min(
+  Number(limit) || PAGINATION.LEADS_DEFAULT_LIMIT,
+  PAGINATION.LEADS_MAX_LIMIT
+);
   const safeOffset = Number(offset) || 0;
 
   /**

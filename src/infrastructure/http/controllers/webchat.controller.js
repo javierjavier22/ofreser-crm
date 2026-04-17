@@ -48,6 +48,12 @@ const { processIncomingMessage } = require('../../../application/use-cases/proce
  * Esto nos permite reemplazar el menú base del motor
  * por el mismo menú comercial que usamos en WhatsApp.
  */
+ 
+ const {
+  TEXT_LIMITS
+} = require('../../../shared/constants/app.constants');
+
+
 function isEngineMainMenu(reply) {
   if (!reply?.options) return false;
 
@@ -170,7 +176,7 @@ function postChat(req, res) {
    */
   const sessionId = req.body.sessionId;
   const rawMessage = req.body.message;
-  const MAX_WEBCHAT_MESSAGE_LENGTH = 1000;
+  const MAX_WEBCHAT_MESSAGE_LENGTH = TEXT_LIMITS.WEBCHAT_MESSAGE_MAX;
 
   /**
    * Validación básica.

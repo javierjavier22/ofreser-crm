@@ -57,6 +57,13 @@ const {
   saveAuditLog
 } = require('../infrastructure/persistence/sqlite/audit.repository');
 
+const {
+  CRM_ROLES,
+  CRM_ALLOWED_ROLES,
+  CRM_USERNAME,
+  CRM_PASSWORD
+} = require('../shared/constants/app.constants');
+
 const router = express.Router();
 
 /**
@@ -71,25 +78,21 @@ const router = express.Router();
  * - máximo 40
  * - solo letras, números, punto, guion y guion bajo
  */
-const USERNAME_MIN_LENGTH = 3;
-const USERNAME_MAX_LENGTH = 40;
-const USERNAME_REGEX = /^[a-zA-Z0-9._-]+$/;
+const USERNAME_MIN_LENGTH = CRM_USERNAME.MIN_LENGTH;
+const USERNAME_MAX_LENGTH = CRM_USERNAME.MAX_LENGTH;
+const USERNAME_REGEX = CRM_USERNAME.REGEX;
 
 /**
  * Password:
- * - mínimo 8 caracteres
- * - máximo 100
- *
- * No exigimos complejidad extra por ahora
- * para mantener compatibilidad operativa.
+ * - mínimo y máximo vienen de constantes compartidas
  */
-const PASSWORD_MIN_LENGTH = 8;
-const PASSWORD_MAX_LENGTH = 100;
+const PASSWORD_MIN_LENGTH = CRM_PASSWORD.MIN_LENGTH;
+const PASSWORD_MAX_LENGTH = CRM_PASSWORD.MAX_LENGTH;
 
 /**
  * Roles válidos del sistema.
  */
-const ALLOWED_ROLES = ['admin', 'user'];
+const ALLOWED_ROLES = CRM_ALLOWED_ROLES;
 
 /**
  * ============================================
@@ -167,7 +170,7 @@ function normalizeUsername(username) {
  * Normaliza rol entrante.
  */
 function normalizeRole(role) {
-  return String(role || 'user').trim().toLowerCase();
+  return String(role || CRM_ROLES.USER).trim().toLowerCase();
 }
 
 /**

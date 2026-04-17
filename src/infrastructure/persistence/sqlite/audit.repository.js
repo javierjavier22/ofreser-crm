@@ -36,6 +36,10 @@
 const db = require('../../database/sqlite');
 const { logger } = require('../../../shared/logger/logger');
 
+const {
+  PAGINATION
+} = require('../../../shared/constants/app.constants');
+
 /**
  * Devuelve fecha actual en formato ISO.
  */
@@ -328,7 +332,7 @@ function getAuditLogsFiltered({
   action = '',
   entityType = '',
   entityId = '',
-  limit = 20,
+  limit = PAGINATION.AUDIT_DEFAULT_LIMIT,
   offset = 0
 } = {}) {
   const conditions = [];
@@ -358,7 +362,13 @@ function getAuditLogsFiltered({
     ? `WHERE ${conditions.join(' AND ')}`
     : '';
 
-  const safeLimit = Math.max(1, Math.min(Number(limit) || 20, 100));
+  const safeLimit = Math.max(
+  1,
+  Math.min(
+    Number(limit) || PAGINATION.AUDIT_DEFAULT_LIMIT,
+    PAGINATION.AUDIT_MAX_LIMIT
+  )
+);
   const safeOffset = Math.max(0, Number(offset) || 0);
 
   /**

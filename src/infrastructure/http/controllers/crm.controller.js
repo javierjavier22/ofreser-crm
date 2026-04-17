@@ -70,6 +70,12 @@ const {
   saveAuditLog
 } = require('../../persistence/sqlite/audit.repository');
 
+const {
+  LEAD_ALLOWED_STATUSES,
+  SESSION_ALLOWED_CONTROL_MODES,
+  TEXT_LIMITS
+} = require('../../../shared/constants/app.constants');
+
 /**
  * ============================================
  * GET /leads (con paginación opcional)
@@ -207,7 +213,7 @@ function patchLeadStatus(req, res) {
   const leadId = req.params.id;
   const { status } = req.body;
 
-  const validStatuses = ['nuevo', 'calificado', 'seguimiento', 'cerrado'];
+  const validStatuses = LEAD_ALLOWED_STATUSES;
 
   if (!validStatuses.includes(status)) {
     return res.status(400).json({
@@ -276,7 +282,7 @@ function patchLeadStatus(req, res) {
 function patchLeadNote(req, res) {
   const leadId = req.params.id;
   const { note } = req.body;
-  const MAX_NOTE_LENGTH = 2000;
+  const MAX_NOTE_LENGTH = TEXT_LIMITS.INTERNAL_NOTE_MAX;
 
   if (typeof note !== 'string') {
     return res.status(400).json({
@@ -361,7 +367,7 @@ function patchSessionControl(req, res) {
   const sessionId = req.params.sessionId;
   const { controlMode, takenBy } = req.body;
 
-  const validModes = ['bot', 'human', 'closed'];
+  const validModes = SESSION_ALLOWED_CONTROL_MODES;
 
   if (!validModes.includes(controlMode)) {
     return res.status(400).json({
@@ -458,7 +464,7 @@ function patchSessionControl(req, res) {
 async function postHumanMessage(req, res) {
   const sessionId = req.params.sessionId;
   const { text } = req.body;
-  const MAX_HUMAN_MESSAGE_LENGTH = 2000;
+  const MAX_HUMAN_MESSAGE_LENGTH = TEXT_LIMITS.HUMAN_MESSAGE_MAX;
 
   if (typeof text !== 'string' || !text.trim()) {
     return res.status(400).json({
