@@ -45,7 +45,14 @@ const crypto = require('crypto');
  * Este archivo vive en src/routes,
  * por eso la ruta correcta hacia sqlite es esta.
  */
-const db = require('../infrastructure/database/sqlite');
+const {
+  getCrmUserById,
+  listCrmUsers,
+  createCrmUser,
+  updateCrmUserRoleAndActive,
+  updateCrmUserPasswordHash,
+  countActiveCrmAdmins
+} = require('../infrastructure/persistence/sqlite/crm-users.repository');
 const {
   saveAuditLog
 } = require('../infrastructure/persistence/sqlite/audit.repository');
@@ -241,43 +248,7 @@ function getPasswordValidationError(password, fieldName = 'password') {
  * ============================================
  */
 
-/**
- * Busca un usuario por ID.
- *
- * Devuelve null si no existe.
- */
-function getUserById(id) {
-  return (
-    db.prepare(`
-      SELECT
-        id,
-        username,
-        role,
-        is_active,
-        created_at,
-        updated_at
-      FROM crm_users
-      WHERE id = ?
-      LIMIT 1
-    `).get(id) || null
-  );
-}
 
-/**
- * Cuenta cuántos admins activos hay en el sistema.
- *
- * Esto se usa para evitar dejar al sistema sin administradores.
- */
-function countActiveAdmins() {
-  const row = db.prepare(`
-    SELECT COUNT(*) AS total
-    FROM crm_users
-    WHERE role = 'admin'
-      AND is_active = 1
-  `).get();
-
-  return Number(row?.total || 0);
-}
 
 /**
  * ============================================
@@ -295,17 +266,7 @@ function countActiveAdmins() {
  */
 router.get('/', requireAdmin, (req, res) => {
   try {
-    const users = db.prepare(`
-      SELECT
-        id,
-        username,
-        role,
-        is_active,
-        created_at,
-        updated_at
-      FROM crm_users
-      ORDER BY datetime(created_at) DESC
-    `).all();
+const users = listCrmUsers();
 
     return res.json({
       ok: true,
@@ -370,22 +331,13 @@ router.post('/', requireAdmin, (req, res) => {
     const id = `user_${Date.now()}`;
     const passwordHash = hashPassword(rawPassword);
 
-    db.prepare(`
-      INSERT INTO crm_users (
-        id,
-        username,
-        password_hash,
-        role,
-        is_active,
-        created_at,
-        updated_at
-      ) VALUES (?, ?, ?, ?, 1, datetime('now'), datetime('now'))
-    `).run(
-      id,
-      normalizedUsername,
-      passwordHash,
-      normalizedRole
-    );
+createCrmUser({
+  id,
+  username: normalizedUsername,
+  passwordHash,
+  role: normalizedRole,
+  isActive: 1
+});
 
     /**
      * Registramos creación de usuario.
@@ -464,7 +416,7 @@ router.put('/:id', requireAdmin, (req, res) => {
     /**
      * Verificamos que el usuario objetivo exista.
      */
-    const targetUser = getUserById(id);
+    const targetUser = getCrmUserById(id);
 
     if (!targetUser) {
       return res.status(404).json({
@@ -530,7 +482,7 @@ router.put('/:id', requireAdmin, (req, res) => {
       (nextIsActive === 0 || normalizedRole !== 'admin');
 
     if (adminWouldBeRemoved) {
-      const activeAdmins = countActiveAdmins();
+      const activeAdmins = countActiveCrmAdmins();
 
       if (activeAdmins <= 1) {
         return res.status(400).json({
@@ -542,18 +494,11 @@ router.put('/:id', requireAdmin, (req, res) => {
     /**
      * Ejecutamos actualización.
      */
-    db.prepare(`
-      UPDATE crm_users
-      SET
-        role = ?,
-        is_active = ?,
-        updated_at = datetime('now')
-      WHERE id = ?
-    `).run(
-      normalizedRole,
-      nextIsActive,
-      id
-    );
+updateCrmUserRoleAndActive({
+  id,
+  role: normalizedRole,
+  isActive: nextIsActive
+});
 
     /**
      * Registramos cambio administrativo sobre usuario.
@@ -621,7 +566,7 @@ router.post('/:id/reset-password', requireAdmin, (req, res) => {
     /**
      * Verificamos que el usuario exista antes de tocar la contraseña.
      */
-    const targetUser = getUserById(id);
+    const targetUser = getCrmUserById(id);
 
     if (!targetUser) {
       return res.status(404).json({
@@ -631,13 +576,10 @@ router.post('/:id/reset-password', requireAdmin, (req, res) => {
 
     const passwordHash = hashPassword(rawPassword);
 
-    db.prepare(`
-      UPDATE crm_users
-      SET
-        password_hash = ?,
-        updated_at = datetime('now')
-      WHERE id = ?
-    `).run(passwordHash, id);
+    updateCrmUserPasswordHash({
+  id,
+  passwordHash
+});
 
     /**
      * Registramos reset de contraseña por admin.

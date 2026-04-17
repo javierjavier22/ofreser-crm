@@ -28,7 +28,12 @@
  */
 
 const crypto = require('crypto');
-const db = require('../../infrastructure/database/sqlite');
+const {
+  purgeExpiredCrmSessions,
+  createCrmSession,
+  getCrmSessionByTokenRow,
+  deleteCrmSessionByToken
+} = require('../../infrastructure/persistence/sqlite/crm-sessions.repository');
 
 /**
  * TTL del token (12 horas)
@@ -46,12 +51,8 @@ function generateToken() {
  * Limpia sesiones expiradas de la base
  */
 function purgeExpiredTokens() {
-  const now = Date.now();
-
-  db.prepare(`
-    DELETE FROM crm_sessions
-    WHERE expires_at <= ?
-  `).run(now);
+const now = Date.now();
+purgeExpiredCrmSessions(now);
 }
 
 /**
@@ -69,16 +70,14 @@ function issueCrmToken(userId, username, role = 'admin') {
   const now = Date.now();
   const expiresAt = now + CRM_TOKEN_TTL_MS;
 
-  db.prepare(`
-    INSERT INTO crm_sessions (
-      token,
-      user_id,
-      username,
-      role,
-      issued_at,
-      expires_at
-    ) VALUES (?, ?, ?, ?, ?, ?)
-  `).run(token, userId, username, role, now, expiresAt);
+createCrmSession({
+  token,
+  userId,
+  username,
+  role,
+  issuedAt: now,
+  expiresAt
+});
 
   return token;
 }
@@ -91,12 +90,7 @@ function getCrmSessionByToken(token) {
 
   purgeExpiredTokens();
 
-    const row = db.prepare(`
-    SELECT token, user_id, username, role, issued_at, expires_at
-    FROM crm_sessions
-    WHERE token = ?
-    LIMIT 1
-  `).get(token);
+const row = getCrmSessionByTokenRow(token);
 
   if (!row) return null;
 
@@ -116,10 +110,7 @@ function getCrmSessionByToken(token) {
 function revokeCrmToken(token) {
   if (!token) return false;
 
-  const result = db.prepare(`
-    DELETE FROM crm_sessions
-    WHERE token = ?
-  `).run(token);
+const result = deleteCrmSessionByToken(token);
 
   return result.changes > 0;
 }

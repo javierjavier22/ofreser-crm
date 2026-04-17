@@ -27,7 +27,10 @@
 
 const crypto = require('crypto');
 const crmAuthMiddleware = require('../crm-auth.middleware');
-const db = require('../../database/sqlite');
+const {
+  getCrmUserAuthByUsername,
+  updateCrmUserPasswordHash
+} = require('../../persistence/sqlite/crm-users.repository');
 const {
   saveAuditLog
 } = require('../../persistence/sqlite/audit.repository');
@@ -90,17 +93,7 @@ function postCrmLogin(req, res) {
   /**
    * 🔎 Buscar usuario en DB
    */
-  const dbUser = db.prepare(`
-    SELECT
-      id,
-      username,
-      password_hash,
-      is_active,
-      role
-    FROM crm_users
-    WHERE username = ?
-    LIMIT 1
-  `).get(normalizedUsername);
+const dbUser = getCrmUserAuthByUsername(normalizedUsername);
 
   /**
    * ❌ Usuario no existe
@@ -213,11 +206,7 @@ function postCrmChangePassword(req, res) {
   /**
    * 🔎 Buscar usuario
    */
-  const dbUser = db.prepare(`
-    SELECT id, password_hash, is_active
-    FROM crm_users
-    WHERE username = ?
-  `).get(currentUsername);
+const dbUser = getCrmUserAuthByUsername(currentUsername);
 
   if (!dbUser) {
     return res.status(400).json({
@@ -250,11 +239,10 @@ function postCrmChangePassword(req, res) {
    */
   const newHash = hashPassword(newPassword);
 
-  db.prepare(`
-    UPDATE crm_users
-    SET password_hash = ?, updated_at = datetime('now')
-    WHERE id = ?
-  `).run(newHash, dbUser.id);
+updateCrmUserPasswordHash({
+  id: dbUser.id,
+  passwordHash: newHash
+});
 
   /**
    * Registramos cambio de contraseña propia.
