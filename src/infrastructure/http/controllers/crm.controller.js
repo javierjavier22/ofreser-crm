@@ -41,6 +41,15 @@
  * Este archivo permite ver y gestionar leads
  * desde el CRM interno.
  */
+ 
+ const {
+  getEnrichedLeads,
+  getEnrichedLeadsPaginated, // 👈 NUEVO
+  getLeadById,
+  enrichLeadWithConversationData,
+  updateLeadStatus,
+  updateLeadNote
+} = require('../../persistence/sqlite/leads.repository');
 
 const {
   getEnrichedLeads,
@@ -70,18 +79,41 @@ const {
 } = require('../../persistence/sqlite/audit.repository');
 
 /**
- * Devuelve todos los leads enriquecidos.
+ * ============================================
+ * GET /leads (con paginación opcional)
+ * ============================================
  *
- * "Enriquecidos" significa que además de los datos básicos del lead,
- * vienen con información adicional de conversación, como:
- * - cantidad de mensajes
- * - último mensaje
- * - fecha del último mensaje
- * - controlMode de la sesión
+ * ¿Qué hace?
+ * ----------
+ * - Si NO hay query params → comportamiento original (compatibilidad)
+ * - Si hay limit/offset → devuelve paginado
+ *
+ * Esto permite migrar el frontend sin romper nada.
  */
 function getLeads(req, res) {
+  const { limit, offset } = req.query;
+
+  /**
+   * 🆕 MODO PAGINADO
+   */
+  if (limit !== undefined || offset !== undefined) {
+    const result = getEnrichedLeadsPaginated({ limit, offset });
+
+    return res.json({
+      ok: true,
+      total: result.total,
+      limit: result.limit,
+      offset: result.offset,
+      leads: result.leads
+    });
+  }
+
+  /**
+   * 🟡 MODO LEGACY (no romper frontend actual)
+   */
   const leads = getEnrichedLeads();
-  res.json(leads);
+
+  return res.json(leads);
 }
 
 /**

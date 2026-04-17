@@ -557,11 +557,100 @@ function updateLeadNote(leadId, note) {
 }
 
 /**
+ * ============================================
+ * PAGINACIÓN DE LEADS (P1.4)
+ * ============================================
+ *
+ * ¿Qué hace esta función?
+ * -----------------------
+ * Devuelve leads paginados + total de registros.
+ *
+ * ¿Por qué se agrega?
+ * -------------------
+ * Para evitar traer todos los leads en memoria,
+ * lo cual no escala bien cuando crece la base.
+ *
+ * Importante:
+ * -----------
+ * - NO reemplaza funciones existentes
+ * - NO rompe el sistema actual
+ * - Se usa solo si el controller la invoca
+ */
+function getEnrichedLeadsPaginated({ limit = 50, offset = 0 }) {
+  // 🔒 Sanitizamos valores para evitar errores o abuso
+  const safeLimit = Math.min(Number(limit) || 50, 100);
+  const safeOffset = Number(offset) || 0;
+
+  /**
+   * 1. Obtenemos TOTAL de leads (para paginador)
+   */
+  const totalRow = db.prepare(`
+    SELECT COUNT(*) as total FROM leads
+  `).get();
+
+  const total = totalRow?.total || 0;
+
+  /**
+   * 2. Traemos SOLO la página solicitada
+   */
+  const rows = db.prepare(`
+    SELECT
+      id,
+      session_id,
+      channel,
+      external_user_id,
+      source,
+      category,
+      name,
+      phone,
+      normalized_phone,
+      pest,
+      place_type,
+      zone,
+      product,
+      local_type,
+      business_name,
+      address,
+      certificate_type,
+      business_type,
+      admin_reason,
+      internal_note,
+      status,
+      requires_human,
+      partial,
+      partial_reason,
+      created_at,
+      updated_at
+    FROM leads
+    ORDER BY datetime(created_at) DESC
+    LIMIT ? OFFSET ?
+  `).all(safeLimit, safeOffset);
+
+  /**
+   * 3. Mapeamos + enriquecemos (igual que antes)
+   */
+  const leads = rows
+    .map(mapRowToLead)
+    .map(enrichLeadWithConversationData);
+
+  /**
+   * 4. Devolvemos estructura paginada
+   */
+  return {
+    total,
+    limit: safeLimit,
+    offset: safeOffset,
+    leads
+  };
+}
+
+/**
  * Exportamos funciones públicas.
  */
 module.exports = {
   getAllLeads,
   getEnrichedLeads,
+  getEnrichedLeadsPaginated, // 👈 AGREGAR ESTA LÍNEA
   getLeadById,
   getLeadBySessionId,
   saveLead,

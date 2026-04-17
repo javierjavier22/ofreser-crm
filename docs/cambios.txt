@@ -122,7 +122,7 @@ Prioridad
 Alta.
 
 ==================================================================================================================
-P0.4 Falta validación explícita de variables críticas de entorno
+P0.4 Falta validación explícita de variables críticas de entorno			OK
 ==================================================================================================================
 Problema
 
@@ -189,7 +189,9 @@ Prioridad
 
 Media-alta.
 
-P1.2 Reemplazar console.* por logger central en módulos productivos
+==================================================================================================================
+P1.2 Reemplazar console.* por logger central en módulos productivos		OK
+==================================================================================================================
 Problema
 
 Todavía hay partes con:
@@ -213,14 +215,16 @@ Cambiar de forma quirúrgica en:
 
 backup.js
 restore.js
-audit.repository.js
-admin.controller.js
+audit.repository.js		
+admin.controller.js		OK
 cualquier otro operativo que siga con consola
 Prioridad
 
 Alta porque mejora operación sin romper negocio.
 
+==================================================================================================================
 P1.3 Agregar paginación a auditoría
+==================================================================================================================
 Problema
 
 getAuditLogsFiltered() devuelve todo.
@@ -247,8 +251,9 @@ y un paginado simple en UI.
 Prioridad
 
 Alta si pensás usarlo de verdad en producción.
-
+==================================================================================================================
 P1.4 Agregar paginación o lazy loading para leads
+==================================================================================================================
 Problema
 
 El CRM trae todos los leads juntos.
@@ -273,7 +278,9 @@ Prioridad
 
 Media-alta.
 
+==================================================================================================================
 P1.5 Mejorar seguridad de contraseñas
+==================================================================================================================
 Problema
 
 El frontend de cambio de contraseña exige mínimo 6 caracteres. El backend también es tolerante.
@@ -294,8 +301,9 @@ Yo haría mínimo 8 y nada más por ahora.
 Prioridad
 
 Alta.
-
+==================================================================================================================
 P1.6 Limitar tamaño de campos libres
+==================================================================================================================
 Problema
 
 Campos como:
@@ -326,9 +334,11 @@ etc.
 Prioridad
 
 Alta.
-
+==================================================================================================================
 3. P2. Mejoras buenas pero no urgentes
+==================================================================================================================
 P2.1 Extraer constantes compartidas
+==================================================================================================================
 Problema
 
 Hay strings repetidos en varios lugares:
@@ -355,8 +365,9 @@ audit-actions.constants.js
 Prioridad
 
 Media.
-
+==================================================================================================================
 P2.2 Formalizar validaciones con helpers comunes
+==================================================================================================================
 Problema
 
 Hay validaciones repartidas en distintos archivos.
@@ -381,8 +392,9 @@ ids
 Prioridad
 
 Media.
-
+==================================================================================================================
 P2.3 Mejorar crm-login.js sin cambiar su lógica base
+==================================================================================================================
 Problema
 
 Está bien, pero se puede endurecer un poco:
@@ -409,8 +421,9 @@ antes de recargar o al reabrir login.
 Prioridad
 
 Media.
-
+==================================================================================================================
 P2.4 Preparar cleanup automático de backups y logs
+==================================================================================================================
 Problema
 
 Tanto backups como logs pueden crecer indefinidamente.
@@ -433,8 +446,9 @@ o script manual
 Prioridad
 
 Media.
-
+==================================================================================================================
 P2.5 Validar mejor backups antes de restore
+==================================================================================================================
 Problema
 
 restore.js no valida que el archivo sea realmente una DB SQLite sana.
@@ -459,36 +473,38 @@ Prioridad
 
 Media.
 
+==================================================================================================================
 4. No tocar por ahora
+==================================================================================================================
 No tocar 1. Refactor masivo del frontend CRM
-
+==================================================================================================================
 El index_crm.html es grande, sí. Pero hoy funciona y está muy integrado.
 Separarlo ya en múltiples JS/CSS sería trabajo grande y con riesgo innecesario.
 
 Decisión: no tocar ahora.
-
+==================================================================================================================
 No tocar 2. Migrar SQLite a PostgreSQL
-
+==================================================================================================================
 Sí, para escalar de verdad alguna vez puede tocar.
 Pero hoy sería meter complejidad antes de tiempo.
 
 Decisión: no tocar ahora.
-
+==================================================================================================================
 No tocar 3. Reescribir bot con IA o NLP más complejo
-
+==================================================================================================================
 Tu sistema actual está diseñado con heurísticas y FSM.
 Eso es correcto para esta etapa.
 
 Decisión: no tocar ahora.
-
+==================================================================================================================
 No tocar 4. Refactor total a TypeScript
-
+==================================================================================================================
 Sería una mejora técnica, pero hoy no es prioridad frente a bugs, seguridad y operación.
 
 Decisión: no tocar ahora.
-
+==================================================================================================================
 No tocar 5. Rehacer auth completa con refresh tokens, cookies httpOnly, etc.
-
+==================================================================================================================
 Arquitectónicamente puede mejorar, pero ya es una segunda etapa.
 Primero conviene endurecer lo actual.
 
