@@ -52,14 +52,6 @@
 } = require('../../persistence/sqlite/leads.repository');
 
 const {
-  getEnrichedLeads,
-  getLeadById,
-  enrichLeadWithConversationData,
-  updateLeadStatus,
-  updateLeadNote
-} = require('../../persistence/sqlite/leads.repository');
-
-const {
   getAllMessages,
   getMessagesBySessionId,
   saveMessage
