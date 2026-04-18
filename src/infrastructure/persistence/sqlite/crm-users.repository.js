@@ -24,9 +24,12 @@
 const db = require('../../database/sqlite');
 
 /**
- * Busca usuario por username incluyendo password_hash.
+ * Busca usuario por username incluyendo datos sensibles de auth.
  *
- * Se usa en login y cambio de contraseña.
+ * Se usa en:
+ * - login
+ * - cambio de contraseña
+ * - control de bloqueo
  */
 function getCrmUserAuthByUsername(username) {
   return (
@@ -37,6 +40,8 @@ function getCrmUserAuthByUsername(username) {
         password_hash,
         is_active,
         role,
+        failed_attempts,
+        is_blocked,
         created_at,
         updated_at
       FROM crm_users
@@ -169,6 +174,68 @@ function countActiveCrmAdmins() {
   return Number(row?.total || 0);
 }
 
+/**
+ * Incrementa intentos fallidos de login para un usuario.
+ */
+function incrementCrmUserFailedAttempts(userId) {
+  return db.prepare(`
+    UPDATE crm_users
+    SET
+      failed_attempts = COALESCE(failed_attempts, 0) + 1,
+      updated_at = datetime('now')
+    WHERE id = ?
+  `).run(String(userId || '').trim());
+}
+
+/**
+ * Resetea intentos fallidos de login para un usuario.
+ *
+ * Se usa cuando el login fue correcto.
+ */
+function resetCrmUserFailedAttempts(userId) {
+  return db.prepare(`
+    UPDATE crm_users
+    SET
+      failed_attempts = 0,
+      updated_at = datetime('now')
+    WHERE id = ?
+  `).run(String(userId || '').trim());
+}
+
+/**
+ * Bloquea un usuario CRM.
+ *
+ * Importante:
+ * - no lo desactiva
+ * - solo marca is_blocked = 1
+ */
+function blockCrmUser(userId) {
+  return db.prepare(`
+    UPDATE crm_users
+    SET
+      is_blocked = 1,
+      updated_at = datetime('now')
+    WHERE id = ?
+  `).run(String(userId || '').trim());
+}
+
+/**
+ * Desbloquea un usuario CRM y reinicia intentos fallidos.
+ *
+ * Esto nos va a servir también más adelante
+ * si querés agregar botón "Desbloquear".
+ */
+function unblockCrmUser(userId) {
+  return db.prepare(`
+    UPDATE crm_users
+    SET
+      is_blocked = 0,
+      failed_attempts = 0,
+      updated_at = datetime('now')
+    WHERE id = ?
+  `).run(String(userId || '').trim());
+}
+
 module.exports = {
   getCrmUserAuthByUsername,
   getCrmUserById,
@@ -177,4 +244,8 @@ module.exports = {
   updateCrmUserRoleAndActive,
   updateCrmUserPasswordHash,
   countActiveCrmAdmins
+  incrementCrmUserFailedAttempts,
+  resetCrmUserFailedAttempts,
+  blockCrmUser,
+  unblockCrmUser
 };

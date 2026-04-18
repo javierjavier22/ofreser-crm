@@ -178,6 +178,52 @@ function createCrmUsersTable() {
 }
 
 /**
+ * =========================================================
+ * MIGRACIÓN SEGURA DE crm_users
+ * =========================================================
+ *
+ * ¿Qué hace este bloque?
+ * ----------------------
+ * Agrega columnas nuevas a crm_users si todavía no existen.
+ *
+ * Nuevas columnas:
+ * - failed_attempts: cantidad de intentos fallidos
+ * - is_blocked: indica si el usuario está bloqueado
+ *
+ * Importante:
+ * -----------
+ * Esto permite migrar la base existente sin romper instalaciones ya activas.
+ */
+function ensureCrmUsersSecurityColumns(db) {
+  const columns = db.prepare(`PRAGMA table_info(crm_users)`).all();
+  const columnNames = columns.map((col) => String(col.name || '').trim());
+
+  if (!columnNames.includes('failed_attempts')) {
+    db.prepare(`
+      ALTER TABLE crm_users
+      ADD COLUMN failed_attempts INTEGER NOT NULL DEFAULT 0
+    `).run();
+  }
+
+  if (!columnNames.includes('is_blocked')) {
+    db.prepare(`
+      ALTER TABLE crm_users
+      ADD COLUMN is_blocked INTEGER NOT NULL DEFAULT 0
+    `).run();
+  }
+}
+
+safeAddColumn(`
+  ALTER TABLE crm_users
+  ADD COLUMN failed_login_attempts INTEGER NOT NULL DEFAULT 0
+`);
+
+safeAddColumn(`
+  ALTER TABLE crm_users
+  ADD COLUMN is_locked INTEGER NOT NULL DEFAULT 0
+`);
+
+/**
  * Crea la tabla de sesiones del CRM (login).
  *
  * Esto reemplaza el almacenamiento en memoria
@@ -452,6 +498,7 @@ function initDb() {
   createMessagesTable();
   createLeadsTable();
   createCrmUsersTable();
+  ensureCrmUsersSecurityColumns(db);
   createCrmSessionsTable();
   createAuditLogsTable();
 

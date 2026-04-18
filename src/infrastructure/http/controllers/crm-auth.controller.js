@@ -29,7 +29,10 @@ const crypto = require('crypto');
 const crmAuthMiddleware = require('../crm-auth.middleware');
 const {
   getCrmUserAuthByUsername,
-  updateCrmUserPasswordHash
+  updateCrmUserPasswordHash,
+  incrementCrmUserFailedAttempts,
+  resetCrmUserFailedAttempts,
+  blockCrmUser
 } = require('../../persistence/sqlite/crm-users.repository');
 
 const {
@@ -44,6 +47,11 @@ const {
   normalizeUsername,
   getPasswordValidationError
 } = require('../../../shared/validation/crm.validation');
+
+/**
+ * Cantidad máxima de intentos fallidos antes de bloquear usuario.
+ */
+const CRM_LOGIN_MAX_FAILED_ATTEMPTS = 3;
 
 /**
  * Verifica password contra hash almacenado.
@@ -260,32 +268,23 @@ function hashPassword(plainPassword) {
  * ============================================
  */
 /**
+/**
  * ============================================
- * LOGIN
+ * LOGIN CON BLOQUEO POR USUARIO
  * ============================================
  *
- * Protecciones:
- * - valida usuario/password obligatorios
- * - aplica rate limit por IP
- * - limpia contador en login exitoso
+ * Reglas:
+ * - usuario inexistente => credenciales inválidas
+ * - password incorrecta => suma intento fallido
+ * - al llegar a 3 intentos => usuario bloqueado
+ * - usuario bloqueado => no puede entrar
+ * - login correcto => resetea intentos fallidos
  */
 function postCrmLogin(req, res) {
   const { username, password } = req.body || {};
 
   const normalizedUsername = normalizeUsername(username);
   const rawPassword = String(password || '');
-  const clientIp = getClientIp(req);
-
-  /**
-   * 1. Revisamos si la IP está temporalmente bloqueada.
-   */
-  const blockStatus = getLoginBlockStatus(clientIp);
-
-  if (blockStatus.blocked) {
-    return res.status(429).json({
-      error: `Demasiados intentos fallidos. Intentá de nuevo en ${blockStatus.retryAfterSeconds} segundos.`
-    });
-  }
 
   if (!normalizedUsername || !rawPassword) {
     return res.status(400).json({
@@ -294,45 +293,67 @@ function postCrmLogin(req, res) {
   }
 
   /**
-   * 2. Buscar usuario en DB.
+   * 1. Buscar usuario en DB
    */
   const dbUser = getCrmUserAuthByUsername(normalizedUsername);
 
   /**
-   * 3. Usuario inexistente.
+   * 2. Usuario no existe
+   *
+   * Importante:
+   * devolvemos mensaje genérico para no confirmar existencia.
    */
   if (!dbUser) {
-    registerFailedLoginAttempt(clientIp);
-
     return res.status(401).json({
       error: 'Credenciales inválidas'
     });
   }
 
   /**
-   * 4. Usuario inactivo.
-   *
-   * Nota:
-   * también cuenta como intento fallido para no filtrar demasiado.
+   * 3. Usuario bloqueado
+   */
+  if (Number(dbUser.is_blocked || 0) === 1) {
+    return res.status(403).json({
+      error: 'Usuario bloqueado. Contacte al administrador.'
+    });
+  }
+
+  /**
+   * 4. Usuario inactivo
    */
   if (Number(dbUser.is_active) !== 1) {
-    registerFailedLoginAttempt(clientIp);
-
     return res.status(403).json({
       error: 'Usuario inactivo'
     });
   }
 
   /**
-   * 5. Validar contraseña.
+   * 5. Validar contraseña
    */
   const validPassword = verifyPassword(
     rawPassword,
     dbUser.password_hash
   );
 
+  /**
+   * 6. Password incorrecta
+   *
+   * Sumamos intento y, si llega al máximo,
+   * bloqueamos inmediatamente.
+   */
   if (!validPassword) {
-    registerFailedLoginAttempt(clientIp);
+    incrementCrmUserFailedAttempts(dbUser.id);
+
+    const freshUser = getCrmUserAuthByUsername(normalizedUsername);
+    const failedAttempts = Number(freshUser?.failed_attempts || 0);
+
+    if (failedAttempts >= CRM_LOGIN_MAX_FAILED_ATTEMPTS) {
+      blockCrmUser(dbUser.id);
+
+      return res.status(403).json({
+        error: 'Usuario bloqueado. Contacte al administrador.'
+      });
+    }
 
     return res.status(401).json({
       error: 'Credenciales inválidas'
@@ -340,12 +361,14 @@ function postCrmLogin(req, res) {
   }
 
   /**
-   * 6. Si el login fue correcto, limpiamos intentos fallidos.
+   * 7. Login correcto
+   *
+   * Reiniciamos intentos fallidos.
    */
-  clearFailedLoginAttempts(clientIp);
+  resetCrmUserFailedAttempts(dbUser.id);
 
   /**
-   * 7. Emitir token.
+   * 8. Emitir token
    */
   const token = crmAuthMiddleware.issueCrmToken(
     dbUser.id,
@@ -354,7 +377,7 @@ function postCrmLogin(req, res) {
   );
 
   /**
-   * 8. Registramos login exitoso en auditoría.
+   * 9. Auditoría de login exitoso
    */
   saveAuditLog({
     action: 'CRM_LOGIN_SUCCESS',
