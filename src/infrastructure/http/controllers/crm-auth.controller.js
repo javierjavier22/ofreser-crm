@@ -51,6 +51,177 @@ const {
  * Formato del hash:
  * salt:hash
  */
+ 
+ /**
+ * ============================================
+ * RATE LIMIT DE LOGIN EN MEMORIA
+ * ============================================
+ *
+ * ¿Qué hace este bloque?
+ * ----------------------
+ * Protege el endpoint /crm/login contra fuerza bruta simple.
+ *
+ * Estrategia:
+ * -----------
+ * - cuenta intentos fallidos por IP
+ * - si supera el límite, bloquea temporalmente
+ * - si el login es exitoso, limpia el contador
+ *
+ * Importante:
+ * -----------
+ * - es en memoria
+ * - se reinicia si reinicia el proceso
+ * - para este MVP es suficiente y de bajo riesgo
+ */
+
+const LOGIN_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutos
+const LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5;
+
+/**
+ * Estructura:
+ * Map<ip, { attempts: number, firstAttemptAt: number, blockedUntil: number }>
+ */
+const loginAttemptStore = new Map();
+
+/**
+ * Devuelve una IP razonable para rate limit.
+ *
+ * Prioridad:
+ * - x-forwarded-for (Render / proxy)
+ * - req.ip
+ * - fallback genérico
+ */
+function getClientIp(req) {
+  const forwardedFor = String(req.headers['x-forwarded-for'] || '')
+    .split(',')[0]
+    .trim();
+
+  if (forwardedFor) {
+    return forwardedFor;
+  }
+
+  return String(req.ip || 'unknown').trim();
+}
+
+/**
+ * Limpia el estado vencido de una IP.
+ */
+function normalizeLoginAttemptState(ip) {
+  const now = Date.now();
+  const current = loginAttemptStore.get(ip);
+
+  if (!current) {
+    return null;
+  }
+
+  /**
+   * Si el bloqueo ya venció y la ventana también venció,
+   * limpiamos completamente.
+   */
+  const windowExpired =
+    current.firstAttemptAt &&
+    now - current.firstAttemptAt > LOGIN_RATE_LIMIT_WINDOW_MS;
+
+  const blockExpired =
+    current.blockedUntil &&
+    now >= current.blockedUntil;
+
+  if (windowExpired && blockExpired) {
+    loginAttemptStore.delete(ip);
+    return null;
+  }
+
+  /**
+   * Si venció la ventana de intentos pero no estaba bloqueado,
+   * reiniciamos contador.
+   */
+  if (windowExpired && !current.blockedUntil) {
+    loginAttemptStore.delete(ip);
+    return null;
+  }
+
+  /**
+   * Si estaba bloqueado y el bloqueo venció,
+   * reiniciamos estado para permitir nuevos intentos.
+   */
+  if (current.blockedUntil && now >= current.blockedUntil) {
+    loginAttemptStore.delete(ip);
+    return null;
+  }
+
+  return current;
+}
+
+/**
+ * Devuelve si la IP está bloqueada actualmente.
+ */
+function getLoginBlockStatus(ip) {
+  const current = normalizeLoginAttemptState(ip);
+
+  if (!current) {
+    return {
+      blocked: false,
+      retryAfterSeconds: 0
+    };
+  }
+
+  const now = Date.now();
+
+  if (current.blockedUntil && now < current.blockedUntil) {
+    return {
+      blocked: true,
+      retryAfterSeconds: Math.max(
+        1,
+        Math.ceil((current.blockedUntil - now) / 1000)
+      )
+    };
+  }
+
+  return {
+    blocked: false,
+    retryAfterSeconds: 0
+  };
+}
+
+/**
+ * Registra un intento fallido para la IP.
+ */
+function registerFailedLoginAttempt(ip) {
+  const now = Date.now();
+  const current = normalizeLoginAttemptState(ip);
+
+  if (!current) {
+    loginAttemptStore.set(ip, {
+      attempts: 1,
+      firstAttemptAt: now,
+      blockedUntil: 0
+    });
+    return;
+  }
+
+  /**
+   * Si la ventana sigue vigente, sumamos intento.
+   */
+  current.attempts += 1;
+
+  /**
+   * Si alcanza el máximo, bloqueamos.
+   */
+  if (current.attempts >= LOGIN_RATE_LIMIT_MAX_ATTEMPTS) {
+    current.blockedUntil = now + LOGIN_RATE_LIMIT_WINDOW_MS;
+  }
+
+  loginAttemptStore.set(ip, current);
+}
+
+/**
+ * Limpia intentos fallidos luego de login exitoso.
+ */
+function clearFailedLoginAttempts(ip) {
+  loginAttemptStore.delete(ip);
+}
+
+
 function verifyPassword(plainPassword, storedHash) {
   try {
     const [salt, originalHash] = String(storedHash || '').split(':');
@@ -88,11 +259,33 @@ function hashPassword(plainPassword) {
  * LOGIN
  * ============================================
  */
+/**
+ * ============================================
+ * LOGIN
+ * ============================================
+ *
+ * Protecciones:
+ * - valida usuario/password obligatorios
+ * - aplica rate limit por IP
+ * - limpia contador en login exitoso
+ */
 function postCrmLogin(req, res) {
   const { username, password } = req.body || {};
 
   const normalizedUsername = normalizeUsername(username);
   const rawPassword = String(password || '');
+  const clientIp = getClientIp(req);
+
+  /**
+   * 1. Revisamos si la IP está temporalmente bloqueada.
+   */
+  const blockStatus = getLoginBlockStatus(clientIp);
+
+  if (blockStatus.blocked) {
+    return res.status(429).json({
+      error: `Demasiados intentos fallidos. Intentá de nuevo en ${blockStatus.retryAfterSeconds} segundos.`
+    });
+  }
 
   if (!normalizedUsername || !rawPassword) {
     return res.status(400).json({
@@ -101,30 +294,37 @@ function postCrmLogin(req, res) {
   }
 
   /**
-   * 🔎 Buscar usuario en DB
+   * 2. Buscar usuario en DB.
    */
-const dbUser = getCrmUserAuthByUsername(normalizedUsername);
+  const dbUser = getCrmUserAuthByUsername(normalizedUsername);
 
   /**
-   * ❌ Usuario no existe
+   * 3. Usuario inexistente.
    */
   if (!dbUser) {
+    registerFailedLoginAttempt(clientIp);
+
     return res.status(401).json({
       error: 'Credenciales inválidas'
     });
   }
 
   /**
-   * ❌ Usuario inactivo
+   * 4. Usuario inactivo.
+   *
+   * Nota:
+   * también cuenta como intento fallido para no filtrar demasiado.
    */
   if (Number(dbUser.is_active) !== 1) {
+    registerFailedLoginAttempt(clientIp);
+
     return res.status(403).json({
       error: 'Usuario inactivo'
     });
   }
 
   /**
-   * 🔐 Validar contraseña
+   * 5. Validar contraseña.
    */
   const validPassword = verifyPassword(
     rawPassword,
@@ -132,13 +332,20 @@ const dbUser = getCrmUserAuthByUsername(normalizedUsername);
   );
 
   if (!validPassword) {
+    registerFailedLoginAttempt(clientIp);
+
     return res.status(401).json({
       error: 'Credenciales inválidas'
     });
   }
 
   /**
-   * 🎟️ Emitir token
+   * 6. Si el login fue correcto, limpiamos intentos fallidos.
+   */
+  clearFailedLoginAttempts(clientIp);
+
+  /**
+   * 7. Emitir token.
    */
   const token = crmAuthMiddleware.issueCrmToken(
     dbUser.id,
@@ -147,7 +354,7 @@ const dbUser = getCrmUserAuthByUsername(normalizedUsername);
   );
 
   /**
-   * Registramos login exitoso en auditoría.
+   * 8. Registramos login exitoso en auditoría.
    */
   saveAuditLog({
     action: 'CRM_LOGIN_SUCCESS',
