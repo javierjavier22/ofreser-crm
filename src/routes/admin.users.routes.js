@@ -58,42 +58,25 @@ const {
 } = require('../infrastructure/persistence/sqlite/audit.repository');
 
 const {
-  CRM_ROLES,
-  CRM_ALLOWED_ROLES,
-  CRM_USERNAME,
-  CRM_PASSWORD
+  CRM_ROLES
 } = require('../shared/constants/app.constants');
 
+const {
+  normalizeUsername,
+  normalizeRole,
+  isAllowedRole,
+  getUsernameValidationError,
+  getPasswordValidationError,
+  parseBooleanLike
+} = require('../shared/validation/crm.validation');
+
 const router = express.Router();
-
 /**
- * ============================================
- * CONSTANTES DE VALIDACIÓN
- * ============================================
+ * En esta etapa mantenemos importadas las constantes compartidas
+ * para referencia del archivo, pero la validación real ya vive
+ * en shared/validation/crm.validation.
  */
-
-/**
- * Username:
- * - mínimo 3 caracteres
- * - máximo 40
- * - solo letras, números, punto, guion y guion bajo
- */
-const USERNAME_MIN_LENGTH = CRM_USERNAME.MIN_LENGTH;
-const USERNAME_MAX_LENGTH = CRM_USERNAME.MAX_LENGTH;
-const USERNAME_REGEX = CRM_USERNAME.REGEX;
-
-/**
- * Password:
- * - mínimo y máximo vienen de constantes compartidas
- */
-const PASSWORD_MIN_LENGTH = CRM_PASSWORD.MIN_LENGTH;
-const PASSWORD_MAX_LENGTH = CRM_PASSWORD.MAX_LENGTH;
-
-/**
- * Roles válidos del sistema.
- */
-const ALLOWED_ROLES = CRM_ALLOWED_ROLES;
-
+ 
 /**
  * ============================================
  * MIDDLEWARE DE AUTORIZACIÓN
@@ -143,106 +126,6 @@ function hashPassword(password) {
     .toString('hex');
 
   return `${salt}:${hash}`;
-}
-
-/**
- * ============================================
- * HELPERS DE VALIDACIÓN
- * ============================================
- */
-
-/**
- * Normaliza un username.
- *
- * Regla:
- * - trim
- * - se guarda tal como fue escrito
- *
- * Nota:
- * no forzamos lowercase para no cambiar comportamiento
- * existente del sistema sin necesidad.
- */
-function normalizeUsername(username) {
-  return String(username || '').trim();
-}
-
-/**
- * Normaliza rol entrante.
- */
-function normalizeRole(role) {
-  return String(role || CRM_ROLES.USER).trim().toLowerCase();
-}
-
-/**
- * Devuelve true si el username cumple formato permitido.
- */
-function isValidUsername(username) {
-  if (!username) return false;
-  if (username.length < USERNAME_MIN_LENGTH) return false;
-  if (username.length > USERNAME_MAX_LENGTH) return false;
-  if (!USERNAME_REGEX.test(username)) return false;
-
-  return true;
-}
-
-/**
- * Devuelve true si la contraseña cumple
- * longitud mínima y máxima.
- */
-function isValidPassword(password) {
-  const value = String(password || '');
-
-  if (!value) return false;
-  if (value.length < PASSWORD_MIN_LENGTH) return false;
-  if (value.length > PASSWORD_MAX_LENGTH) return false;
-
-  return true;
-}
-
-/**
- * Devuelve mensaje de error de username.
- *
- * Esto ayuda a dar errores más claros al frontend.
- */
-function getUsernameValidationError(username) {
-  if (!username) {
-    return 'username requerido';
-  }
-
-  if (username.length < USERNAME_MIN_LENGTH) {
-    return `username debe tener al menos ${USERNAME_MIN_LENGTH} caracteres`;
-  }
-
-  if (username.length > USERNAME_MAX_LENGTH) {
-    return `username no puede superar ${USERNAME_MAX_LENGTH} caracteres`;
-  }
-
-  if (!USERNAME_REGEX.test(username)) {
-    return 'username solo puede contener letras, números, punto, guion y guion bajo';
-  }
-
-  return '';
-}
-
-/**
- * Devuelve mensaje de error de contraseña.
- */
-function getPasswordValidationError(password, fieldName = 'password') {
-  const value = String(password || '');
-
-  if (!value) {
-    return `${fieldName} requerido`;
-  }
-
-  if (value.length < PASSWORD_MIN_LENGTH) {
-    return `${fieldName} debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres`;
-  }
-
-  if (value.length > PASSWORD_MAX_LENGTH) {
-    return `${fieldName} no puede superar ${PASSWORD_MAX_LENGTH} caracteres`;
-  }
-
-  return '';
 }
 
 /**
@@ -325,7 +208,7 @@ router.post('/', requireAdmin, (req, res) => {
     /**
      * Validación de role.
      */
-    if (!ALLOWED_ROLES.includes(normalizedRole)) {
+    if (!isAllowedRole(normalizedRole)) {
       return res.status(400).json({
         error: 'role inválido'
       });
@@ -410,7 +293,7 @@ router.put('/:id', requireAdmin, (req, res) => {
      */
     const normalizedRole = normalizeRole(role);
 
-    if (!ALLOWED_ROLES.includes(normalizedRole)) {
+    if (!isAllowedRole(normalizedRole)) {
       return res.status(400).json({
         error: 'role inválido'
       });
@@ -432,13 +315,7 @@ router.put('/:id', requireAdmin, (req, res) => {
      *
      * Aceptamos boolean, 0/1 o equivalentes truthy/falsy.
      */
-    const nextIsActive =
-      is_active === true ||
-      is_active === 1 ||
-      is_active === '1' ||
-      is_active === 'true'
-        ? 1
-        : 0;
+const nextIsActive = parseBooleanLike(is_active) ? 1 : 0;
 
     /**
      * Blindaje 1:

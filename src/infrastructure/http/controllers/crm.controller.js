@@ -76,6 +76,10 @@ const {
   TEXT_LIMITS
 } = require('../../../shared/constants/app.constants');
 
+const {
+  validateMaxTextLength
+} = require('../../../shared/validation/crm.validation');
+
 /**
  * ============================================
  * GET /leads (con paginación opcional)
@@ -290,13 +294,20 @@ function patchLeadNote(req, res) {
     });
   }
 
-  const nextNote = String(note || '').trim();
+const noteValidation = validateMaxTextLength(
+  note,
+  MAX_NOTE_LENGTH,
+  'La nota debe ser texto',
+  `La nota no puede superar los ${MAX_NOTE_LENGTH} caracteres`
+);
 
-  if (nextNote.length > MAX_NOTE_LENGTH) {
-    return res.status(400).json({
-      error: `La nota no puede superar los ${MAX_NOTE_LENGTH} caracteres`
-    });
-  }
+if (!noteValidation.ok) {
+  return res.status(400).json({
+    error: noteValidation.error
+  });
+}
+
+const nextNote = noteValidation.value;
 
   /**
    * Leemos el lead actual antes del cambio
@@ -472,13 +483,20 @@ async function postHumanMessage(req, res) {
     });
   }
 
-  const cleanText = String(text || '').trim();
+const textValidation = validateMaxTextLength(
+  text,
+  MAX_HUMAN_MESSAGE_LENGTH,
+  'El mensaje es obligatorio',
+  `El mensaje no puede superar los ${MAX_HUMAN_MESSAGE_LENGTH} caracteres`
+);
 
-  if (cleanText.length > MAX_HUMAN_MESSAGE_LENGTH) {
-    return res.status(400).json({
-      error: `El mensaje no puede superar los ${MAX_HUMAN_MESSAGE_LENGTH} caracteres`
-    });
-  }
+if (!textValidation.ok) {
+  return res.status(400).json({
+    error: textValidation.error
+  });
+}
+
+const cleanText = textValidation.value;
 
   const session = getBySessionId(sessionId);
 

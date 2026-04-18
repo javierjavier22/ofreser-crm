@@ -33,9 +33,13 @@ const {
 } = require('../../persistence/sqlite/crm-users.repository');
 
 const {
-  CRM_PASSWORD,
   CRM_ROLES
 } = require('../../../shared/constants/app.constants');
+
+const {
+  normalizeUsername,
+  getPasswordValidationError
+} = require('../../../shared/validation/crm.validation');
 
 /**
  * Verifica password contra hash almacenado.
@@ -83,7 +87,7 @@ function hashPassword(plainPassword) {
 function postCrmLogin(req, res) {
   const { username, password } = req.body || {};
 
-  const normalizedUsername = String(username || '').trim();
+  const normalizedUsername = normalizeUsername(username);
   const rawPassword = String(password || '');
 
   if (!normalizedUsername || !rawPassword) {
@@ -185,7 +189,7 @@ function getCrmMe(req, res) {
 function postCrmChangePassword(req, res) {
   const { currentPassword, newPassword } = req.body || {};
 
-  const currentUsername = String(req.crmAuth?.username || '').trim();
+  const currentUsername = normalizeUsername(req.crmAuth?.username);
 
   if (!currentUsername) {
     return res.status(401).json({
@@ -199,9 +203,11 @@ function postCrmChangePassword(req, res) {
 	  });
 	}
 
-if (String(newPassword).length < CRM_PASSWORD.MIN_LENGTH) {
+const newPasswordError = getPasswordValidationError(newPassword, 'newPassword');
+
+if (newPasswordError) {
   return res.status(400).json({
-    error: `Mínimo ${CRM_PASSWORD.MIN_LENGTH} caracteres`
+    error: newPasswordError
   });
 }
 

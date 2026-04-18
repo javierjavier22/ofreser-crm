@@ -53,6 +53,10 @@ const { processIncomingMessage } = require('../../../application/use-cases/proce
   TEXT_LIMITS
 } = require('../../../shared/constants/app.constants');
 
+const {
+  validateMaxTextLength
+} = require('../../../shared/validation/crm.validation');
+
 
 function isEngineMainMenu(reply) {
   if (!reply?.options) return false;
@@ -187,13 +191,20 @@ function postChat(req, res) {
     });
   }
 
-  const cleanMessage = String(rawMessage || '').trim();
+const messageValidation = validateMaxTextLength(
+  rawMessage,
+  MAX_WEBCHAT_MESSAGE_LENGTH,
+  'Faltan sessionId o message',
+  `El mensaje no puede superar los ${MAX_WEBCHAT_MESSAGE_LENGTH} caracteres`
+);
 
-  if (cleanMessage.length > MAX_WEBCHAT_MESSAGE_LENGTH) {
-    return res.status(400).json({
-      error: `El mensaje no puede superar los ${MAX_WEBCHAT_MESSAGE_LENGTH} caracteres`
-    });
-  }
+if (!messageValidation.ok) {
+  return res.status(400).json({
+    error: messageValidation.error
+  });
+}
+
+const cleanMessage = messageValidation.value;
 
   try {
     /**
