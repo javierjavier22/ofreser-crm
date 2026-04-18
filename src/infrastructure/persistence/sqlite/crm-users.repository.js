@@ -243,7 +243,7 @@ module.exports = {
   createCrmUser,
   updateCrmUserRoleAndActive,
   updateCrmUserPasswordHash,
-  countActiveCrmAdmins
+  countActiveCrmAdmins,
   incrementCrmUserFailedAttempts,
   resetCrmUserFailedAttempts,
   blockCrmUser,
