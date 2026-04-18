@@ -188,6 +188,22 @@ function incrementCrmUserFailedAttempts(userId) {
 }
 
 /**
+ * Desbloquea un usuario del CRM.
+ *
+ * - limpia intentos fallidos
+ * - elimina bloqueo
+ */
+function unlockCrmUser(username) {
+  return db.prepare(`
+    UPDATE crm_users
+    SET
+      failed_attempts = 0,
+      is_blocked = 0
+    WHERE username = ?
+  `).run(username);
+}
+
+/**
  * Resetea intentos fallidos de login para un usuario.
  *
  * Se usa cuando el login fue correcto.
@@ -247,5 +263,6 @@ module.exports = {
   incrementCrmUserFailedAttempts,
   resetCrmUserFailedAttempts,
   blockCrmUser,
-  unblockCrmUser
+  unblockCrmUser,
+  unlockCrmUser
 };

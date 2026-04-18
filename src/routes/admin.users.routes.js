@@ -71,6 +71,9 @@ const {
 } = require('../shared/validation/crm.validation');
 
 const router = express.Router();
+
+const { unlockCrmUserController } = require('../controllers/admin.controller');
+router.post('/admin/users/:username/unlock', unlockCrmUserController);
 /**
  * En esta etapa mantenemos importadas las constantes compartidas
  * para referencia del archivo, pero la validación real ya vive

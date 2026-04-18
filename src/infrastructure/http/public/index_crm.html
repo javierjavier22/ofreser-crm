@@ -4286,6 +4286,9 @@ async function loadLeads({ silent = false, preserveModal = true } = {}) {
                           : `<button class="activate-user" onclick="toggleAdminUserActive('${String(user.id || "").replaceAll("'", "\'")}', '${String(user.role || "user").replaceAll("'", "\'")}', true)">Activar</button>`
                       }
                       <button class="reset-pass" onclick="resetAdminUserPassword('${String(user.id || "").replaceAll("'", "\'")}', '${String(user.username || "").replaceAll("'", "\'")}')">Reset password</button>
+					  <button onclick="unlockUser('${user.username}')">
+  Desbloquear
+</button>
                     </div>
                   </td>
                 </tr>
@@ -4507,6 +4510,30 @@ async function confirmResetAdminUserPassword() {
     statusBox.textContent = 'Error reseteando contraseña: ' + error.message;
   } finally {
     confirmBtn.disabled = false;
+  }
+}
+
+async function unlockUser(username) {
+  if (!confirm(`¿Desbloquear usuario ${username}?`)) return;
+
+  try {
+    const res = await crmFetch(`/admin/users/${username}/unlock`, {
+      method: 'POST'
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Error desbloqueando');
+    }
+
+    alert('Usuario desbloqueado');
+
+    // refrescar lista
+    loadUsers?.();
+
+  } catch (err) {
+    alert(err.message);
   }
 }
 

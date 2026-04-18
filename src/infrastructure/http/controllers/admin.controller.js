@@ -54,6 +54,8 @@ const {
   getAuditLogsFiltered
 } = require('../../persistence/sqlite/audit.repository');
 
+const { unlockCrmUser } = require('../../persistence/sqlite/crm-users.repository');
+
 /**
  * Devuelve true solo si el reset administrativo
  * está explícitamente habilitado.
@@ -183,6 +185,30 @@ function postResetSystem(req, res) {
     return res.status(500).json({
       error: 'No se pudo resetear el sistema'
     });
+  }
+}
+
+/**
+ * Desbloquea un usuario CRM (solo admin).
+ */
+async function unlockCrmUserController(req, res) {
+  try {
+    const { username } = req.params;
+
+    if (!username) {
+      return res.status(400).json({ error: 'username requerido' });
+    }
+
+    unlockCrmUser(username);
+
+    return res.json({
+      ok: true,
+      message: 'Usuario desbloqueado correctamente'
+    });
+
+  } catch (error) {
+    console.error('unlockCrmUserController error:', error);
+    return res.status(500).json({ error: 'Error interno' });
   }
 }
 
@@ -409,6 +435,7 @@ function postRestoreBackup(req, res) {
 
 module.exports = {
   postResetSystem,
+  unlockCrmUserController,
   getAuditLogs,
   postCreateBackup,
   getBackups,
