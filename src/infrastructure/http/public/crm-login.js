@@ -459,6 +459,47 @@ let crmAuthRedirectInProgress = false;
  * - evitamos loops raros del auto refresh
  * - forzamos recarga para volver al login
  */
+ 
+/**
+ * ============================================
+ * VALIDACIÓN DE SESIÓN CRM
+ * ============================================
+ *
+ * Qué hace:
+ * - verifica si hay token
+ * - valida expiración por inactividad
+ * - si no hay sesión → muestra login
+ * - si hay sesión válida → permite continuar
+ */
+
+async function ensureCrmAuthOrShowLogin() {
+  const token = getStoredCrmToken();
+
+  // Si no hay token → mostrar login
+  if (!token) {
+    openLoginOverlay();
+    return false;
+  }
+
+  // Validar inactividad
+  const lastActivity = getLastActivity();
+  const now = Date.now();
+
+  if (!lastActivity || (now - lastActivity > CRM_INACTIVITY_LIMIT_MS)) {
+    clearStoredCrmToken();
+    clearStoredCrmRole();
+    clearLastActivity();
+
+    openLoginOverlay();
+    return false;
+  }
+
+  // Token OK → actualizar actividad
+  updateLastActivity();
+
+  return true;
+}
+ 
 async function crmFetch(url, options = {}) {
   const token = getStoredCrmToken();
   const incomingHeaders = options.headers || {};
