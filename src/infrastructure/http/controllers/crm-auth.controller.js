@@ -37,6 +37,10 @@ const {
 } = require('../../../shared/constants/app.constants');
 
 const {
+  saveAuditLog
+} = require('../../persistence/sqlite/audit.repository');
+
+const {
   normalizeUsername,
   getPasswordValidationError
 } = require('../../../shared/validation/crm.validation');
