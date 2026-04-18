@@ -72,7 +72,7 @@ const {
 
 const router = express.Router();
 
-const { unlockCrmUserController } = require('../controllers/admin.controller');
+const { unlockCrmUserController } = require('../infrastructure/http/controllers/admin.controller');
 router.post('/admin/users/:username/unlock', unlockCrmUserController);
 /**
  * En esta etapa mantenemos importadas las constantes compartidas
