@@ -104,11 +104,6 @@ const adminUsersRoutes = require('../../routes/admin.users.routes');
 const app = express();
 
 /**
- * Servimos archivos estáticos del frontend.
- */
-app.use(express.static(path.join(__dirname, 'public')));
-
-/**
  * Middleware global CORS.
  */
 app.use(cors());
@@ -245,4 +240,9 @@ app.post('/webhook/whatsapp', receiveWhatsappWebhook);
 /**
  * Exportamos la app.
  */
+ 
+ /**
+ * Servimos archivos estáticos del frontend.
+ */
+app.use(express.static(path.join(__dirname, 'public')));
 module.exports = app;
