@@ -1,3 +1,8 @@
+TEST PENDIENTIES
+FUERA DEL HOARIO QUE NO HAY ASESOR , SI PIDO ASESOR QUE NO DIGA QUE YA SE CONTACTARA
+ASEGUARSAE QUE LA SOLUCION QUED EBIEN SEPARAD SI MAÑANA LE QUIERO VENDER EL CHATBOT A OTRA EMPRESA DE FUMIGACION O INCLUSO A OTRA EMPRESA DE SERVICIOS O LO QU ESEA QUE SEA LO MAS FACIL DE MIGRARR Y PERSONZLIASR 
+
+
 Voy a ordenar todo en un backlog único, depurado y accionable, separando bug real, riesgo, mejora y no tocar por ahora. Después de eso ya podemos ejecutar cambios sin improvisar.
 
 Thought for 6s

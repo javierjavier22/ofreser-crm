@@ -494,138 +494,104 @@ async function crmFetch(url, options = {}) {
   return response;
 }
 
-  /**
-   * Valida si el token actual sigue siendo válido.
-   */
-  async function validateCrmSession() {
-    const token = getStoredCrmToken();
+/**
+ * ============================================
+ * SUBMIT DEL LOGIN (VERSIÓN PRO)
+ * ============================================
+ *
+ * Mejoras:
+ * - evita crash si backend devuelve HTML
+ * - mensajes de error claros para el usuario
+ * - distingue:
+ *   - credenciales incorrectas (401)
+ *   - error servidor (500)
+ *   - error de red
+ * - mantiene UX limpia
+ */
 
-    if (!token) return false;
+async function onLoginSubmit(event) {
+  event.preventDefault();
 
+  const username = document.getElementById('crmLoginUsername').value.trim();
+  const password = document.getElementById('crmLoginPassword').value;
+  const submitBtn = document.getElementById('crmLoginSubmit');
+  const errorBox = document.getElementById('crmLoginError');
+
+  // Reset UI
+  errorBox.textContent = '';
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Ingresando...';
+
+  try {
+    const res = await fetch(`${CRM_API_BASE}/crm/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, password })
+    });
+
+    /**
+     * Intentamos parsear JSON de forma segura
+     */
+    let data = null;
     try {
-      const res = await fetch(`${CRM_API_BASE}/crm/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (!res.ok) {
-        return false;
-      }
-
-      /**
-       * Si el backend devuelve role, lo persistimos
-       * para que el CRM pueda adaptar la interfaz.
-       */
-      const data = await res.json();
-
-      if (data?.auth?.role) {
-        setStoredCrmRole(data.auth.role);
-      }
-
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  /**
-   * Garantiza autenticación o muestra login.
-   */
-  async function ensureCrmAuthOrShowLogin() {
-    const token = getStoredCrmToken();
-
-    if (!token) {
-      openLoginOverlay();
-      return false;
+      data = await res.json();
+    } catch (e) {
+      // Si falla, probablemente vino HTML (error de servidor)
     }
 
     /**
-     * Validación por inactividad.
+     * Manejo de errores por status
      */
-    const lastActivity = getLastActivity();
-    const now = Date.now();
+    if (!res.ok) {
+      if (res.status === 401) {
+        throw new Error('Usuario o contraseña incorrectos');
+      }
 
-    if (!lastActivity || now - lastActivity > CRM_INACTIVITY_LIMIT_MS) {
-      clearStoredCrmToken();
-      clearStoredCrmRole();
-      clearLastActivity();
-      openLoginOverlay();
-      return false;
+      if (res.status >= 500) {
+        throw new Error('Error del servidor. Intentá nuevamente.');
+      }
+
+      throw new Error(
+        data?.error ||
+        data?.message ||
+        'No se pudo iniciar sesión'
+      );
     }
 
     /**
-     * Validación contra backend.
+     * Validación defensiva
      */
-    const isValid = await validateCrmSession();
-
-    if (isValid) {
-      updateLastActivity();
-      closeLoginOverlay();
-      injectChangePasswordButton();
-      return true;
+    if (!data || !data.token) {
+      throw new Error('Respuesta inválida del servidor');
     }
 
-    clearStoredCrmToken();
-    clearStoredCrmRole();
-    clearLastActivity();
-    openLoginOverlay();
-    return false;
+    // Guardamos sesión
+    setStoredCrmToken(data.token);
+    setStoredCrmRole(data.role || 'user');
+    updateLastActivity();
+
+    closeLoginOverlay();
+
+    // Reiniciamos CRM ya autenticado
+    window.location.reload();
+
+  } catch (error) {
+    /**
+     * Diferenciar error de red
+     */
+    if (error instanceof TypeError) {
+      errorBox.textContent = 'Sin conexión con el servidor';
+    } else {
+      errorBox.textContent = error.message;
+    }
+
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Entrar';
   }
-
-  /**
-   * Submit del formulario de login.
-   */
-  async function onLoginSubmit(event) {
-    event.preventDefault();
-
-    const username = document.getElementById('crmLoginUsername').value.trim();
-    const password = document.getElementById('crmLoginPassword').value;
-    const submitBtn = document.getElementById('crmLoginSubmit');
-    const errorBox = document.getElementById('crmLoginError');
-
-    errorBox.textContent = '';
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Ingresando...';
-
-    try {
-      const res = await fetch(`${CRM_API_BASE}/crm/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username, password })
-      });
-
-      const data = await res.json();
-
-if (!res.ok) {
-  throw new Error(
-    data.error ||
-    data.message ||
-    `HTTP ${res.status}`
-  );
 }
-
-      setStoredCrmToken(data.token);
-      setStoredCrmRole(data.role || 'user');
-      updateLastActivity();
-      closeLoginOverlay();
-
-      /**
-       * Recomendación:
-       * recargar para reiniciar el flujo del CRM
-       * ya autenticado.
-       */
-      window.location.reload();
-
-    } catch (error) {
-      errorBox.textContent = error.message || 'No se pudo iniciar sesión';
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Entrar';
-    }
-  }
 
   /**
    * Submit del formulario de cambio de contraseña.
