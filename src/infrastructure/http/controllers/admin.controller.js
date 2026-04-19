@@ -75,11 +75,26 @@ function isAdminResetAllowed() {
 const { blockCrmUser } = require('../../persistence/sqlite/crm-users.repository');
 
 function blockCrmUserController(req, res) {
-  const { username } = req.params;
+  try {
+    const { username } = req.params;
 
-  blockCrmUser(username);
+    if (!username) {
+      return res.status(400).json({ error: 'username requerido' });
+    }
 
-  res.json({ ok: true });
+    const { blockCrmUser } = require('../../persistence/sqlite/crm-users.repository');
+
+    blockCrmUser(username);
+
+    return res.json({
+      ok: true,
+      message: 'Usuario bloqueado'
+    });
+
+  } catch (error) {
+    console.error('blockCrmUserController error:', error);
+    return res.status(500).json({ error: 'Error interno' });
+  }
 }
 
 /**
@@ -449,5 +464,6 @@ module.exports = {
   getAuditLogs,
   postCreateBackup,
   getBackups,
-  postRestoreBackup
+  postRestoreBackup,
+  blockCrmUserController
 };
