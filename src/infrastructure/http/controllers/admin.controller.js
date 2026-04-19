@@ -72,6 +72,16 @@ function isAdminResetAllowed() {
   return String(process.env.ALLOW_ADMIN_RESET || '').trim().toLowerCase() === 'true';
 }
 
+const { blockCrmUser } = require('../../persistence/sqlite/crm-users.repository');
+
+function blockCrmUserController(req, res) {
+  const { username } = req.params;
+
+  blockCrmUser(username);
+
+  res.json({ ok: true });
+}
+
 /**
  * Devuelve información básica de contexto
  * para explicar por qué el reset fue bloqueado.

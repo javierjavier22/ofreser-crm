@@ -119,6 +119,14 @@ function createCrmUser({
   );
 }
 
+function blockCrmUser(username) {
+  return db.prepare(`
+    UPDATE crm_users
+    SET is_blocked = 1
+    WHERE username = ?
+  `).run(username);
+}
+
 /**
  * Actualiza rol y estado activo de usuario.
  */

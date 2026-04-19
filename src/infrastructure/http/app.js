@@ -103,6 +103,10 @@ const adminUsersRoutes = require('../../routes/admin.users.routes');
  */
 const app = express();
 
+const adminUsersRoutes = require('../../routes/admin.users.routes');
+
+app.use('/admin/users', adminUsersRoutes);
+
 /**
  * Middleware global CORS.
  */

@@ -4286,9 +4286,10 @@ async function loadLeads({ silent = false, preserveModal = true } = {}) {
                           : `<button class="activate-user" onclick="toggleAdminUserActive('${String(user.id || "").replaceAll("'", "\'")}', '${String(user.role || "user").replaceAll("'", "\'")}', true)">Activar</button>`
                       }
                       <button class="reset-pass" onclick="resetAdminUserPassword('${String(user.id || "").replaceAll("'", "\'")}', '${String(user.username || "").replaceAll("'", "\'")}')">Reset password</button>
-					  <button onclick="unlockUser('${user.username}')">
-  Desbloquear
-</button>
+					  ${user.is_blocked
+  ? `<button onclick="unlockUser('${user.username}')">Desbloquear</button>`
+  : `<button onclick="blockUser('${user.username}')">Bloquear</button>`
+}
                     </div>
                   </td>
                 </tr>
@@ -4512,7 +4513,28 @@ async function confirmResetAdminUserPassword() {
     confirmBtn.disabled = false;
   }
 }
+async function blockUser(username) {
+  if (!confirm(`¿Bloquear usuario ${username}?`)) return;
 
+  try {
+    const res = await crmFetch(`/admin/users/${username}/block`, {
+      method: 'POST'
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Error bloqueando');
+    }
+
+    alert('Usuario bloqueado');
+
+    loadUsers?.();
+
+  } catch (err) {
+    alert(err.message);
+  }
+}
 async function unlockUser(username) {
   if (!confirm(`¿Desbloquear usuario ${username}?`)) return;
 
