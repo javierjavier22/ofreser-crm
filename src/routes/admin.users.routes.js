@@ -76,9 +76,9 @@ const {
   unlockCrmUserController,
   blockCrmUserController
 } = require('../infrastructure/http/controllers/admin.controller');
-router.post('/admin/users/:username/unlock', unlockCrmUserController);
 
-router.post('/:username/block', blockCrmUserController);
+router.post('/:username/unlock', requireAdmin, unlockCrmUserController);
+router.post('/:username/block', requireAdmin, blockCrmUserController);
 /**
  * En esta etapa mantenemos importadas las constantes compartidas
  * para referencia del archivo, pero la validación real ya vive
@@ -113,6 +113,22 @@ function requireAdmin(req, res, next) {
 
   return next();
 }
+
+/**
+ * Bloquear un usuario del CRM por username.
+ *
+ * Ruta final real:
+ * POST /admin/users/:username/block
+ */
+router.post('/:username/block', requireAdmin, blockCrmUserController);
+
+/**
+ * Desbloquear un usuario del CRM por username.
+ *
+ * Ruta final real:
+ * POST /admin/users/:username/unlock
+ */
+router.post('/:username/unlock', requireAdmin, unlockCrmUserController);
 
 /**
  * ============================================

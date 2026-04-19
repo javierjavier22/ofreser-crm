@@ -86,25 +86,13 @@ const {
 
 /**
  * Rutas administrativas de usuarios.
- *
- * OJO:
- * Este archivo app.js vive en:
- *   src/infrastructure/http/app.js
- *
- * Y el router vive en:
- *   src/routes/admin.users.routes.js
- *
- * Por eso la ruta relativa correcta es ../../routes/...
  */
+const adminUsersRoutes = require('../../routes/admin.users.routes');
 
 /**
  * Creamos la instancia principal de Express.
  */
 const app = express();
-
-const adminUsersRoutes = require('../../routes/admin.users.routes');
-
-app.use('/admin/users', adminUsersRoutes);
 
 /**
  * Middleware global CORS.

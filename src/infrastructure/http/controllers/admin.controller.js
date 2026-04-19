@@ -74,6 +74,9 @@ function isAdminResetAllowed() {
 
 const { blockCrmUser } = require('../../persistence/sqlite/crm-users.repository');
 
+/**
+ * Bloquea un usuario CRM por username.
+ */
 function blockCrmUserController(req, res) {
   try {
     const { username } = req.params;
@@ -82,15 +85,12 @@ function blockCrmUserController(req, res) {
       return res.status(400).json({ error: 'username requerido' });
     }
 
-    const { blockCrmUser } = require('../../persistence/sqlite/crm-users.repository');
-
     blockCrmUser(username);
 
     return res.json({
       ok: true,
-      message: 'Usuario bloqueado'
+      message: 'Usuario bloqueado correctamente'
     });
-
   } catch (error) {
     console.error('blockCrmUserController error:', error);
     return res.status(500).json({ error: 'Error interno' });

@@ -2674,6 +2674,32 @@
     <!-- Script externo de login y auth del CRM -->
     <script src="crm-login.js"></script>
     <script>
+	
+	/**
+ * =========================================================
+ * crmFetch
+ * Wrapper PRO de fetch con autenticación automática
+ * =========================================================
+ */
+async function crmFetch(url, options = {}) {
+  const token = localStorage.getItem('ofreser_crm_token');
+
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {})
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return fetch(url, {
+    ...options,
+    headers
+  });
+}
+
+
       /**
        * =========================================================
        * CONFIGURACIÓN GENERAL
@@ -4517,7 +4543,7 @@ async function blockUser(username) {
   if (!confirm(`¿Bloquear usuario ${username}?`)) return;
 
   try {
-    const res = await crmFetch(`/admin/users/${username}/block`, {
+    const res = await crmFetch(`/admin/users/${encodeURIComponent(username)}/block`, {
       method: 'POST'
     });
 
@@ -4527,19 +4553,20 @@ async function blockUser(username) {
       throw new Error(data.error || 'Error bloqueando');
     }
 
-    alert('Usuario bloqueado');
-
-    loadUsers?.();
+    showToast('Usuario bloqueado correctamente', 'success');
+    await loadAdminUsers();
 
   } catch (err) {
+    console.error(err);
     alert(err.message);
   }
 }
+
 async function unlockUser(username) {
   if (!confirm(`¿Desbloquear usuario ${username}?`)) return;
 
   try {
-    const res = await crmFetch(`/admin/users/${username}/unlock`, {
+    const res = await crmFetch(`/admin/users/${encodeURIComponent(username)}/unlock`, {
       method: 'POST'
     });
 
@@ -4549,12 +4576,11 @@ async function unlockUser(username) {
       throw new Error(data.error || 'Error desbloqueando');
     }
 
-    alert('Usuario desbloqueado');
-
-    // refrescar lista
-    loadUsers?.();
+    showToast('Usuario desbloqueado correctamente', 'success');
+    await loadAdminUsers();
 
   } catch (err) {
+    console.error(err);
     alert(err.message);
   }
 }

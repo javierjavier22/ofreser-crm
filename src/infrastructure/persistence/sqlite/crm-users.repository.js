@@ -75,6 +75,11 @@ function getCrmUserById(id) {
 
 /**
  * Lista usuarios del CRM sin password_hash.
+ *
+ * Importante:
+ * - ahora también devolvemos is_blocked
+ * - esto permite al frontend decidir si mostrar
+ *   "Bloquear" o "Desbloquear"
  */
 function listCrmUsers() {
   return db.prepare(`
@@ -83,6 +88,8 @@ function listCrmUsers() {
       username,
       role,
       is_active,
+      is_blocked,
+      failed_attempts,
       created_at,
       updated_at
     FROM crm_users
@@ -117,14 +124,6 @@ function createCrmUser({
     String(role || 'user').trim(),
     Number(isActive) === 1 ? 1 : 0
   );
-}
-
-function blockCrmUser(username) {
-  return db.prepare(`
-    UPDATE crm_users
-    SET is_blocked = 1
-    WHERE username = ?
-  `).run(username);
 }
 
 /**
@@ -227,20 +226,21 @@ function resetCrmUserFailedAttempts(userId) {
 }
 
 /**
- * Bloquea un usuario CRM.
+ * Bloquea un usuario CRM por username.
  *
  * Importante:
  * - no lo desactiva
  * - solo marca is_blocked = 1
+ * - resetea updated_at
  */
-function blockCrmUser(userId) {
+function blockCrmUser(username) {
   return db.prepare(`
     UPDATE crm_users
     SET
       is_blocked = 1,
       updated_at = datetime('now')
-    WHERE id = ?
-  `).run(String(userId || '').trim());
+    WHERE username = ?
+  `).run(String(username || '').trim());
 }
 
 /**
