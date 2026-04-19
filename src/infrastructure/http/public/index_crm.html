@@ -2562,8 +2562,10 @@
             <option value="CRM_PASSWORD_CHANGED">Cambio de contraseña propia</option>
             <option value="ADMIN_RESET_SYSTEM">Reset del sistema</option>
             <option value="ADMIN_USER_CREATED">Usuario creado</option>
-            <option value="ADMIN_USER_UPDATED">Usuario actualizado</option>
-            <option value="ADMIN_USER_PASSWORD_RESET">Reset de contraseña de usuario</option>
+			<option value="ADMIN_USER_UPDATED">Usuario actualizado</option>
+			<option value="ADMIN_USER_PASSWORD_RESET">Reset de contraseña de usuario</option>
+			<option value="ADMIN_USER_BLOCKED">Usuario bloqueado</option>
+			<option value="ADMIN_USER_UNBLOCKED">Usuario desbloqueado</option>
             <option value="LEAD_STATUS_CHANGED">Cambio de estado del lead</option>
             <option value="LEAD_NOTE_UPDATED">Actualización de nota</option>
             <option value="SESSION_TAKEN_BY_HUMAN">Tomada por humano</option>
@@ -4742,6 +4744,8 @@ function getAuditFriendlyTitle(log) {
     SESSION_TAKEN_BY_HUMAN: "Conversación tomada por humano",
     SESSION_RETURNED_TO_BOT: "Conversación devuelta al bot",
     SESSION_CLOSED: "Conversación cerrada",
+	ADMIN_USER_BLOCKED: "Bloqueo de usuario",
+ADMIN_USER_UNBLOCKED: "Desbloqueo de usuario",
     HUMAN_MESSAGE_SENT: "Mensaje humano enviado al cliente"
   };
 
@@ -4799,6 +4803,14 @@ function getAuditFriendlySubtitle(log) {
   if (action === "ADMIN_RESET_SYSTEM") {
     return `Se ejecutó un borrado general de datos de testing.`;
   }
+  
+  if (action === "ADMIN_USER_BLOCKED") {
+  return `Se bloqueó el usuario ${details.targetUsername || "-"}.`;
+}
+
+if (action === "ADMIN_USER_UNBLOCKED") {
+  return `Se desbloqueó el usuario ${details.targetUsername || "-"}.`;
+}
 
   return `Entidad: ${log?.entityType || "-"}${log?.entityId ? ` · ID: ${log.entityId}` : ""}`;
 }
@@ -4876,6 +4888,10 @@ function getAuditFriendlyLines(log) {
   if (log?.entityId) {
     lines.push(`<div class="audit-friendly-line"><strong>ID entidad:</strong> ${escapeHtml(log.entityId)}</div>`);
   }
+
+if (action === "ADMIN_USER_BLOCKED" || action === "ADMIN_USER_UNBLOCKED") {
+  lines.push(`<div class="audit-friendly-line"><strong>Usuario afectado:</strong> ${escapeHtml(details.targetUsername || "-")}</div>`);
+}
 
   return lines.join("");
 }

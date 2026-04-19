@@ -77,6 +77,9 @@ const { blockCrmUser } = require('../../persistence/sqlite/crm-users.repository'
 /**
  * Bloquea un usuario CRM por username.
  */
+/**
+ * Bloquea un usuario CRM por username y registra auditoría.
+ */
 function blockCrmUserController(req, res) {
   try {
     const { username } = req.params;
@@ -86,6 +89,16 @@ function blockCrmUserController(req, res) {
     }
 
     blockCrmUser(username);
+
+    saveAuditLog({
+      action: 'ADMIN_USER_BLOCKED',
+      entityType: 'user',
+      entityId: String(username),
+      req,
+      details: {
+        targetUsername: String(username)
+      }
+    });
 
     return res.json({
       ok: true,
@@ -214,7 +227,7 @@ function postResetSystem(req, res) {
 }
 
 /**
- * Desbloquea un usuario CRM (solo admin).
+ * Desbloquea un usuario CRM por username y registra auditoría.
  */
 async function unlockCrmUserController(req, res) {
   try {
@@ -226,11 +239,20 @@ async function unlockCrmUserController(req, res) {
 
     unlockCrmUser(username);
 
+    saveAuditLog({
+      action: 'ADMIN_USER_UNBLOCKED',
+      entityType: 'user',
+      entityId: String(username),
+      req,
+      details: {
+        targetUsername: String(username)
+      }
+    });
+
     return res.json({
       ok: true,
       message: 'Usuario desbloqueado correctamente'
     });
-
   } catch (error) {
     console.error('unlockCrmUserController error:', error);
     return res.status(500).json({ error: 'Error interno' });
