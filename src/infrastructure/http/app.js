@@ -96,7 +96,6 @@ const {
  *
  * Por eso la ruta relativa correcta es ../../routes/...
  */
-const adminUsersRoutes = require('../../routes/admin.users.routes');
 
 /**
  * Creamos la instancia principal de Express.
