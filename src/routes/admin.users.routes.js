@@ -72,7 +72,10 @@ const {
 
 const router = express.Router();
 
-const { unlockCrmUserController } = require('../infrastructure/http/controllers/admin.controller');
+const {
+  unlockCrmUserController,
+  blockCrmUserController
+} = require('../infrastructure/http/controllers/admin.controller');
 router.post('/admin/users/:username/unlock', unlockCrmUserController);
 
 router.post('/:username/block', blockCrmUserController);
