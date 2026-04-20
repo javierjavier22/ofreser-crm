@@ -35,6 +35,7 @@ const {
   blockCrmUser
 } = require('../../persistence/sqlite/crm-users.repository');
 
+
 const {
   CRM_ROLES
 } = require('../../../shared/constants/app.constants');
@@ -270,20 +271,19 @@ function hashPassword(plainPassword) {
 /**
 /**
  * ============================================
- * LOGIN CON BLOQUEO POR USUARIO
+ * LOGIN CRM
  * ============================================
  *
- * Reglas:
- * - usuario inexistente => credenciales inválidas
- * - password incorrecta => suma intento fallido
- * - al llegar a 3 intentos => usuario bloqueado
- * - usuario bloqueado => no puede entrar
- * - login correcto => resetea intentos fallidos
+ * Qué hace esta versión:
+ * - valida usuario y contraseña
+ * - bloquea por usuario al llegar al límite
+ * - resetea intentos si el login es correcto
+ * - evita filtrar demasiada información sensible
  */
 function postCrmLogin(req, res) {
   const { username, password } = req.body || {};
 
-  const normalizedUsername = normalizeUsername(username);
+  const normalizedUsername = String(username || '').trim();
   const rawPassword = String(password || '');
 
   if (!normalizedUsername || !rawPassword) {
@@ -293,15 +293,12 @@ function postCrmLogin(req, res) {
   }
 
   /**
-   * 1. Buscar usuario en DB
+   * Buscar usuario real en base.
    */
   const dbUser = getCrmUserAuthByUsername(normalizedUsername);
 
   /**
-   * 2. Usuario no existe
-   *
-   * Importante:
-   * devolvemos mensaje genérico para no confirmar existencia.
+   * No revelar demasiado si el usuario no existe.
    */
   if (!dbUser) {
     return res.status(401).json({
@@ -310,16 +307,7 @@ function postCrmLogin(req, res) {
   }
 
   /**
-   * 3. Usuario bloqueado
-   */
-  if (Number(dbUser.is_blocked || 0) === 1) {
-    return res.status(403).json({
-      error: 'Usuario bloqueado. Contacte al administrador.'
-    });
-  }
-
-  /**
-   * 4. Usuario inactivo
+   * Usuario inactivo.
    */
   if (Number(dbUser.is_active) !== 1) {
     return res.status(403).json({
@@ -328,7 +316,16 @@ function postCrmLogin(req, res) {
   }
 
   /**
-   * 5. Validar contraseña
+   * Si ya está bloqueado, no seguimos.
+   */
+  if (Number(dbUser.is_blocked) === 1) {
+    return res.status(403).json({
+      error: 'Usuario bloqueado. Contacte al administrador.'
+    });
+  }
+
+  /**
+   * Validar contraseña.
    */
   const validPassword = verifyPassword(
     rawPassword,
@@ -336,18 +333,17 @@ function postCrmLogin(req, res) {
   );
 
   /**
-   * 6. Password incorrecta
-   *
-   * Sumamos intento y, si llega al máximo,
-   * bloqueamos inmediatamente.
+   * Contraseña incorrecta:
+   * - sumamos intento fallido
+   * - si llega al límite, bloqueamos
    */
   if (!validPassword) {
+    const currentFailedAttempts = Number(dbUser.failed_attempts || 0);
+    const nextFailedAttempts = currentFailedAttempts + 1;
+
     incrementCrmUserFailedAttempts(dbUser.id);
 
-    const freshUser = getCrmUserAuthByUsername(normalizedUsername);
-    const failedAttempts = Number(freshUser?.failed_attempts || 0);
-
-    if (failedAttempts >= CRM_LOGIN_MAX_FAILED_ATTEMPTS) {
+    if (nextFailedAttempts >= 3) {
       blockCrmUser(dbUser.id);
 
       return res.status(403).json({
@@ -361,14 +357,13 @@ function postCrmLogin(req, res) {
   }
 
   /**
-   * 7. Login correcto
-   *
-   * Reiniciamos intentos fallidos.
+   * Login correcto:
+   * reseteamos intentos fallidos.
    */
   resetCrmUserFailedAttempts(dbUser.id);
 
   /**
-   * 8. Emitir token
+   * Emitimos token.
    */
   const token = crmAuthMiddleware.issueCrmToken(
     dbUser.id,
@@ -377,15 +372,12 @@ function postCrmLogin(req, res) {
   );
 
   /**
-   * 9. Auditoría de login exitoso
+   * Auditoría de login exitoso.
    */
   saveAuditLog({
     action: 'CRM_LOGIN_SUCCESS',
     entityType: 'auth',
     entityId: dbUser.id,
-    actorUserId: dbUser.id,
-    actorUsername: dbUser.username,
-    actorRole: dbUser.role || CRM_ROLES.ADMIN,
     req,
     details: {
       username: dbUser.username
@@ -395,8 +387,8 @@ function postCrmLogin(req, res) {
   return res.json({
     ok: true,
     token,
-    username: dbUser.username,
-    role: dbUser.role || CRM_ROLES.ADMIN
+    role: dbUser.role || 'user',
+    username: dbUser.username
   });
 }
 
