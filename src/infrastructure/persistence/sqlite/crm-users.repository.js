@@ -64,6 +64,8 @@ function getCrmUserById(id) {
         username,
         role,
         is_active,
+        is_blocked,
+        failed_attempts,
         created_at,
         updated_at
       FROM crm_users
@@ -127,17 +129,19 @@ function createCrmUser({
 }
 
 /**
- * Actualiza rol, estado activo y estado de bloqueo de un usuario.
+ * Actualiza rol, estado activo, estado de bloqueo
+ * e intentos fallidos de un usuario.
  *
  * Importante:
- * - centralizamos toda la edición administrativa acá
- * - así evitamos tener múltiples caminos distintos
+ * - cuando desbloqueamos desde admin, también debemos resetear
+ *   failed_attempts para que no se vuelva a bloquear al primer error
  */
 function updateCrmUserRoleAndActive({
   id,
   role,
   isActive,
-  isBlocked = 0
+  isBlocked = 0,
+  failedAttempts = 0
 }) {
   return db.prepare(`
     UPDATE crm_users
@@ -145,12 +149,14 @@ function updateCrmUserRoleAndActive({
       role = ?,
       is_active = ?,
       is_blocked = ?,
+      failed_attempts = ?,
       updated_at = datetime('now')
     WHERE id = ?
   `).run(
     String(role || 'user').trim(),
     Number(isActive) === 1 ? 1 : 0,
     Number(isBlocked) === 1 ? 1 : 0,
+    Number(failedAttempts) || 0,
     String(id || '').trim()
   );
 }

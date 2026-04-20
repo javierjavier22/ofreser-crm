@@ -383,7 +383,8 @@ updateCrmUserRoleAndActive({
   id,
   role: normalizedRole,
   isActive: nextIsActive,
-  isBlocked: nextIsBlocked
+  isBlocked: nextIsBlocked,
+  failedAttempts: nextIsBlocked === 1 ? Number(targetUser.failed_attempts || 0) : 0
 });
 
     /**
