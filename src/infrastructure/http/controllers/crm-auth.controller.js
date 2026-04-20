@@ -343,7 +343,7 @@ function postCrmLogin(req, res) {
 
     incrementCrmUserFailedAttempts(dbUser.id);
 
-    if (nextFailedAttempts >= 3) {
+    if (nextFailedAttempts >= CRM_LOGIN_MAX_FAILED_ATTEMPTS) {
       blockCrmUser(dbUser.id);
 
       return res.status(403).json({
