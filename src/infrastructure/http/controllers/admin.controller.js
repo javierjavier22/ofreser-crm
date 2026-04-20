@@ -54,7 +54,7 @@ const {
   getAuditLogsFiltered
 } = require('../../persistence/sqlite/audit.repository');
 
-const { unlockCrmUser } = require('../../persistence/sqlite/crm-users.repository');
+
 
 /**
  * Devuelve true solo si el reset administrativo
@@ -72,7 +72,6 @@ function isAdminResetAllowed() {
   return String(process.env.ALLOW_ADMIN_RESET || '').trim().toLowerCase() === 'true';
 }
 
-const { blockCrmUser } = require('../../persistence/sqlite/crm-users.repository');
 
 /**
  * Bloquea un usuario CRM por username.
@@ -80,35 +79,7 @@ const { blockCrmUser } = require('../../persistence/sqlite/crm-users.repository'
 /**
  * Bloquea un usuario CRM por username y registra auditoría.
  */
-function blockCrmUserController(req, res) {
-  try {
-    const { username } = req.params;
 
-    if (!username) {
-      return res.status(400).json({ error: 'username requerido' });
-    }
-
-    blockCrmUser(username);
-
-    saveAuditLog({
-      action: 'ADMIN_USER_BLOCKED',
-      entityType: 'user',
-      entityId: String(username),
-      req,
-      details: {
-        targetUsername: String(username)
-      }
-    });
-
-    return res.json({
-      ok: true,
-      message: 'Usuario bloqueado correctamente'
-    });
-  } catch (error) {
-    console.error('blockCrmUserController error:', error);
-    return res.status(500).json({ error: 'Error interno' });
-  }
-}
 
 /**
  * Devuelve información básica de contexto
@@ -229,35 +200,7 @@ function postResetSystem(req, res) {
 /**
  * Desbloquea un usuario CRM por username y registra auditoría.
  */
-async function unlockCrmUserController(req, res) {
-  try {
-    const { username } = req.params;
 
-    if (!username) {
-      return res.status(400).json({ error: 'username requerido' });
-    }
-
-    unlockCrmUser(username);
-
-    saveAuditLog({
-      action: 'ADMIN_USER_UNBLOCKED',
-      entityType: 'user',
-      entityId: String(username),
-      req,
-      details: {
-        targetUsername: String(username)
-      }
-    });
-
-    return res.json({
-      ok: true,
-      message: 'Usuario desbloqueado correctamente'
-    });
-  } catch (error) {
-    console.error('unlockCrmUserController error:', error);
-    return res.status(500).json({ error: 'Error interno' });
-  }
-}
 
 /**
  * Devuelve auditoría del sistema.
@@ -482,10 +425,8 @@ function postRestoreBackup(req, res) {
 
 module.exports = {
   postResetSystem,
-  unlockCrmUserController,
   getAuditLogs,
   postCreateBackup,
   getBackups,
-  postRestoreBackup,
-  blockCrmUserController
+  postRestoreBackup
 };

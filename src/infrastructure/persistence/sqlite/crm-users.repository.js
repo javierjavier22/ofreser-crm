@@ -127,23 +127,30 @@ function createCrmUser({
 }
 
 /**
- * Actualiza rol y estado activo de usuario.
+ * Actualiza rol, estado activo y estado de bloqueo de un usuario.
+ *
+ * Importante:
+ * - centralizamos toda la edición administrativa acá
+ * - así evitamos tener múltiples caminos distintos
  */
 function updateCrmUserRoleAndActive({
   id,
   role,
-  isActive
+  isActive,
+  isBlocked = 0
 }) {
   return db.prepare(`
     UPDATE crm_users
     SET
       role = ?,
       is_active = ?,
+      is_blocked = ?,
       updated_at = datetime('now')
     WHERE id = ?
   `).run(
     String(role || 'user').trim(),
     Number(isActive) === 1 ? 1 : 0,
+    Number(isBlocked) === 1 ? 1 : 0,
     String(id || '').trim()
   );
 }

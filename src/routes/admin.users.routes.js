@@ -72,13 +72,6 @@ const {
 
 const router = express.Router();
 
-const {
-  unlockCrmUserController,
-  blockCrmUserController
-} = require('../infrastructure/http/controllers/admin.controller');
-
-router.post('/:username/unlock', requireAdmin, unlockCrmUserController);
-router.post('/:username/block', requireAdmin, blockCrmUserController);
 /**
  * En esta etapa mantenemos importadas las constantes compartidas
  * para referencia del archivo, pero la validación real ya vive
@@ -301,7 +294,7 @@ createCrmUser({
 router.put('/:id', requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
-    const { role, is_active } = req.body || {};
+    const { role, is_active, is_blocked } = req.body || {};
 
     /**
      * Usuario autenticado actual.
@@ -340,6 +333,7 @@ router.put('/:id', requireAdmin, (req, res) => {
      * Aceptamos boolean, 0/1 o equivalentes truthy/falsy.
      */
 const nextIsActive = parseBooleanLike(is_active) ? 1 : 0;
+const nextIsBlocked = parseBooleanLike(is_blocked) ? 1 : 0;
 
     /**
      * Blindaje 1:
@@ -355,20 +349,19 @@ const nextIsActive = parseBooleanLike(is_active) ? 1 : 0;
       });
     }
 
-    /**
-     * Blindaje 2:
-     * No permitir que el admin actual se quite a sí mismo el rol admin.
-     */
-    if (
-      currentUserId &&
-      currentUserId === String(targetUser.id) &&
-      String(targetUser.role).toLowerCase() === 'admin' &&
-      normalizedRole !== 'admin'
-    ) {
-      return res.status(400).json({
-        error: 'No podés quitarte a vos mismo el rol admin'
-      });
-    }
+/**
+ * Blindaje extra:
+ * no permitir que el admin actual se bloquee a sí mismo.
+ */
+if (
+  currentUserId &&
+  currentUserId === String(targetUser.id) &&
+  nextIsBlocked === 1
+) {
+  return res.status(400).json({
+    error: 'No podés bloquearte a vos mismo'
+  });
+}
 
     /**
      * Blindaje 3:
@@ -380,10 +373,14 @@ const nextIsActive = parseBooleanLike(is_active) ? 1 : 0;
 
     const targetIsActive = Number(targetUser.is_active || 0) === 1;
 
-    const adminWouldBeRemoved =
-      targetIsAdmin &&
-      targetIsActive &&
-      (nextIsActive === 0 || normalizedRole !== 'admin');
+const adminWouldBeRemoved =
+  targetIsAdmin &&
+  targetIsActive &&
+  (
+    nextIsActive === 0 ||
+    normalizedRole !== 'admin' ||
+    nextIsBlocked === 1
+  );
 
     if (adminWouldBeRemoved) {
       const activeAdmins = countActiveCrmAdmins();
@@ -401,7 +398,8 @@ const nextIsActive = parseBooleanLike(is_active) ? 1 : 0;
 updateCrmUserRoleAndActive({
   id,
   role: normalizedRole,
-  isActive: nextIsActive
+  isActive: nextIsActive,
+  isBlocked: nextIsBlocked
 });
 
     /**
@@ -412,17 +410,19 @@ updateCrmUserRoleAndActive({
       entityType: 'user',
       entityId: id,
       req,
-      details: {
-        targetUsername: targetUser.username,
-        from: {
-          role: targetUser.role,
-          isActive: Number(targetUser.is_active) === 1
-        },
-        to: {
-          role: normalizedRole,
-          isActive: nextIsActive === 1
-        }
-      }
+details: {
+  targetUsername: targetUser.username,
+  from: {
+    role: targetUser.role,
+    isActive: Number(targetUser.is_active) === 1,
+    isBlocked: Number(targetUser.is_blocked) === 1
+  },
+  to: {
+    role: normalizedRole,
+    isActive: nextIsActive === 1,
+    isBlocked: nextIsBlocked === 1
+  }
+}
     });
 
     return res.json({

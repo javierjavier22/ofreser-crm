@@ -4314,9 +4314,9 @@ async function loadLeads({ silent = false, preserveModal = true } = {}) {
                           : `<button class="activate-user" onclick="toggleAdminUserActive('${String(user.id || "").replaceAll("'", "\'")}', '${String(user.role || "user").replaceAll("'", "\'")}', true)">Activar</button>`
                       }
                       <button class="reset-pass" onclick="resetAdminUserPassword('${String(user.id || "").replaceAll("'", "\'")}', '${String(user.username || "").replaceAll("'", "\'")}')">Reset password</button>
-					  ${user.is_blocked
-  ? `<button onclick="unlockUser('${user.username}')">Desbloquear</button>`
-  : `<button onclick="blockUser('${user.username}')">Bloquear</button>`
+${Number(user.is_blocked) === 1
+  ? `<button onclick="setUserBlockedState('${String(user.id || "").replaceAll("'", "\\'")}', '${String(user.role || "user").replaceAll("'", "\\'")}', ${Number(user.is_active) === 1 ? "true" : "false"}, false)">Desbloquear</button>`
+  : `<button onclick="setUserBlockedState('${String(user.id || "").replaceAll("'", "\\'")}', '${String(user.role || "user").replaceAll("'", "\\'")}', ${Number(user.is_active) === 1 ? "true" : "false"}, true)">Bloquear</button>`
 }
                     </div>
                   </td>
@@ -4541,52 +4541,53 @@ async function confirmResetAdminUserPassword() {
     confirmBtn.disabled = false;
   }
 }
-async function blockUser(username) {
-  if (!confirm(`¿Bloquear usuario ${username}?`)) return;
+
+/**
+ * Cambia el estado de bloqueo de un usuario usando
+ * el mismo endpoint PUT /admin/users/:id.
+ *
+ * Esto unifica la lógica administrativa y evita
+ * caminos paralelos inseguros.
+ */
+async function setUserBlockedState(userId, role, isActive, shouldBlock) {
+  const actionLabel = shouldBlock ? 'bloquear' : 'desbloquear';
+
+  if (!confirm(`¿Querés ${actionLabel} este usuario?`)) return;
 
   try {
-    const res = await crmFetch(`/admin/users/${encodeURIComponent(username)}/block`, {
-      method: 'POST'
-    });
+    const res = await crmFetch(
+      `${API_BASE}/admin/users/${encodeURIComponent(userId)}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role,
+          is_active: isActive,
+          is_blocked: shouldBlock
+        })
+      }
+    );
 
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(data.error || 'Error bloqueando');
+      throw new Error(data.error || `Error al ${actionLabel} usuario`);
     }
 
-    showToast('Usuario bloqueado correctamente', 'success');
-    await loadAdminUsers();
+    showToast(
+      shouldBlock
+        ? 'Usuario bloqueado correctamente'
+        : 'Usuario desbloqueado correctamente',
+      'success'
+    );
 
-  } catch (err) {
-    console.error(err);
-    alert(err.message);
+    await loadAdminUsers();
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
   }
 }
-
-async function unlockUser(username) {
-  if (!confirm(`¿Desbloquear usuario ${username}?`)) return;
-
-  try {
-    const res = await crmFetch(`/admin/users/${encodeURIComponent(username)}/unlock`, {
-      method: 'POST'
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Error desbloqueando');
-    }
-
-    showToast('Usuario desbloqueado correctamente', 'success');
-    await loadAdminUsers();
-
-  } catch (err) {
-    console.error(err);
-    alert(err.message);
-  }
-}
-
+	
       function openWhatsApp(url) {
         if (!url) return;
         window.open(url, "_blank");
