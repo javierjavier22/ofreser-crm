@@ -108,22 +108,6 @@ function requireAdmin(req, res, next) {
 }
 
 /**
- * Bloquear un usuario del CRM por username.
- *
- * Ruta final real:
- * POST /admin/users/:username/block
- */
-router.post('/:username/block', requireAdmin, blockCrmUserController);
-
-/**
- * Desbloquear un usuario del CRM por username.
- *
- * Ruta final real:
- * POST /admin/users/:username/unlock
- */
-router.post('/:username/unlock', requireAdmin, unlockCrmUserController);
-
-/**
  * ============================================
  * HELPERS DE SEGURIDAD
  * ============================================
