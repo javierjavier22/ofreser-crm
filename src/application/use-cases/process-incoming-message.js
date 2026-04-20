@@ -61,8 +61,35 @@ const {
 
 const {
   saveLead,
-  savePartialLead
+  savePartialLead,
+  getLeadBySessionId,
+  updateLead
 } = require('../../infrastructure/persistence/sqlite/leads.repository');
+
+/**
+ * Detecta si ya hay datos útiles en la sesión como para
+ * justificar la creación de un lead parcial borrador.
+ *
+ * Importante:
+ * - NO exige contacto completo
+ * - alcanza con que exista intención real o datos del flujo
+ * - evita perder consultas abandonadas a mitad de camino
+ */
+function hasMeaningfulLeadData(sessionData = {}) {
+  return Boolean(
+    sessionData.category ||
+    sessionData.pest ||
+    sessionData.placeType ||
+    sessionData.zone ||
+    sessionData.product ||
+    sessionData.localType ||
+    sessionData.businessName ||
+    sessionData.address ||
+    sessionData.adminReason ||
+    sessionData.name ||
+    sessionData.phone
+  );
+}
 
 /**
  * Procesa un mensaje entrante sin importar el canal.
@@ -436,6 +463,45 @@ session.data = {
       persistedSession.data,
       result.partialReason || 'handoff_humano'
     );
+  }
+
+  /**
+   * 10B. Si todavía NO se guardó un lead explícitamente,
+   * pero ya hay datos útiles en la sesión, creamos o actualizamos
+   * un lead parcial borrador para no perder la consulta
+   * si el usuario abandona el chat.
+   *
+   * Regla:
+   * - si ya existe un lead parcial reciente para esta sesión, se actualiza
+   * - si no existe, se crea uno nuevo
+   * - esto NO reemplaza el save_lead final
+   */
+  if (!savedLead && hasMeaningfulLeadData(persistedSession.data)) {
+    const latestLead = getLeadBySessionId(persistedSession.sessionId);
+
+    const canUpdateExistingDraft =
+      latestLead &&
+      latestLead.partial === true &&
+      latestLead.status === 'seguimiento';
+
+    if (canUpdateExistingDraft) {
+      savedLead = updateLead(
+        latestLead,
+        persistedSession.data,
+        {
+          status: 'seguimiento',
+          requiresHuman: Boolean(persistedSession.data.requiresHuman),
+          partial: true,
+          partialReason: 'abandono_temporal'
+        }
+      );
+    } else {
+      savedLead = savePartialLead(
+        persistedSession,
+        persistedSession.data,
+        'abandono_temporal'
+      );
+    }
   }
 
   /**
