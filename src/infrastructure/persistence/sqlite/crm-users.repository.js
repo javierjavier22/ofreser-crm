@@ -77,9 +77,9 @@ function getCrmUserById(id) {
  * Lista usuarios del CRM sin password_hash.
  *
  * Importante:
- * - ahora también devolvemos is_blocked
- * - esto permite al frontend decidir si mostrar
- *   "Bloquear" o "Desbloquear"
+ * - devolvemos is_blocked para que el frontend
+ *   pueda mostrar correctamente Bloquear / Desbloquear
+ * - devolvemos failed_attempts para debugging/admin
  */
 function listCrmUsers() {
   return db.prepare(`
