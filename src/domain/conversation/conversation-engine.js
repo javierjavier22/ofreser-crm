@@ -392,6 +392,8 @@ Vamos a registrar tu consulta administrativa.
  * - partialReason opcional
  */
 function processConversation({ session, rawMessage }) {
+
+  try {
   const msg = normalize(rawMessage);
 
   touchSession(session);
@@ -1097,14 +1099,31 @@ Si necesitás algo más, escribí "menu" o tocá el botón de abajo.`,
     }
   }
 
-  touchSession(session);
+touchSession(session);
 
-  return {
-    session,
-    reply,
-    action,
-    partialReason
-  };
+return {
+  session,
+  reply,
+  action,
+  partialReason
+};
+
+  } catch (err) {
+    console.error('🔥 ERROR ENGINE:', err);
+
+    return {
+      session: {
+        step: 'main_menu',
+        data: {},
+        invalidCount: 0
+      },
+      reply: buildResponse(
+        `Ocurrió un error. Volvimos al inicio.`,
+        mainMenuOptions()
+      ),
+      action: null
+    };
+  }
 }
 
 module.exports = {
