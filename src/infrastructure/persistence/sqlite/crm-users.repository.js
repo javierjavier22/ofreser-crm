@@ -226,21 +226,20 @@ function resetCrmUserFailedAttempts(userId) {
 }
 
 /**
- * Bloquea un usuario CRM por username.
+ * Bloquea un usuario CRM por ID.
  *
  * Importante:
- * - no lo desactiva
- * - solo marca is_blocked = 1
- * - resetea updated_at
+ * - usamos ID (no username)
+ * - consistente con el resto del sistema
  */
-function blockCrmUser(username) {
+function blockCrmUser(userId) {
   return db.prepare(`
     UPDATE crm_users
     SET
       is_blocked = 1,
       updated_at = datetime('now')
-    WHERE username = ?
-  `).run(String(username || '').trim());
+    WHERE id = ?
+  `).run(String(userId || '').trim());
 }
 
 /**
