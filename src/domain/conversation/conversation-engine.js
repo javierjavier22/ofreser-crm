@@ -69,6 +69,73 @@ function normalize(text) {
 }
 
 /**
+ * Asegura que la sesión tenga la estructura mínima esperada.
+ *
+ * NO cambia la lógica del bot.
+ * Solo evita errores si la sesión viene nula, vacía o incompleta.
+ */
+function ensureSessionStructure(session) {
+  const safeSession = session || {};
+
+  if (!safeSession.step) {
+    safeSession.step = 'welcome';
+  }
+
+  if (!safeSession.data || typeof safeSession.data !== 'object') {
+    safeSession.data = {};
+  }
+
+  if (typeof safeSession.invalidCount !== 'number') {
+    safeSession.invalidCount = 0;
+  }
+
+  return safeSession;
+}
+
+/**
+ * Lista de steps válidos del motor conversacional.
+ *
+ * Si por algún motivo llega un step corrupto o inexistente,
+ * lo corregimos antes del switch.
+ */
+const VALID_STEPS = new Set([
+  'welcome',
+  'main_menu',
+  'services_pest',
+  'services_place_type',
+  'services_zone',
+  'services_contact',
+  'products_item',
+  'products_contact',
+  'certificates_local_type',
+  'certificates_business_name',
+  'certificates_address',
+  'certificates_contact',
+  'admin_reason',
+  'admin_contact',
+  'completed',
+  'handoff',
+  'closed'
+]);
+
+/**
+ * Corrige steps inválidos antes de entrar al switch.
+ *
+ * Importante:
+ * - no rompe la conversación
+ * - vuelve al flujo seguro
+ */
+function normalizeSessionStep(session) {
+  if (!VALID_STEPS.has(session.step)) {
+    session.step = 'main_menu';
+    session.data = {};
+    session.invalidCount = 0;
+  }
+
+  return session;
+}
+
+/**
  * Detecta comandos para volver al menú principal.
  */
 function isBackCommand(msg) {
@@ -394,9 +461,12 @@ Vamos a registrar tu consulta administrativa.
 function processConversation({ session, rawMessage }) {
 
   try {
-  const msg = normalize(rawMessage);
+    session = ensureSessionStructure(session);
+    session = normalizeSessionStep(session);
 
-  touchSession(session);
+    const msg = normalize(rawMessage);
+
+    touchSession(session);
 
   /**
    * 1. Intentamos detectar primero una FAQ directa.
