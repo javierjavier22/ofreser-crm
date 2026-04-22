@@ -1,35 +1,158 @@
-TEST PENDIENTIES
-FUERA DEL HOARIO QUE NO HAY ASESOR , SI PIDO ASESOR QUE NO DIGA QUE YA SE CONTACTARA
-ASEGUARSAE QUE LA SOLUCION QUED EBIEN SEPARAD SI MAÑANA LE QUIERO VENDER EL CHATBOT A OTRA EMPRESA DE FUMIGACION O INCLUSO A OTRA EMPRESA DE SERVICIOS O LO QU ESEA QUE SEA LO MAS FACIL DE MIGRARR Y PERSONZLIASR 
+📌 ROADMAP OFRESER REAL (VERSIÓN CONSOLIDADA)
+✅ HECHO (VALIDADO)
+Core sistema
+chatbot funcionando (WhatsApp + webchat)
+CRM operativo
+sesiones persistentes
+handoff humano
+Leads (IMPORTANTE – ya nivel producto)
+lead parcial automático ✔
+no pérdida por abandono ✔
+promoción parcial → completo ✔
+no duplicación ✔
+expiración por inactividad ✔
+limpieza visual del CRM ✔
+TOTAL consistente ✔
+Seguridad base
+env validation ✔
+reset protegido ✔
+auth CRM ✔
+admin users base ✔
+Operación
+auditoría ✔
+backups CRUD desde CRM ✔
+paginación auditoría ✔
+======================================================================
+🔴 PRIORIDAD ALTA (LO SIGUIENTE REAL)
+🔐 1. Seguridad mínima (OBLIGATORIO antes de vender)
 
+Esto es nuevo y crítico.
 
-ROADMAP OFRESER REAL
+rate limit en /crm/login
+rate limit en /chat
+endurecer API key (evitar hardcode simple)
 
-HECHO
-- env validation
-- reset protegido
-- auth CRM
-- admin users base
-- auditoría
-- backups CRUD desde CRM
-- paginación auditoría
+👉 evita ataques básicos
+======================================================================
+👥 2. Reglas de usuarios/admin (ya lo tenías)
 
-PENDIENTE PRIORIDAD ALTA
-1. bug bloqueo automático por login fallido
-2. no bloquearse a sí mismo
-3. no bloquear último admin activo
-4. cleanup automático de backups
+Mantener:
 
-PENDIENTE PRIORIDAD MEDIA
-5. validación extra antes de restore
-6. timeout de sesiones conversacionales
-7. paginación leads
-8. límites de campos libres
-9. limpieza gradual acceso DB
+bug bloqueo login fallido
+no bloquearse a sí mismo
+no bloquear último admin activo
 
-NO TOCAR AHORA
-- refactor masivo frontend
-- PostgreSQL
-- TypeScript
-- auth nueva
-- IA compleja
+👉 cerrar esto te deja auth sólida
+======================================================================
+
+🧹 3. Cleanup automático de backups
+
+Ya lo tenías y es correcto.
+
+👉 evita crecimiento infinito de storage
+======================================================================
+
+🟠 PRIORIDAD MEDIA (PRODUCTO)
+⏱️ 4. Timeout de sesiones humanas
+
+(esto NO está resuelto aún)
+
+Hoy:
+
+queda en human infinito
+
+Falta:
+
+volver a bot después de X tiempo
+
+👉 crítico para no “perder” conversaciones
+======================================================================
+📊 5. Paginación de leads
+
+Ya lo tenías.
+
+👉 necesario si crece volumen real
+======================================================================
+🧠 6. Validaciones de input
+límites de texto
+sanitización básica
+
+👉 evita basura y problemas futuros
+======================================================================
+💾 7. Validación antes de restore
+
+Ya lo tenías.
+
+👉 evitar romper DB con archivos corruptos
+======================================================================
+🧹 8. Limpieza gradual acceso DB
+
+(lo tenías anotado)
+
+👉 probablemente refactor de repositorios / acceso
+======================================================================
+🟡 NUEVO BLOQUE CLAVE (MUY IMPORTANTE)
+🧩 9. PARAMETRIZACIÓN DEL BOT (VENTA / ESCALADO)
+
+Esto es lo más importante para lo que dijiste:
+
+venderlo a otra empresa de plagas o incluso otro rubro
+
+Objetivo
+
+Separar:
+
+👉 motor del bot
+de
+👉 contenido del negocio
+
+Hoy tenés
+
+Todo hardcodeado en:
+
+conversation-engine
+textos
+opciones
+lógica de servicios
+Tenés que llevarlo a:
+Configurable por empresa
+
+Ejemplo:
+
+{
+  "businessName": "Ofreser",
+  "services": ["cucarachas", "ratas", "mosquitos"],
+  "products": ["insecticida", "cebos"],
+  "flows": {
+    "services": true,
+    "products": true,
+    "certificates": true
+  }
+}
+Qué implica esto (sin hacerlo ahora)
+separar textos del engine
+separar menú principal
+separar categorías
+poder cambiar sin tocar código
+Resultado
+
+👉 mismo bot
+👉 múltiples clientes
+👉 solo cambiás config
+======================================================================
+🟢 BAJA PRIORIDAD (NO AHORA)
+UX / mejoras
+notificaciones CRM
+highlight nuevos leads
+orden por actividad
+Métricas
+tasa de abandono
+tasa de conversión
+🚫 NO TOCAR (BIEN DEFINIDO)
+refactor masivo frontend ❌
+PostgreSQL ❌
+TypeScript ❌
+auth nueva ❌
+IA compleja ❌
+
+👉 correcto mantener esto así

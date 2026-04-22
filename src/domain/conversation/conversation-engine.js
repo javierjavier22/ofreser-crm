@@ -91,21 +91,7 @@ function isBusinessHoursNow() {
  * según si estamos dentro o fuera de horario comercial.
  */
 function getHumanHandoffMessage() {
-  if (isBusinessHoursNow()) {
-    return `Perfecto 👍
-
-Voy a derivar tu caso a un asesor.
-A partir de este momento un asesor continuará la atención por este mismo chat.`;
-  }
-
-  return `Gracias por tu mensaje 👍
-
-Voy a derivar tu caso a un asesor.
-
-Nuestro horario de atención es:
-${BUSINESS_CONFIG.office.scheduleText}
-
-Te responderemos por este mismo medio dentro de ese horario.`;
+  return 'TEST HORARIO NUEVO 123';
 }
 
 /**
