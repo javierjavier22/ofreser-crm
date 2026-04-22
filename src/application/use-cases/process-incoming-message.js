@@ -99,7 +99,7 @@ function hasMeaningfulLeadData(sessionData = {}) {
  * - hasta 12 horas: continúa
  * - más de 12 horas: se considera vencida
  */
-const FLOW_EXPIRATION_MS = 2 * 60 * 1000;
+const FLOW_EXPIRATION_MS = 12 * 60 * 60 * 1000;
 
 /**
  * Detecta si una sesión conversacional ya venció
