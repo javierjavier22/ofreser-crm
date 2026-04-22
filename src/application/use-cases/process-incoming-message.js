@@ -92,6 +92,39 @@ function hasMeaningfulLeadData(sessionData = {}) {
 }
 
 /**
+ * Tiempo máximo de inactividad permitido para retomar
+ * una consulta vieja sin resetear el flujo.
+ *
+ * Regla actual:
+ * - hasta 12 horas: continúa
+ * - más de 12 horas: se considera vencida
+ */
+const FLOW_EXPIRATION_MS = 2 * 60 * 1000;
+
+/**
+ * Detecta si una sesión conversacional ya venció
+ * por inactividad.
+ *
+ * Importante:
+ * - si no hay updatedAt válido, no vence
+ * - usamos updatedAt porque representa
+ *   la última actividad real del flujo
+ */
+function isExpiredSessionForLeadFlow(session) {
+  if (!session || !session.updatedAt) {
+    return false;
+  }
+
+  const updatedAtMs = new Date(session.updatedAt).getTime();
+
+  if (!Number.isFinite(updatedAtMs)) {
+    return false;
+  }
+
+  return (Date.now() - updatedAtMs) >= FLOW_EXPIRATION_MS;
+}
+
+/**
  * Define si corresponde crear o actualizar un lead parcial automático.
  *
  * Regla:
@@ -167,6 +200,45 @@ function processIncomingMessage({
     });
 
     // Guardamos la nueva sesión recién creada
+    upsertSession(session);
+  }
+  
+    /**
+   * 2B. Si la sesión anterior venció por inactividad,
+   * descartamos el flujo viejo y arrancamos de cero.
+   *
+   * Además:
+   * - si había un lead parcial en seguimiento para esa sesión,
+   *   lo marcamos como expirado para que salga del tablero activo
+   * - NO borramos nada de la base
+   */
+  if (session && isExpiredSessionForLeadFlow(session)) {
+    const latestLead = getLeadBySessionId(session.sessionId);
+
+    const canExpirePartialLead =
+      latestLead &&
+      latestLead.partial === true &&
+      latestLead.status === 'seguimiento';
+
+    if (canExpirePartialLead) {
+      updateLead(
+        latestLead,
+        latestLead,
+        {
+          status: 'expirado',
+          requiresHuman: Boolean(latestLead.requiresHuman),
+          partial: true,
+          partialReason: 'expirado_por_inactividad'
+        }
+      );
+    }
+
+    session = createNewSession({
+      sessionId,
+      channel: session.channel || channel,
+      externalUserId: session.externalUserId || externalUserId || sessionId
+    });
+
     upsertSession(session);
   }
 
