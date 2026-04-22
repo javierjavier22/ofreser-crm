@@ -42,7 +42,10 @@
  * y devuelve la respuesta final lista para el canal.
  */
 
-const { processConversation } = require('../../domain/conversation/conversation-engine');
+const {
+  processConversation,
+  getHumanHandoffMessage
+} = require('../../domain/conversation/conversation-engine');
 const { detectIntent } = require('../../domain/conversation/detect-intent');
 const { scoreLead } = require('../../domain/lead/lead-scorer');
 const { parseContactData } = require('../../domain/lead/contact-parser');
@@ -361,8 +364,7 @@ session.data = {
      * lo generamos y lo dejamos persistido.
      */
     if (!session.humanNoticeSentAt) {
-      const humanNoticeMessage =
-        'Tu consulta fue derivada a un asesor. En breve te responderemos por este medio.';
+const humanNoticeMessage = getHumanHandoffMessage();
 
       /**
        * Guardamos timestamp del aviso único

@@ -1251,5 +1251,6 @@ return {
 }
 
 module.exports = {
-  processConversation
+  processConversation,
+  getHumanHandoffMessage
 };
