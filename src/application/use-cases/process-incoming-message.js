@@ -92,6 +92,34 @@ function hasMeaningfulLeadData(sessionData = {}) {
 }
 
 /**
+ * Define si corresponde crear o actualizar un lead parcial automático.
+ *
+ * Regla:
+ * - solo mientras la consulta está en progreso
+ * - NO cuando ya terminó
+ * - NO cuando ya cerró
+ * - NO cuando ya fue derivada explícitamente
+ */
+function shouldAutoCreatePartialLead(sessionStep) {
+  const draftAllowedSteps = new Set([
+    'services_pest',
+    'services_place_type',
+    'services_zone',
+    'services_contact',
+    'products_item',
+    'products_contact',
+    'certificates_local_type',
+    'certificates_business_name',
+    'certificates_address',
+    'certificates_contact',
+    'admin_reason',
+    'admin_contact'
+  ]);
+
+  return draftAllowedSteps.has(sessionStep);
+}
+
+/**
  * Procesa un mensaje entrante sin importar el canal.
  *
  * Parámetros:
@@ -502,7 +530,11 @@ session.data = {
    * - si no existe, se crea uno nuevo
    * - esto NO reemplaza el save_lead final
    */
-  if (!savedLead && hasMeaningfulLeadData(persistedSession.data)) {
+  if (
+    !savedLead &&
+    hasMeaningfulLeadData(persistedSession.data) &&
+    shouldAutoCreatePartialLead(persistedSession.step)
+  ) {
     const latestLead = getLeadBySessionId(persistedSession.sessionId);
 
     const canUpdateExistingDraft =
