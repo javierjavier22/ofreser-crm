@@ -3347,19 +3347,28 @@ function applyCrmRolePermissions() {
        * KPIs superiores.
        */
       function renderStats(leads) {
-        const total = leads.length;
-        const nuevo = leads.filter((x) => x.status === "nuevo").length;
-        const calificado = leads.filter(
-          (x) => x.status === "calificado",
-        ).length;
-        const seguimiento = leads.filter(
-          (x) => x.status === "seguimiento",
-        ).length;
-        const cerrado = leads.filter((x) => x.status === "cerrado").length;
-        const human = leads.filter((x) => x.controlMode === "human").length;
-        const bot = leads.filter(
-          (x) => (x.controlMode || "bot") === "bot",
-        ).length;
+const nuevo = leads.filter((x) => x.status === "nuevo").length;
+const calificado = leads.filter(
+  (x) => x.status === "calificado",
+).length;
+const seguimiento = leads.filter(
+  (x) => x.status === "seguimiento",
+).length;
+const cerrado = leads.filter((x) => x.status === "cerrado").length;
+
+/**
+ * TOTAL del tablero:
+ * suma solo los estados visibles en las 4 columnas del CRM.
+ *
+ * Esto evita contar leads internos u ocultos
+ * como "expirado", que siguen en base pero no se muestran.
+ */
+const total = nuevo + calificado + seguimiento + cerrado;
+
+const human = leads.filter((x) => x.controlMode === "human").length;
+const bot = leads.filter(
+  (x) => (x.controlMode || "bot") === "bot",
+).length;
 
         document.getElementById("stat-total").textContent = total;
         document.getElementById("stat-nuevo").textContent = nuevo;
