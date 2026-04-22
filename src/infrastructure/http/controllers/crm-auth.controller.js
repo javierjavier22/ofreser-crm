@@ -284,6 +284,14 @@ function postCrmLogin(req, res) {
   const { username, password } = req.body || {};
 
   const normalizedUsername = String(username || '').trim();
+  const ip = getClientIp(req);
+const blockStatus = getLoginBlockStatus(ip);
+
+if (blockStatus.blocked) {
+  return res.status(429).json({
+    error: `Demasiados intentos. Intentá en ${blockStatus.retryAfterSeconds}s`
+  });
+}
   const rawPassword = String(password || '');
 
   if (!normalizedUsername || !rawPassword) {
@@ -301,6 +309,8 @@ function postCrmLogin(req, res) {
    * No revelar demasiado si el usuario no existe.
    */
   if (!dbUser) {
+    registerFailedLoginAttempt(ip);
+
     return res.status(401).json({
       error: 'Credenciales inválidas'
     });
@@ -338,6 +348,7 @@ function postCrmLogin(req, res) {
    * - si llega al límite, bloqueamos
    */
   if (!validPassword) {
+		registerFailedLoginAttempt(ip);
     const currentFailedAttempts = Number(dbUser.failed_attempts || 0);
     const nextFailedAttempts = currentFailedAttempts + 1;
 
@@ -345,12 +356,13 @@ function postCrmLogin(req, res) {
 
     if (nextFailedAttempts >= CRM_LOGIN_MAX_FAILED_ATTEMPTS) {
       blockCrmUser(dbUser.id);
+	  clearFailedLoginAttempts(ip);
 
       return res.status(403).json({
         error: 'Usuario bloqueado. Contacte al administrador.'
       });
     }
-
+	
     return res.status(401).json({
       error: 'Credenciales inválidas'
     });
@@ -361,6 +373,7 @@ function postCrmLogin(req, res) {
    * reseteamos intentos fallidos.
    */
   resetCrmUserFailedAttempts(dbUser.id);
+  clearFailedLoginAttempts(ip);
 
   /**
    * Emitimos token.

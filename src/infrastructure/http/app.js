@@ -97,7 +97,14 @@ const app = express();
 /**
  * Middleware global CORS.
  */
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://ofreser-crm.onrender.com'
+  ],
+  credentials: true
+}));
 
 /**
  * Middleware global para parsear JSON.

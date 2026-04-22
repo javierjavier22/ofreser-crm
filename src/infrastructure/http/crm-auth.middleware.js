@@ -142,9 +142,10 @@ function crmAuthMiddleware(req, res, next) {
    * 1. API KEY fallback (legacy)
    */
   const apiKey = req.headers['x-api-key'];
-  const validApiKey = process.env.CRM_API_KEY;
+const validApiKey = process.env.CRM_API_KEY;
+const isDev = process.env.NODE_ENV !== 'production';
 
-  if (apiKey && validApiKey && apiKey === validApiKey) {
+if (isDev && apiKey && validApiKey && apiKey === validApiKey) {
     req.crmAuth = {
       mode: 'api_key',
       username: 'legacy_api_key',
