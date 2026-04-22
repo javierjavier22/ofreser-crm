@@ -442,10 +442,36 @@ session.data = {
 
   /**
    * 9. Si el motor indicó "save_lead",
-   * guardamos un lead completo.
+   * primero verificamos si ya existe un lead parcial reciente
+   * para esta misma sesión.
+   *
+   * Si existe y sigue siendo parcial + seguimiento,
+   * lo convertimos en lead completo en lugar de crear otro.
+   *
+   * Esto evita duplicar la misma consulta en CRM.
    */
   if (result.action === 'save_lead') {
-    savedLead = saveLead(persistedSession, persistedSession.data);
+    const latestLead = getLeadBySessionId(persistedSession.sessionId);
+
+    const canPromotePartialLead =
+      latestLead &&
+      latestLead.partial === true &&
+      latestLead.status === 'seguimiento';
+
+    if (canPromotePartialLead) {
+      savedLead = updateLead(
+        latestLead,
+        persistedSession.data,
+        {
+          status: 'nuevo',
+          requiresHuman: Boolean(persistedSession.data.requiresHuman),
+          partial: false,
+          partialReason: ''
+        }
+      );
+    } else {
+      savedLead = saveLead(persistedSession, persistedSession.data);
+    }
   }
 
   /**
