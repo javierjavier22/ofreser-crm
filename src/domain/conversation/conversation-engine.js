@@ -49,6 +49,66 @@ function nowIso() {
 }
 
 /**
+ * Convierte "HH:MM" a minutos desde 00:00.
+ */
+function timeToMinutes(timeText) {
+  const [hours, minutes] = String(timeText || '00:00')
+    .split(':')
+    .map(Number);
+
+  return (Number(hours) * 60) + Number(minutes);
+}
+
+/**
+ * Informa si ahora estamos dentro del horario comercial.
+ *
+ * Usa la hora local del servidor.
+ * Para este proyecto está bien porque trabajás con horario argentino.
+ */
+function isBusinessHoursNow() {
+  const schedule = BUSINESS_CONFIG?.office?.businessHours || {};
+  const now = new Date();
+
+  const day = now.getDay();
+  const currentMinutes = (now.getHours() * 60) + now.getMinutes();
+
+  const ranges = schedule[day];
+
+  if (!Array.isArray(ranges) || ranges.length === 0) {
+    return false;
+  }
+
+  return ranges.some(range => {
+    const startMinutes = timeToMinutes(range.start);
+    const endMinutes = timeToMinutes(range.end);
+
+    return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+  });
+}
+
+/**
+ * Devuelve el mensaje correcto para derivación a asesor
+ * según si estamos dentro o fuera de horario comercial.
+ */
+function getHumanHandoffMessage() {
+  if (isBusinessHoursNow()) {
+    return `Perfecto 👍
+
+Voy a derivar tu caso a un asesor.
+A partir de este momento un asesor continuará la atención por este mismo chat.`;
+  }
+
+  return `Gracias por tu mensaje 👍
+
+Voy a derivar tu caso a un asesor.
+
+Nuestro horario de atención es:
+${BUSINESS_CONFIG.office.scheduleText}
+
+Te responderemos por este mismo medio dentro de ese horario.`;
+}
+
+/**
  * Actualiza la fecha de modificación de la sesión.
  *
  * Esto sirve para saber cuándo fue el último movimiento
@@ -499,10 +559,7 @@ function processConversation({ session, rawMessage }) {
     session.step = 'handoff';
 
     const reply = buildResponse(
-      `Perfecto 👍
-
-Voy a derivar tu caso a un asesor.
-A partir de este momento un asesor continuará la atención por este mismo chat.`,
+      getHumanHandoffMessage(),
       [],
       { humanHandoff: true, completed: true, locked: true }
     );
@@ -999,10 +1056,7 @@ Volvimos al menú principal.
         partialReason = 'solicitud_asesor_post_consulta';
 
         reply = buildResponse(
-          `Perfecto 👍
-
-Voy a derivar tu caso a un asesor.
-A partir de este momento un asesor continuará la atención por este mismo chat.`,
+          getHumanHandoffMessage(),
           [],
           { humanHandoff: true, completed: true, locked: true }
         );

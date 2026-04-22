@@ -69,13 +69,34 @@ const BUSINESS_CONFIG = {
    * OFICINA / ADMINISTRACIÓN
    * ============================================
    */
-  office: {
-    enabled: true,
+office: {
+  enabled: true,
 
-    scheduleText:
-      'Lunes a viernes de 9 a 18\n' +
-      'Sábados de 9 a 13'
-  },
+  scheduleText:
+    'Lunes a viernes de 9 a 18\n' +
+    'Sábados de 9 a 13',
+
+  /**
+   * Horario comercial estructurado para lógica del bot.
+   *
+   * Formato:
+   * - 0 = domingo
+   * - 1 = lunes
+   * - 2 = martes
+   * - 3 = miércoles
+   * - 4 = jueves
+   * - 5 = viernes
+   * - 6 = sábado
+   */
+  businessHours: {
+1: [{ start: '00:00', end: '23:59' }],
+2: [{ start: '00:00', end: '23:59' }],
+3: [{ start: '00:00', end: '23:59' }],
+4: [{ start: '00:00', end: '23:59' }],
+5: [{ start: '00:00', end: '23:59' }],
+6: [{ start: '00:00', end: '23:59' }]
+  }
+},
 
   /**
    * ============================================
