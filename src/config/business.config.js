@@ -117,16 +117,75 @@ office: {
    * - cambiar copy sin tocar el engine
    * - tener distintos tonos comerciales
    */
-  messages: {
-    welcome:
-      'Bienvenido a Ofreser - Grupo Morón Control de Plagas.',
+messages: {
+  /**
+   * BIENVENIDA
+   */
+  welcome: (companyName) => `Hola 👋 Bienvenido a ${companyName}
 
-    humanHandoff:
-      'Un asesor se va a comunicar con vos a la brevedad.',
+Somos especialistas en control de plagas y servicios para comercios y hogares.
 
-    thanks:
-      'Gracias por contactarte con nosotros.'
-  }
+Podemos ayudarte con fumigación, certificados, venta de productos y consultas administrativas.
+
+¿En qué podemos ayudarte?`,
+
+  /**
+   * MENÚ PRINCIPAL (cuando se reinicia)
+   */
+  mainMenuIntro: () => `Podemos ayudarte con fumigación, certificados, productos y consultas administrativas.
+
+¿En qué podemos ayudarte?`,
+
+  /**
+   * SERVICIOS
+   */
+  servicesIntro: () => `Perfecto 👍
+
+Vamos a ayudarte con tu consulta de fumigación.
+
+¿Qué problema o plaga necesitás tratar?`,
+
+  /**
+   * PRODUCTOS
+   */
+  productsIntro: () => `Perfecto 👍
+
+¿Qué producto estás buscando?`,
+
+  /**
+   * CERTIFICADOS
+   */
+  certificatesIntro: (explanation) => `Perfecto 👍
+
+${explanation}
+
+Vamos a ayudarte con el certificado.
+
+¿Qué tipo de local es?`,
+
+  /**
+   * ADMINISTRACIÓN
+   */
+  adminIntro: () => `Perfecto 👍
+
+Vamos a registrar tu consulta administrativa.
+
+¿Sobre qué tema es?`,
+
+  /**
+   * CIERRE FINAL
+   */
+  closing: (companyName) => `Perfecto 🙌
+
+Gracias por comunicarte con ${companyName}.
+
+Cuando necesites, podés escribirnos nuevamente.`,
+
+  /**
+   * ERROR GENÉRICO
+   */
+  errorFallback: () => `Ocurrió un error. Volvimos al inicio.`
+}
 };
 
 /**

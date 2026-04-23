@@ -331,9 +331,7 @@ function restartToMainMenu(session) {
   return buildResponse(
     `Volvimos al menú principal ✅
 
-Podemos ayudarte con fumigación, certificados, productos y consultas administrativas.
-
-¿En qué podemos ayudarte?`,
+${BUSINESS_CONFIG.messages.mainMenuIntro()}`,
     mainMenuOptions()
   );
 }
@@ -443,11 +441,7 @@ function buildDirectFlowReply(intent, session) {
     session.step = 'services_pest';
 
     return buildResponse(
-      `Perfecto 👍
-
-Vamos a ayudarte con tu consulta de fumigación.
-
-¿Qué problema o plaga necesitás tratar?`,
+      BUSINESS_CONFIG.messages.servicesIntro(),
       [
         ...catalogToOptions(CATALOGS.pests),
         ...basicTools()
@@ -459,10 +453,8 @@ Vamos a ayudarte con tu consulta de fumigación.
     session.data.category = 'productos';
     session.step = 'products_item';
 
-    return buildResponse(
-      `Perfecto 👍
-
-¿Qué producto estás buscando?`,
+        return buildResponse(
+      BUSINESS_CONFIG.messages.productsIntro(),
       [
         ...catalogToOptions(CATALOGS.products),
         ...basicTools()
@@ -474,14 +466,10 @@ Vamos a ayudarte con tu consulta de fumigación.
     session.data.category = 'certificados';
     session.step = 'certificates_local_type';
 
-    return buildResponse(
-      `Perfecto 👍
-
-${BUSINESS_CONFIG.certificate.explanation}
-
-Vamos a ayudarte con el certificado.
-
-¿Qué tipo de local es?`,
+        return buildResponse(
+      BUSINESS_CONFIG.messages.certificatesIntro(
+        BUSINESS_CONFIG.certificate.explanation
+      ),
       [
         ...catalogToOptions(CATALOGS.certificateLocalTypes),
         ...basicTools()
@@ -493,12 +481,8 @@ Vamos a ayudarte con el certificado.
     session.data.category = 'administracion';
     session.step = 'admin_reason';
 
-       return buildResponse(
-      `Perfecto 👍
-
-Vamos a registrar tu consulta administrativa.
-
-¿Sobre qué tema es?`,
+           return buildResponse(
+      BUSINESS_CONFIG.messages.adminIntro(),
       [
         ...catalogToOptions(CATALOGS.adminReasons),
         ...basicTools()
@@ -989,9 +973,7 @@ Un asesor la revisará y te responderá a la brevedad.`,
         session.invalidCount = 0;
 
         reply = buildResponse(
-          `Hola 👋 Bienvenido a ${BUSINESS_CONFIG.companyName}
-
-¿En qué podemos ayudarte?`,
+          BUSINESS_CONFIG.messages.welcome(BUSINESS_CONFIG.companyName),
           mainMenuOptions()
         );
         break;
@@ -1032,12 +1014,10 @@ Un asesor la revisará y te responderá a la brevedad.`,
         session.data = {};
         session.invalidCount = 0;
 
-        reply = buildResponse(
+                reply = buildResponse(
           `Perfecto ✅
 
-Volvimos al menú principal.
-
-¿En qué podemos ayudarte?`,
+${BUSINESS_CONFIG.messages.mainMenuIntro()}`,
           mainMenuOptions()
         );
         break;
@@ -1066,11 +1046,7 @@ Volvimos al menú principal.
         session.invalidCount = 0;
 
         reply = buildResponse(
-          `Perfecto 🙌
-
-Gracias por comunicarte con ${BUSINESS_CONFIG.companyName}.
-
-Cuando necesites, podés escribirnos nuevamente.`,
+          BUSINESS_CONFIG.messages.closing(BUSINESS_CONFIG.companyName),
           [
             { label: '🏠 Volver al menú', value: 'menu' }
           ],
@@ -1131,9 +1107,7 @@ Si querés, podemos iniciar otra consulta o derivarte con un asesor.
         session.invalidCount = 0;
 
         reply = buildResponse(
-          `Hola 👋 Bienvenido a ${BUSINESS_CONFIG.companyName}
-
-¿En qué podemos ayudarte?`,
+          BUSINESS_CONFIG.messages.welcome(BUSINESS_CONFIG.companyName),
           mainMenuOptions()
         );
         break;
@@ -1184,10 +1158,8 @@ Si querés, podemos iniciar otra consulta o derivarte con un asesor.
       }
 
       if (isNoCommand(msg)) {
-        reply = buildResponse(
-          `Gracias por tu consulta 🙌
-
-Si necesitás algo más, escribí "menu" o tocá el botón de abajo.`,
+                reply = buildResponse(
+          BUSINESS_CONFIG.messages.genericThanks(),
           [
             { label: '🏠 Volver al menú', value: 'menu' }
           ],
@@ -1196,10 +1168,8 @@ Si necesitás algo más, escribí "menu" o tocá el botón de abajo.`,
         break;
       }
 
-      reply = buildResponse(
-        `Gracias por tu consulta 🙌
-
-Si necesitás algo más, escribí "menu" o tocá el botón de abajo.`,
+            reply = buildResponse(
+        BUSINESS_CONFIG.messages.genericThanks(),
         [
           { label: '🏠 Volver al menú', value: 'menu' }
         ],
@@ -1213,8 +1183,8 @@ Si necesitás algo más, escribí "menu" o tocá el botón de abajo.`,
       session.data = {};
       session.invalidCount = 0;
 
-      reply = buildResponse(
-        `Ocurrió un problema con la conversación. Volvimos al menú principal.`,
+           reply = buildResponse(
+        BUSINESS_CONFIG.messages.flowRecovery(),
         mainMenuOptions()
       );
       break;
@@ -1240,7 +1210,7 @@ return {
         invalidCount: 0
       },
       reply: buildResponse(
-        `Ocurrió un error. Volvimos al inicio.`,
+        BUSINESS_CONFIG.messages.engineError(),
         mainMenuOptions()
       ),
       action: null
