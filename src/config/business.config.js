@@ -320,10 +320,90 @@ const CATALOGS = {
   ]
 };
 
+/**
+ * SCORING CONFIGURABLE DEL NEGOCIO
+ */
+const LEAD_SCORING_CONFIG = {
+  intentScores: {
+    servicios: 40,
+    certificados: 35,
+    productos: 25,
+    administracion: 15,
+    asesor: 20
+  },
+
+  historyRules: {
+    min3: 10,
+    min6: 10
+  },
+
+  structuredDataScores: {
+    phone: 20,
+    address: 15,
+    placeType: 10,
+    pest: 15,
+    product: 10,
+    businessName: 10,
+    name: 10
+  },
+
+  fallbackSignals: {
+    addressKeywords: [
+      'domicilio',
+      'direccion',
+      'dirección',
+      'zona',
+      'barrio',
+      'calle'
+    ],
+    placeKeywords: [
+      'casa',
+      'hogar',
+      'departamento',
+      'local',
+      'negocio',
+      'comercio'
+    ],
+    pestKeywords: [
+      'cucaracha',
+      'cucarachas',
+      'rata',
+      'ratas',
+      'raton',
+      'ratones',
+      'ratón',
+      'hormiga',
+      'hormigas',
+      'alacran',
+      'alacrán',
+      'alacranes',
+      'murcielago',
+      'murciélago',
+      'plaga',
+      'plagas'
+    ],
+    urgencyKeywords: [
+      'urgente',
+      'asesor',
+      'persona',
+      'humano'
+    ]
+  },
+
+  fallbackScores: {
+    phoneLikeText: 10,
+    addressSignal: 8,
+    placeSignal: 8,
+    pestSignal: 10,
+    urgencySignal: 5
+  }
+};
+
 module.exports = {
   BUSINESS_CONFIG,
   MAIN_MENU,
   INTENT_KEYWORDS_CONFIG,
   FAQ_CONFIG,
-  CATALOGS
+  CATALOGS,
+  LEAD_SCORING_CONFIG
 };

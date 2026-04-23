@@ -29,6 +29,10 @@
  * - service_request
  * - faq
  */
+ 
+ const {
+  LEAD_SCORING_CONFIG
+} = require('../../config/business.config');
 
 /**
  * Convierte cualquier valor a texto seguro en minúsculas.
@@ -41,11 +45,19 @@ function normalizeText(value) {
  * Devuelve el historial de la sesión como arreglo seguro.
  */
 function getHistory(sessionData) {
-  if (!sessionData || !Array.isArray(sessionData.history)) {
+  if (!sessionData) {
     return [];
   }
 
-  return sessionData.history;
+  if (Array.isArray(sessionData.conversationHistory)) {
+    return sessionData.conversationHistory;
+  }
+
+  if (Array.isArray(sessionData.history)) {
+    return sessionData.history;
+  }
+
+  return [];
 }
 
 /**
@@ -79,26 +91,9 @@ function hasPhoneLikeText(text) {
  */
 function scoreIntent(lastIntent) {
   const intent = normalizeText(lastIntent);
+  const intentScores = LEAD_SCORING_CONFIG?.intentScores || {};
 
-  switch (intent) {
-    case 'servicios':
-      return 40;
-
-    case 'certificados':
-      return 35;
-
-    case 'productos':
-      return 25;
-
-    case 'administracion':
-      return 15;
-
-    case 'asesor':
-      return 20;
-
-    default:
-      return 0;
-  }
+  return Number(intentScores[intent] || 0);
 }
 
 /**
@@ -109,13 +104,14 @@ function scoreIntent(lastIntent) {
  */
 function scoreHistoryLength(history) {
   let score = 0;
+  const rules = LEAD_SCORING_CONFIG?.historyRules || {};
 
   if (history.length >= 3) {
-    score += 10;
+    score += Number(rules.min3 || 0);
   }
 
   if (history.length >= 6) {
-    score += 10;
+    score += Number(rules.min6 || 0);
   }
 
   return score;
@@ -129,33 +125,34 @@ function scoreHistoryLength(history) {
  */
 function scoreStructuredData(sessionData) {
   let score = 0;
+  const weights = LEAD_SCORING_CONFIG?.structuredDataScores || {};
 
   if (sessionData.normalizedPhone || sessionData.phone) {
-    score += 20;
+    score += Number(weights.phone || 0);
   }
 
   if (sessionData.address || sessionData.zone || sessionData.location) {
-    score += 15;
+    score += Number(weights.address || 0);
   }
 
   if (sessionData.placeType || sessionData.localType) {
-    score += 10;
+    score += Number(weights.placeType || 0);
   }
 
   if (sessionData.pest) {
-    score += 15;
+    score += Number(weights.pest || 0);
   }
 
   if (sessionData.product) {
-    score += 10;
+    score += Number(weights.product || 0);
   }
 
   if (sessionData.businessName) {
-    score += 10;
+    score += Number(weights.businessName || 0);
   }
 
   if (sessionData.name) {
-    score += 10;
+    score += Number(weights.name || 0);
   }
 
   return score;
@@ -169,83 +166,49 @@ function scoreStructuredData(sessionData) {
 function scoreFallbackText(text, sessionData) {
   let score = 0;
 
-  /**
-   * Solo sumamos si NO tenemos ya teléfono estructurado.
-   * Evita duplicar demasiado el score por el mismo dato.
-   */
+  const fallbackSignals = LEAD_SCORING_CONFIG?.fallbackSignals || {};
+  const fallbackScores = LEAD_SCORING_CONFIG?.fallbackScores || {};
+
+  const addressKeywords = Array.isArray(fallbackSignals.addressKeywords)
+    ? fallbackSignals.addressKeywords
+    : [];
+
+  const placeKeywords = Array.isArray(fallbackSignals.placeKeywords)
+    ? fallbackSignals.placeKeywords
+    : [];
+
+  const pestKeywords = Array.isArray(fallbackSignals.pestKeywords)
+    ? fallbackSignals.pestKeywords
+    : [];
+
+  const urgencyKeywords = Array.isArray(fallbackSignals.urgencyKeywords)
+    ? fallbackSignals.urgencyKeywords
+    : [];
+
   if (!sessionData.normalizedPhone && !sessionData.phone && hasPhoneLikeText(text)) {
-    score += 10;
+    score += Number(fallbackScores.phoneLikeText || 0);
   }
 
-  /**
-   * Señales de dirección / ubicación.
-   */
   if (!sessionData.address && !sessionData.zone && !sessionData.location) {
-    if (
-      text.includes('domicilio') ||
-      text.includes('direccion') ||
-      text.includes('dirección') ||
-      text.includes('zona') ||
-      text.includes('barrio') ||
-      text.includes('calle')
-    ) {
-      score += 8;
+    if (addressKeywords.some((keyword) => text.includes(keyword))) {
+      score += Number(fallbackScores.addressSignal || 0);
     }
   }
 
-  /**
-   * Señales de tipo de lugar.
-   */
   if (!sessionData.placeType && !sessionData.localType) {
-    if (
-      text.includes('casa') ||
-      text.includes('hogar') ||
-      text.includes('departamento') ||
-      text.includes('local') ||
-      text.includes('negocio') ||
-      text.includes('comercio')
-    ) {
-      score += 8;
+    if (placeKeywords.some((keyword) => text.includes(keyword))) {
+      score += Number(fallbackScores.placeSignal || 0);
     }
   }
 
-  /**
-   * Señales de plaga.
-   */
   if (!sessionData.pest) {
-    if (
-      text.includes('cucaracha') ||
-      text.includes('cucarachas') ||
-      text.includes('rata') ||
-      text.includes('ratas') ||
-      text.includes('raton') ||
-      text.includes('ratones') ||
-      text.includes('ratón') ||
-      text.includes('ratones') ||
-      text.includes('hormiga') ||
-      text.includes('hormigas') ||
-      text.includes('alacran') ||
-      text.includes('alacrán') ||
-      text.includes('alacranes') ||
-      text.includes('murcielago') ||
-      text.includes('murciélago') ||
-      text.includes('plaga') ||
-      text.includes('plagas')
-    ) {
-      score += 10;
+    if (pestKeywords.some((keyword) => text.includes(keyword))) {
+      score += Number(fallbackScores.pestSignal || 0);
     }
   }
 
-  /**
-   * Señales de urgencia o contacto humano.
-   */
-  if (
-    text.includes('urgente') ||
-    text.includes('asesor') ||
-    text.includes('persona') ||
-    text.includes('humano')
-  ) {
-    score += 5;
+  if (urgencyKeywords.some((keyword) => text.includes(keyword))) {
+    score += Number(fallbackScores.urgencySignal || 0);
   }
 
   return score;
