@@ -36,7 +36,10 @@
  */
 
 const { detectFaq, mainMenuOptions } = require('./detect-faq');
-const BUSINESS_CONFIG = require('../../config/business.config');
+const {
+  BUSINESS_CONFIG,
+  CATALOGS
+} = require('../../config/business.config');
 const { buildResponse } = require('./response-builder');
 const { detectIntent } = require('./detect-intent');
 const { parseContactMessage } = require('./parse-contact');
@@ -126,6 +129,24 @@ function touchSession(session) {
  */
 function normalize(text) {
   return String(text || '').trim().toLowerCase();
+}
+
+/**
+ * Convierte un catálogo de strings en opciones del bot.
+ *
+ * Regla:
+ * - label: texto visible
+ * - value: texto normalizado en minúsculas
+ */
+function catalogToOptions(list = []) {
+  if (!Array.isArray(list)) {
+    return [];
+  }
+
+  return list.map((item) => ({
+    label: String(item),
+    value: String(item).toLowerCase()
+  }));
 }
 
 /**
@@ -428,12 +449,7 @@ Vamos a ayudarte con tu consulta de fumigación.
 
 ¿Qué problema o plaga necesitás tratar?`,
       [
-        { label: 'Cucarachas', value: 'cucarachas' },
-        { label: 'Roedores', value: 'roedores' },
-        { label: 'Hormigas', value: 'hormigas' },
-        { label: 'Mosquitos', value: 'mosquitos' },
-        { label: 'Alacranes', value: 'alacranes' },
-        { label: 'Otra plaga', value: 'otro' },
+        ...catalogToOptions(CATALOGS.pests),
         ...basicTools()
       ]
     );
@@ -448,11 +464,7 @@ Vamos a ayudarte con tu consulta de fumigación.
 
 ¿Qué producto estás buscando?`,
       [
-        { label: 'Insecticidas', value: 'insecticidas' },
-        { label: 'Rodenticidas', value: 'rodenticidas' },
-        { label: 'Trampas', value: 'trampas' },
-        { label: 'Equipos profesionales', value: 'equipos profesionales' },
-        { label: 'Otro producto', value: 'otro producto' },
+        ...catalogToOptions(CATALOGS.products),
         ...basicTools()
       ]
     );
@@ -471,11 +483,7 @@ Vamos a ayudarte con el certificado.
 
 ¿Qué tipo de local es?`,
       [
-        { label: 'Bar / Restaurant', value: 'bar_restaurant' },
-        { label: 'Kiosco / Almacén / Despensa', value: 'kiosco_almacen_despensa' },
-        { label: 'Industria / Fábricas', value: 'industria_fabrica' },
-        { label: 'Oficina / Local comercial', value: 'oficina_local' },
-        { label: 'Otro', value: 'otro' },
+        ...catalogToOptions(CATALOGS.certificateLocalTypes),
         ...basicTools()
       ]
     );
@@ -485,18 +493,14 @@ Vamos a ayudarte con el certificado.
     session.data.category = 'administracion';
     session.step = 'admin_reason';
 
-    return buildResponse(
+       return buildResponse(
       `Perfecto 👍
 
 Vamos a registrar tu consulta administrativa.
 
 ¿Sobre qué tema es?`,
       [
-        { label: 'Factura', value: 'factura' },
-        { label: 'Pago', value: 'pago' },
-        { label: 'Comprobante', value: 'comprobante' },
-        { label: 'Servicio realizado', value: 'servicio realizado' },
-        { label: 'Otro tema', value: 'otro' },
+        ...catalogToOptions(CATALOGS.adminReasons),
         ...basicTools()
       ]
     );
@@ -675,18 +679,12 @@ Por favor elegí una de las opciones del menú para poder ayudarte mejor.`,
       session.data.pest = rawMessage.trim();
       session.step = 'services_place_type';
 
-      reply = buildResponse(
+            reply = buildResponse(
         `Bien 👍
 
 ¿Para qué tipo de lugar es el servicio?`,
         [
-          { label: 'Casa', value: 'casa' },
-          { label: 'Departamento', value: 'departamento' },
-          { label: 'Comercio', value: 'comercio' },
-          { label: 'Oficina', value: 'oficina' },
-          { label: 'Industria', value: 'industria' },
-          { label: 'Galpón', value: 'galpon' },
-          { label: 'Otro', value: 'otro' },
+          ...catalogToOptions(CATALOGS.placeTypes),
           ...basicTools()
         ]
       );

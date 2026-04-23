@@ -223,26 +223,41 @@ const FAQ_CONFIG = [
 const CATALOGS = {
   pests: [
     'Cucarachas',
-    'Hormigas',
     'Roedores',
+    'Hormigas',
     'Mosquitos',
-    'Alacranes'
+    'Alacranes',
+    'Otra plaga'
   ],
   placeTypes: [
     'Casa',
     'Departamento',
     'Comercio',
-    'Industria'
+    'Oficina',
+    'Industria',
+    'Galpón',
+    'Otro'
   ],
   products: [
-    'Insecticida',
-    'Raticida',
-    'Trampas'
+    'Insecticidas',
+    'Rodenticidas',
+    'Trampas',
+    'Equipos profesionales',
+    'Otro producto'
+  ],
+  certificateLocalTypes: [
+    'Bar / Restaurant',
+    'Kiosco / Almacén / Despensa',
+    'Industria / Fábricas',
+    'Oficina / Local comercial',
+    'Otro'
   ],
   adminReasons: [
     'Factura',
     'Pago',
-    'Consulta general'
+    'Comprobante',
+    'Servicio realizado',
+    'Otro tema'
   ]
 };
 
