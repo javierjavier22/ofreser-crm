@@ -21,7 +21,10 @@
  * - el flujo sigue normalmente en el conversation-engine
  */
 
-const BUSINESS_CONFIG = require('../../config/business.config');
+const {
+  BUSINESS_CONFIG,
+  FAQ_CONFIG
+} = require('../../config/business.config');
 const { buildResponse } = require('./response-builder');
 
 /**
@@ -66,6 +69,36 @@ function escapeRegex(text) {
 }
 
 /**
+ * Normaliza texto para comparación flexible.
+ */
+function normalizeForFaq(text) {
+  return removeAccents(String(text || '').toLowerCase().trim());
+}
+
+/**
+ * Detecta si una FAQ configurable matchea el mensaje.
+ */
+function matchConfiguredFaq(msg, faqItem) {
+  const normalizedMsg = normalizeForFaq(msg);
+  const keywords = Array.isArray(faqItem?.keywords) ? faqItem.keywords : [];
+
+  return keywords.some((keyword) => {
+    const normalizedKeyword = normalizeForFaq(keyword);
+
+    if (!normalizedKeyword) {
+      return false;
+    }
+
+    if (normalizedKeyword.length <= 5) {
+      return normalizedMsg.includes(normalizedKeyword);
+    }
+
+    const pattern = new RegExp(`\\b${escapeRegex(normalizedKeyword)}\\b`, 'i');
+    return pattern.test(normalizedMsg);
+  });
+}
+
+/**
  * Opciones del menú principal reutilizables.
  *
  * Esto se usa en respuestas FAQ para que el usuario
@@ -87,6 +120,32 @@ function mainMenuOptions() {
  * @returns {object|null} respuesta del bot o null
  */
 function detectFaq(msg) {
+	
+	  /**
+   * =========================================================
+   * FAQ CONFIGURABLE DESDE business.config.js
+   * =========================================================
+   *
+   * Estrategia:
+   * - primero intentamos con FAQ_CONFIG
+   * - si no matchea nada, seguimos con el fallback legacy
+   *
+   * Así no rompemos nada actual.
+   */
+  if (Array.isArray(FAQ_CONFIG) && FAQ_CONFIG.length > 0) {
+    const matchedFaq = FAQ_CONFIG.find((faqItem) => matchConfiguredFaq(msg, faqItem));
+
+    if (matchedFaq) {
+      const responseText =
+        typeof matchedFaq.response === 'function'
+          ? matchedFaq.response()
+          : String(matchedFaq.response || '').trim();
+
+      if (responseText) {
+        return buildResponse(responseText, mainMenuOptions());
+      }
+    }
+  }
 
   /**
    * =========================================================

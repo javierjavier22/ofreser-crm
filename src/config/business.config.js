@@ -211,10 +211,10 @@ const FAQ_CONFIG = [
     keywords: ['horario', 'atienden'],
     response: () => `Nuestro horario es:\n${BUSINESS_CONFIG.office.scheduleText}`
   },
-  {
-    keywords: ['direccion', 'donde estan'],
-    response: () => `Estamos en:\n${BUSINESS_CONFIG.office.address}`
-  }
+{
+  keywords: ['direccion', 'donde estan'],
+  response: () => `Estamos en:\n${BUSINESS_CONFIG.publicStore.address}`
+}
 ];
 
 /**
