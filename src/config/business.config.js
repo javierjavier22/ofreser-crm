@@ -129,4 +129,127 @@ office: {
   }
 };
 
-module.exports = BUSINESS_CONFIG;
+/**
+ * =========================================================
+ * CONFIGURACIÓN PRO MULTIEMPRESA
+ * =========================================================
+ *
+ * IMPORTANTE:
+ * - Esto NO reemplaza lo actual
+ * - Se usa progresivamente
+ * - No rompe nada existente
+ */
+
+/**
+ * MENÚ PRINCIPAL CONFIGURABLE
+ */
+const MAIN_MENU = [
+  {
+    id: 'servicios',
+    label: 'Fumigación',
+    description: 'Servicio de control de plagas'
+  },
+  {
+    id: 'certificados',
+    label: 'Certificado',
+    description: 'Certificado de local fumigado'
+  },
+  {
+    id: 'productos',
+    label: 'Venta de productos',
+    description: 'Compra de insumos'
+  },
+  {
+    id: 'administracion',
+    label: 'Consultas administrativas',
+    description: 'Facturación, pagos u otras consultas'
+  }
+];
+
+/**
+ * KEYWORDS DE INTENCIÓN CONFIGURABLES
+ */
+const INTENT_KEYWORDS_CONFIG = {
+  servicios: [
+    'fumigacion',
+    'fumigar',
+    'plaga',
+    'plagas',
+    'cucaracha',
+    'rata',
+    'hormiga'
+  ],
+  productos: [
+    'producto',
+    'veneno',
+    'insecticida',
+    'trampa'
+  ],
+  certificados: [
+    'certificado',
+    'certificacion',
+    'habilitacion'
+  ],
+  administracion: [
+    'factura',
+    'pago',
+    'comprobante',
+    'administracion'
+  ],
+  asesor: [
+    'asesor',
+    'humano',
+    'persona'
+  ]
+};
+
+/**
+ * FAQ CONFIGURABLE
+ */
+const FAQ_CONFIG = [
+  {
+    keywords: ['horario', 'atienden'],
+    response: () => `Nuestro horario es:\n${BUSINESS_CONFIG.office.scheduleText}`
+  },
+  {
+    keywords: ['direccion', 'donde estan'],
+    response: () => `Estamos en:\n${BUSINESS_CONFIG.office.address}`
+  }
+];
+
+/**
+ * CATÁLOGOS DEL NEGOCIO
+ */
+const CATALOGS = {
+  pests: [
+    'Cucarachas',
+    'Hormigas',
+    'Roedores',
+    'Mosquitos',
+    'Alacranes'
+  ],
+  placeTypes: [
+    'Casa',
+    'Departamento',
+    'Comercio',
+    'Industria'
+  ],
+  products: [
+    'Insecticida',
+    'Raticida',
+    'Trampas'
+  ],
+  adminReasons: [
+    'Factura',
+    'Pago',
+    'Consulta general'
+  ]
+};
+
+module.exports = {
+  BUSINESS_CONFIG,
+  MAIN_MENU,
+  INTENT_KEYWORDS_CONFIG,
+  FAQ_CONFIG,
+  CATALOGS
+};
