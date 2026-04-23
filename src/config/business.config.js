@@ -77,24 +77,16 @@ office: {
     'Sábados de 9 a 13',
 
   /**
-   * Horario comercial estructurado para lógica del bot.
-   *
-   * Formato:
-   * - 0 = domingo
-   * - 1 = lunes
-   * - 2 = martes
-   * - 3 = miércoles
-   * - 4 = jueves
-   * - 5 = viernes
-   * - 6 = sábado
+   * Horario comercial para lógica del bot
    */
   businessHours: {
-1: [{ start: '00:00', end: '23:59' }],
-2: [{ start: '00:00', end: '23:59' }],
-3: [{ start: '00:00', end: '23:59' }],
-4: [{ start: '00:00', end: '23:59' }],
-5: [{ start: '00:00', end: '23:59' }],
-6: [{ start: '00:00', end: '23:59' }]
+    1: [{ start: '09:00', end: '18:00' }], // lunes
+    2: [{ start: '09:00', end: '18:00' }], // martes
+    3: [{ start: '09:00', end: '18:00' }], // miércoles
+    4: [{ start: '09:00', end: '18:00' }], // jueves
+    5: [{ start: '09:00', end: '18:00' }], // viernes
+    6: [{ start: '09:00', end: '13:00' }]  // sábado
+    // domingo (0) no se define → cerrado
   }
 },
 
