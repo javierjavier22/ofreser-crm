@@ -23,6 +23,10 @@
  * No es IA ni NLP avanzado.
  */
  
+ const {
+  INTENT_KEYWORDS_CONFIG
+} = require('../../config/business.config');
+ 
  function removeAccents(text) {
   return text
     .normalize('NFD')
@@ -53,6 +57,45 @@ function containsAny(text, keywords = []) {
 function escapeRegex(text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+/**
+ * Detecta intención usando la configuración del negocio.
+ *
+ * Estrategia:
+ * - respeta el orden comercial actual
+ * - si no encuentra nada, el archivo sigue con fallback legacy
+ */
+function detectIntentFromConfig(msg) {
+  if (
+    !INTENT_KEYWORDS_CONFIG ||
+    typeof INTENT_KEYWORDS_CONFIG !== 'object'
+  ) {
+    return null;
+  }
+
+  const orderedIntentKeys = [
+    'servicios',
+    'productos',
+    'certificados',
+    'administracion',
+    'asesor'
+  ];
+
+  for (const intentKey of orderedIntentKeys) {
+    const keywords = INTENT_KEYWORDS_CONFIG[intentKey];
+
+    if (!Array.isArray(keywords) || keywords.length === 0) {
+      continue;
+    }
+
+    if (containsAny(msg, keywords)) {
+      return intentKey;
+    }
+  }
+
+  return null;
+}
+
 
 /**
  * Diccionario de intenciones.
@@ -142,6 +185,18 @@ function detectIntent(msg) {
    *
    * En ese caso, priorizamos SERVICIOS antes que PRODUCTOS.
    */
+   
+     /**
+   * Primero intentamos detectar usando la configuración central.
+   *
+   * Si no encuentra nada, seguimos con el fallback legacy
+   * para no romper comportamiento actual.
+   */
+  const configuredIntent = detectIntentFromConfig(msg);
+
+  if (configuredIntent) {
+    return configuredIntent;
+  }
 
   if (containsAny(msg, INTENT_KEYWORDS.servicios)) {
     return 'servicios';
