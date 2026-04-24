@@ -308,13 +308,7 @@ function completedTools() {
  */
 function mainMenuResponse() {
   return buildResponse(
-    `Hola 👋 Bienvenido a ${BUSINESS_CONFIG.companyName}
-
-Somos especialistas en control de plagas y servicios para comercios y hogares.
-
-Podemos ayudarte con fumigación, certificados, venta de productos y consultas administrativas.
-
-¿En qué podemos ayudarte?`,
+    BUSINESS_CONFIG.messages.welcome(BUSINESS_CONFIG.companyName),
     mainMenuOptions()
   );
 }

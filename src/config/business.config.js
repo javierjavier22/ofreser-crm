@@ -182,7 +182,24 @@ Gracias por comunicarte con ${companyName}.
 Cuando necesites, podés escribirnos nuevamente.`,
 
   /**
-   * ERROR GENÉRICO
+   * AGRADECIMIENTO GENÉRICO
+   */
+  genericThanks: () => `Gracias por tu consulta 🙌
+
+Si necesitás algo más, escribí "menu" o tocá el botón de abajo.`,
+
+  /**
+   * RECUPERACIÓN DE FLUJO
+   */
+  flowRecovery: () => `Ocurrió un problema con la conversación. Volvimos al menú principal.`,
+
+  /**
+   * ERROR GENÉRICO DEL ENGINE
+   */
+  engineError: () => `Ocurrió un error. Volvimos al inicio.`,
+
+  /**
+   * ERROR GENÉRICO LEGACY
    */
   errorFallback: () => `Ocurrió un error. Volvimos al inicio.`
 }
