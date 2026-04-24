@@ -156,3 +156,244 @@ auth nueva ❌
 IA compleja ❌
 
 👉 correcto mantener esto así
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+********************************************************************************************************
+ETAPA 1		LISTO
+Parametrizar menú principal, FAQ y keywords
+Objetivo
+
+Mover fuera del código lo más fácil y lo que más valor da sin tocar el motor profundo.
+
+Archivos a tocar
+src/config/business.config.js
+src/domain/conversation/detect-faq.js
+src/domain/conversation/detect-intent.js
+src/domain/conversation/conversation-engine.js solo en partes chicas
+Qué sacar del hardcode
+A business.config.js
+
+Agregar 4 bloques nuevos:
+
+mainMenu
+intentKeywords
+faq
+catalogs
+Qué quedaría adentro
+mainMenu
+
+Las opciones visibles del menú:
+
+servicios
+productos
+certificados
+administración
+intentKeywords
+
+Las keywords por intención
+
+faq
+
+Las preguntas frecuentes configurables
+
+catalogs
+
+Las listas base:
+
+plagas
+productos
+tipos de local
+motivos administrativos
+Beneficio
+
+Con solo esta etapa ya vas a poder cambiar oferta y vocabulario sin tocar tanto código.
+
+Riesgo
+
+Bajo, si lo hacemos por bloques.
+********************************************************************************************************
+ETAPA 2		LISTO
+Hacer que detect-faq.js lea de config
+Objetivo
+
+Que las FAQ no estén más quemadas en código.
+
+Archivo principal
+src/domain/conversation/detect-faq.js
+Qué cambia
+
+En vez de tener ifs con palabras fijas, leer de:
+
+BUSINESS_CONFIG.faq
+Beneficio
+
+Si otra empresa cambia:
+
+dirección
+horarios
+tipo de local
+preguntas frecuentes
+
+no tocás lógica.
+
+Riesgo
+
+Bajo.
+********************************************************************************************************
+ETAPA 3
+Hacer que detect-intent.js lea de config
+Objetivo
+
+Que las intenciones no dependan del rubro actual.
+
+Archivo principal
+src/domain/conversation/detect-intent.js
+Qué cambia
+
+Reemplazar INTENT_KEYWORDS hardcodeado por:
+
+BUSINESS_CONFIG.intentKeywords
+Beneficio
+
+Si otra empresa usa:
+
+“visita técnica”
+“mantenimiento”
+“inspección”
+“venta de insumos”
+
+se cambia desde config.
+
+Riesgo
+
+Bajo.
+********************************************************************************************************
+ETAPA 4
+Parametrizar catálogos visibles del engine
+Objetivo
+
+Sacar del engine lo más repetitivo:
+
+botones
+opciones
+labels visibles
+Archivos a tocar
+src/config/business.config.js
+src/domain/conversation/conversation-engine.js
+Qué mover a config
+lista de plagas
+lista de productos
+lista de tipos de local
+lista de motivos administrativos
+Qué NO mover todavía
+
+No mover todavía todo el flujo completo, solo las opciones.
+
+Beneficio
+
+Gran salto sin reescribir el motor.
+
+Riesgo
+
+Medio-bajo.
+********************************************************************************************************
+ETAPA 5
+Parametrizar textos principales del engine
+Objetivo
+
+Sacar del código los mensajes más “Ofreser”.
+
+Archivos a tocar
+src/config/business.config.js
+src/domain/conversation/conversation-engine.js
+Qué textos mover
+bienvenida
+mensajes introductorios por categoría
+mensajes de cierre
+mensajes de asesor
+copy de certificados
+mensajes de resumen base
+Beneficio
+
+La empresa cambia tono, nombre comercial y oferta sin tocar lógica.
+
+Riesgo
+
+Medio.
+********************************************************************************************************
+ETAPA 6
+Parametrizar el scorer
+Objetivo
+
+Que el scoring no dependa de plagas ni de este negocio específico.
+
+Archivos a tocar
+src/domain/lead/lead-scorer.js
+src/config/business.config.js
+Qué mover
+pesos por intención
+señales de texto
+keywords de urgencia
+señales de ubicación / tipo de lugar / rubro
+Importante
+
+Acá antes de tocar conviene decidir si arreglamos primero la inconsistencia:
+
+history vs conversationHistory
+
+Porque si no parametrizamos algo que hoy ya está medio inactivo.
+
+Riesgo
+
+Medio.
+********************************************************************************************************
+ETAPA 7
+Parametrización profunda de flujos
+Objetivo
+
+Que el engine dependa menos de pasos fijos hardcodeados.
+
+Esto NO lo haría ahora
+
+Es posible, pero es más delicado:
+
+pasos configurables
+resúmenes configurables
+campos requeridos por flujo
+Riesgo
+
+Más alto.
+
+Recomendación
+
+Dejarlo para después, cuando todo lo anterior ya esté firme.
+
+Orden recomendado real
+El orden correcto es este:
+Diseñar nuevo business.config.js
+Parametrizar detect-faq.js
+Parametrizar detect-intent.js
+Parametrizar catálogos del engine
+Parametrizar textos del engine
+Revisar y parametrizar lead-scorer.js
+Recién después pensar en flujos 100% configurables
