@@ -28,23 +28,7 @@
  * Wrapper PRO de fetch con autenticación automática
  * =========================================================
  */
-async function crmFetch(url, options = {}) {
-  const token = localStorage.getItem('ofreser_crm_token');
 
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(options.headers || {})
-  };
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  return fetch(url, {
-    ...options,
-    headers
-  });
-}
 
 
       /**
@@ -52,7 +36,7 @@ async function crmFetch(url, options = {}) {
        * CONFIGURACIÓN GENERAL
        * =========================================================
        */
-      const API_BASE = window.location.origin;
+      
       const CRM_SOUND_STORAGE_KEY = "ofreser_crm_sound_enabled";
 
 let allLeads = [];
@@ -1114,14 +1098,7 @@ async function loadLeads({ silent = false, preserveModal = true } = {}) {
         }
       }
 
-      /**
-       * Trae detalle del lead + conversación.
-       */
-      async function fetchLeadConversation(leadId) {
-        const res = await crmFetch(`${API_BASE}/leads/${leadId}/messages`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return await res.json();
-      }
+
 
       /**
        * Render interno de mensajes.
