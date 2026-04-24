@@ -22,12 +22,7 @@
  * - no modulariza todavía
  * - solo separa HTML de JavaScript para mejorar mantenimiento
  */
- 	/**
- * =========================================================
- * crmFetch
- * Wrapper PRO de fetch con autenticación automática
- * =========================================================
- */
+ 	
 
 
 
@@ -37,72 +32,7 @@
        * =========================================================
        */
       
-      const CRM_SOUND_STORAGE_KEY = "ofreser_crm_sound_enabled";
 
-let allLeads = [];
-let currentLeadId = null;
-let autoRefreshTimer = null;
-let crmCurrentAuth = null;
-
-/**
- * =========================================================
- * ESTADO GLOBAL DE PAGINACIÓN DE LEADS
- * =========================================================
- *
- * Importante:
- * - el tablero ahora consume una página por vez
- * - los filtros actuales siguen funcionando sobre la página cargada
- */
-let leadsCurrentOffset = 0;
-const LEADS_PAGE_SIZE = 20;
-let leadsLastTotal = 0;
-
-let auditCurrentOffset = 0;
-const AUDIT_PAGE_SIZE = 20;
-let auditLastTotal = 0;
-
-      /**
-       * Evita ejecutar el bootstrap del CRM múltiples veces.
-       */
-      let crmBootstrapStarted = false;
-
-      /**
-       * Indica si el CRM ya completó al menos una carga inicial de leads.
-       *
-       * Regla:
-       * - primera carga al abrir el CRM => no sonar
-       * - cargas siguientes => si entra lead nuevo, sí sonar
-       */
-      let crmHasCompletedInitialLoad = false;
-
-      /**
-       * Estado persistente del sonido del CRM.
-       *
-       * Si el usuario ya lo activó antes, lo recordamos.
-       */
-      let crmAudioUnlocked =
-        localStorage.getItem(CRM_SOUND_STORAGE_KEY) === "1";
-
-      /**
-       * Contexto de audio reutilizable del CRM.
-       */
-      let crmAudioContext = null;
-
-      /**
-       * Flag simple para evitar doble envío manual
-       * si el usuario hace doble click o presiona Enter varias veces.
-       */
-      let isSendingHumanMessage = false;
-	  
-	  /**
- * Estado temporal del modal de reset password de usuarios.
- *
- * Guardamos:
- * - id del usuario a resetear
- * - username visible en el título/subtítulo
- */
-let resetPasswordTargetUserId = null;
-let resetPasswordTargetUsername = '';
 
       const searchInput = document.getElementById("searchInput");
       const categoryFilter = document.getElementById("categoryFilter");
