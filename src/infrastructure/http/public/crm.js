@@ -2245,23 +2245,7 @@ updateAuditPaginationUi(auditLastTotal, logs.length);
  * @param {string} message - Mensaje a mostrar
  * @param {'success'|'error'|'info'} type - Tipo de mensaje
  */
-      /**
-       * Notificación visual simple para acciones exitosas o errores controlados.
-       */
-function showToast(message, type = 'info') {
-  const container = document.getElementById('toastContainer');
-  if (!container) return;
 
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.textContent = message;
-
-  container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.remove();
-  }, 3000);
-}
 
       /**
        * Resetea completamente los datos de testing del sistema.

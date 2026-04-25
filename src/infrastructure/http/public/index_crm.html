@@ -49,20 +49,17 @@
     <span id="connStatus" style="color: #16a34a; margin-right: 6px;">●</span>
     <span id="lastSyncLabel">Actualizado: --</span>
   </div>
-
   <div class="user-session-box">
     <div class="user-session-main" id="crmSessionUserLabel">Usuario: --</div>
     <div class="user-session-sub" id="crmSessionRoleLabel">Rol: --</div>
     <div class="user-session-sub" id="crmSessionActivityLabel">Última actividad: --</div>
   </div>
-
   <button
     class="btn secondary"
     onclick="loadLeads({ silent: false, preserveModal: true })"
   >
     Actualizar
   </button>
-
   <button
     class="btn secondary"
     id="soundToggleBtn"
@@ -119,9 +116,7 @@
           Abrir demo del cliente
         </button>
       </div>
-    </div>
-
-    
+    </div>    
     <!-- =========================================================
          CONTENIDO PRINCIPAL DEL CRM
          ========================================================= -->
@@ -658,6 +653,8 @@
 	<script src="crm-audio.js"></script>
 	
 	<script src="crm-session-ui.js"></script>
+	
+	<script src="crm-toast.js"></script>
 	
 	<!-- Script principal del CRM -->
 <script src="crm.js"></script>
