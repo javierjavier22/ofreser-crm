@@ -371,6 +371,35 @@ Estado actualizado:
 - NO utilizado en producción (Render)
 - SQLite continúa como base principal activa
 
+### Repository PostgreSQL inicial
+
+Se creó:
+
+- src/infrastructure/persistence/postgres/leads.repository.js
+
+Estado:
+
+- Versión parcial (solo saveLead)
+- No integrada al sistema
+- No reemplaza SQLite
+- Usada solo para pruebas controladas
+
+### Tabla leads en PostgreSQL
+
+Se creó la tabla `leads` en PostgreSQL alineada con la estructura SQLite.
+
+Características:
+
+- Tipos TEXT para mantener flexibilidad
+- BOOLEAN para flags (requires_human, partial)
+- TIMESTAMP para fechas
+
+Estado:
+
+- Tabla creada correctamente
+- Lista para pruebas de inserción
+- No integrada al sistema aún
+
 ---
 
 ## 9. FUNCIONALIDADES DEL SISTEMA
