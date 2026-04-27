@@ -556,17 +556,127 @@ ofreser_bot_bible.md
 
 La biblia debe mantenerse como fuente de verdad actualizada del sistema, debe reflejar estructura, archivos, funcionalidades, etc todo lo reflejado en esta biblia nivel de detalle extremo para que sea interpretado por cualqiuer IA con solo leer este md.
 
-## 18. CONCLUSIÓN DEL ESTADO ACTUAL
+---
+
+## 19. ENTORNO DE DESPLIEGUE — RENDER
+
+### Tipo de servicio
+
+- Web Service (Node.js)
+- Nombre: ofreser-crm
+
+---
+
+### Plan
+
+- Starter (Hobby / Legacy)
+- Recursos:
+  - 0.5 CPU
+  - 512 MB RAM
+
+---
+
+### Región
+
+- Oregon (US West)
+
+---
+
+### Repositorio
+
+- GitHub: javierjavier22/ofreser-crm
+- Branch: main
+
+---
+
+### Build & Deploy
+
+- Build Command: npm install
+- Start Command: node server.js
+- Auto Deploy: On Commit
+
+---
+
+### URL pública
+
+https://ofreser-crm.onrender.com
+
+---
+
+### Variables de entorno
+
+Configuradas actualmente:
+
+- ALLOW_ADMIN_RESET
+- CRM_API_KEY
+- CRM_PASSWORD
+- CRM_USERNAME
+- NODE_ENV
+- PHONE_NUMBER_ID
+- PORT
+- VERIFY_TOKEN
+- WA_PRODUCTION
+- WHATSAPP_TOKEN
+
+Notas:
+
+- DATABASE_URL aún NO está configurada.
+- PostgreSQL no está activo en producción.
+
+---
+
+### Persistencia
+
+- Disco montado en: /var/data
+- Tamaño: 1 GB
+
+Uso actual:
+
+- Base SQLite en:
+  /var/data/ofreser.db
+
+- Persistencia garantizada entre deploys.
+
+---
+
+### Snapshots
+
+- Snapshots automáticos activos
+- Restauración disponible desde panel Render
+
+---
+
+### Logging
+
+- Logs accesibles desde Render Dashboard
+- Logging adicional con Winston en aplicación
+
+---
+
+### Estado actual
+
+- Sistema productivo activo
+- SQLite como base principal
+- PostgreSQL no implementado aún
+
+---
+
+## 20. CONCLUSIÓN DEL ESTADO ACTUAL
 
 El sistema es:
 
 | Aspecto | Estado |
 |---|---|
 | Arquitectura | Monolito modular |
-| Backend | Node.js |
-| DB activa | SQLite |
-| CRM | Funcional completo |
-| Chatbot | Productivo |
-| Logging | Profesional |
-| Seguridad | Básica implementada |
-| PostgreSQL | Preparado pero no activo |
+| Backend | Node.js (Express) |
+| Entorno productivo | Activo en Render (Web Service) |
+| Plan Render | Starter (Hobby / Legacy) |
+| DB activa | SQLite (persistente en /var/data) |
+| Persistencia | Configurada con disk en Render + snapshots |
+| CRM | Funcional completo en producción |
+| Chatbot | Productivo (WhatsApp + Webchat) |
+| Logging | Profesional (Winston + logs Render) |
+| Seguridad | Básica implementada (auth, roles, hashing) |
+| Deploy | Automático (On Commit desde GitHub) |
+| PostgreSQL | Preparado en código, no configurado ni integrado |
+| Estado general | Sistema estable en producción, en fase de mejora incremental controlada |
