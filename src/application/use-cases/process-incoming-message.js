@@ -67,7 +67,7 @@ const {
   savePartialLead,
   getLeadBySessionId,
   updateLead
-} = require('../../infrastructure/persistence/sqlite/leads.repository');
+} = require('../../infrastructure/persistence/leads.repository');
 
 /**
  * Detecta si ya hay datos útiles en la sesión como para
