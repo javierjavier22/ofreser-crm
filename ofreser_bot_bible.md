@@ -338,6 +338,39 @@ Estado:
 - PostgreSQL funcionando localmente.
 - Conexión validada desde script Node.js.
 - SQLite continúa como base principal.
+
+### Conexión local validada
+
+Se configuró PostgreSQL en entorno local (Windows) y se validó la conexión desde el backend Node.js.
+
+Configuración:
+
+- Usuario: postgres
+- Host: localhost
+- Puerto: 5432
+- Base de datos: ofreser
+
+Variable de entorno utilizada:
+
+DATABASE_URL=postgresql://postgres:****@localhost:5432/ofreser
+
+Validación realizada mediante:
+
+- Script: scripts/test-postgres-connection.js
+- Query ejecutada: SELECT NOW()
+
+Resultado:
+
+- Conexión exitosa
+- PostgreSQL responde correctamente
+
+Estado actualizado:
+
+- PostgreSQL disponible en entorno local
+- NO integrado en repositories
+- NO utilizado en producción (Render)
+- SQLite continúa como base principal activa
+
 ---
 
 ## 9. FUNCIONALIDADES DEL SISTEMA
