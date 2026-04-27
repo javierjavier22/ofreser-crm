@@ -314,6 +314,30 @@ Calcula score basado en:
 | Uso en repositorios | ❌ No usada |
 | DB activa | ✅ 100% SQLite |
 
+### Instalación local PostgreSQL (Windows)
+
+Se instaló PostgreSQL localmente en Windows utilizando instalador oficial EDB.
+
+Configuración:
+
+- Usuario: postgres
+- Puerto: 5432
+- Base de datos: ofreser
+
+Se validó conexión mediante:
+
+- pgAdmin
+- Query: SELECT NOW()
+
+Se configuró variable:
+
+DATABASE_URL=postgresql://postgres:****@localhost:5432/ofreser
+
+Estado:
+
+- PostgreSQL funcionando localmente.
+- Conexión validada desde script Node.js.
+- SQLite continúa como base principal.
 ---
 
 ## 9. FUNCIONALIDADES DEL SISTEMA
