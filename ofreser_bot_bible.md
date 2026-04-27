@@ -400,6 +400,46 @@ Estado:
 - Lista para pruebas de inserción
 - No integrada al sistema aún
 
+### Script manual de inserción de leads
+
+Se creó:
+
+- `scripts/test-postgres-leads-insert.js`
+
+Responsabilidad:
+
+- Probar manualmente la inserción de leads en PostgreSQL.
+- Usar `src/infrastructure/persistence/postgres/leads.repository.js`.
+- No activar PostgreSQL en el sistema principal.
+- No modificar SQLite.
+- No modificar controllers.
+- No modificar `server.js`.
+- No modificar `app.js`.
+
+Estado:
+
+- Script creado para prueba controlada.
+- PostgreSQL sigue en paralelo.
+- SQLite continúa como base principal activa.
+
+### Activación controlada PostgreSQL en Render
+
+Se configuró:
+
+- DATABASE_URL en entorno Render
+- USE_POSTGRES=true
+
+Resultado:
+
+- PostgreSQL activo en producción
+- Inserción de leads funcionando
+- SQLite aún presente como fallback
+
+Estado:
+
+- Migración parcial en curso
+- Sistema estable
+
 ---
 
 ## 9. FUNCIONALIDADES DEL SISTEMA
